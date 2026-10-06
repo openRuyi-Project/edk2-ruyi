@@ -1,0 +1,16 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3BoardMacLib
+  FILE_GUID = 5f72d462-dcc3-4bda-9126-2c840b7e7450
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = PlatformMacAddressLib
+[Sources]
+  Mac.c
+[Packages]
+  MdePkg/MdePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseMemoryLib
+  K3BoardEepromLib
+  SpacemitTlvLib
