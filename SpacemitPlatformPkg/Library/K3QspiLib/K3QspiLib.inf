@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3QspiLib
+  FILE_GUID = 36b3ff53-83bc-4285-896e-d381c778c932
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = K3QspiLib
+[Sources]
+  Qspi.c
+[Packages]
+  MdePkg/MdePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  IoLib
+  TimerLib

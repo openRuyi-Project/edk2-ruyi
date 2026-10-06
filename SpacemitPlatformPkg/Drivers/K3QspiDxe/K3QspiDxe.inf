@@ -1,0 +1,37 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3QspiDxe
+  FILE_GUID = fca9205c-2f75-4ef4-903f-d978921c95b4
+  MODULE_TYPE = DXE_DRIVER
+  ENTRY_POINT = K3QspiInitialize
+[Sources]
+  Qspi.h
+  Io.c
+  Dxe.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  FdtLib
+  IoLib
+  HobLib
+  K3HardwareLib
+  K3QspiLib
+  TimerLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiLib
+[Protocols]
+  gSpacemitClockProtocolGuid
+  gEfiDevicePathProtocolGuid
+[Guids]
+  gEfiEventExitBootServicesGuid
+  gEdk2JedecSfdpSpiDxeDriverGuid
+[Depex]
+  gSpacemitClockProtocolGuid
