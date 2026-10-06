@@ -1,0 +1,19 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = SnpAdapterInfoLib
+  FILE_GUID = 98170758-3f39-488c-b863-4e917227426f
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = SnpAdapterInfoLib
+[Sources]
+  Info.c
+[Packages]
+  MdePkg/MdePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  MemoryAllocationLib
+[Guids]
+  gEfiAdapterInfoMediaStateGuid
+  gEfiAdapterInfoUndiIpv6SupportGuid
