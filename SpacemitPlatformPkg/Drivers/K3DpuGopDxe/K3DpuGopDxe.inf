@@ -1,0 +1,45 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3DpuGopDxe
+  FILE_GUID = fcc8227c-8f11-4f9f-85e9-611989563340
+  MODULE_TYPE = DXE_DRIVER
+  ENTRY_POINT = K3DpuGopEntry
+[Sources]
+  Driver.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  DebugLib
+  BaseLib
+  BaseMemoryLib
+  DevicePathLib
+  FdtLib
+  HobLib
+  IoLib
+  K3DpuLib
+  K3DisplayClockLib
+  K3DisplayModeLib
+  K3GopLib
+  K3HardwareLib
+  K3InnoDpLib
+  TimerLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiLib
+[Guids]
+  gFdtTableGuid
+[Protocols]
+  gEfiDevicePathProtocolGuid
+  gEfiLoadedImageProtocolGuid
+  gEfiGraphicsOutputProtocolGuid
+  gEfiEdidDiscoveredProtocolGuid
+  gEfiEdidActiveProtocolGuid
+  gSpacemitClockProtocolGuid
+  gEfiCpuArchProtocolGuid
+[Depex]
+  gSpacemitClockProtocolGuid AND gEfiCpuArchProtocolGuid AND
+  gEfiDevicePathProtocolGuid
