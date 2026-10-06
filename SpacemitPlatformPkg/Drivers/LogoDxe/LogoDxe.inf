@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+# Artwork belongs to the openRuyi project; the driver license does not cover it.
+# Source: https://github.com/openRuyi-Project/homepage/blob/main/static/img/openRuyi.svg
+[Defines]
+  INF_VERSION = 0x0001001b
+  BASE_NAME = OpenRuyiLogoDxe
+  FILE_GUID = 9a163d8c-77f3-4eae-a8b2-a4a798c62871
+  MODULE_TYPE = DXE_DRIVER
+  VERSION_STRING = 1.0
+  ENTRY_POINT = LogoInitialize
+[Sources]
+  Logo.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BmpSupportLib
+  DxeServicesLib
+  MemoryAllocationLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+[Protocols]
+  gEdkiiPlatformLogoProtocolGuid
+[Guids]
+  gOpenRuyiLogoGuid
+[Depex]
+  TRUE

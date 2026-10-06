@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001b
+  BASE_NAME = BootProgressLib
+  FILE_GUID = 4d938045-327e-4f68-878a-7ed741b9f668
+  MODULE_TYPE = DXE_DRIVER
+  LIBRARY_CLASS = BootProgressLib|DXE_DRIVER
+[Sources]
+  BootProgress.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BootLogoLib
+  PcdLib
+  PrintLib
+  SerialPortLib
+  UefiBootManagerLib
+  UefiBootServicesTableLib
+[Guids]
+  gEfiEventReadyToBootGuid
+[Pcd]
+  gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut
