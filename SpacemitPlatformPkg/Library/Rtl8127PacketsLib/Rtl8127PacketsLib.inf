@@ -1,0 +1,20 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Rtl8127PacketsLib
+  FILE_GUID = 342c19c0-dd07-4c2e-9d69-78ce23ea831a
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = Rtl8127PacketsLib
+[Sources]
+  Mac.c
+  Packets.c
+  Internal.h
+[Packages]
+  MdePkg/MdePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  MemoryAllocationLib
+  Rtl8127Lib
+  TimerLib
