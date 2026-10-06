@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001b
+  BASE_NAME = Fastboot
+  FILE_GUID = b7c9a614-8a50-4ab8-9622-bafd036a418e
+  MODULE_TYPE = UEFI_APPLICATION
+  ENTRY_POINT = FastbootMain
+[Sources]
+  Fastboot.c
+[Packages]
+  MdePkg/MdePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DevicePathLib
+  FastbootPlatformLib
+  FastbootTransportLib
+  MemoryAllocationLib
+  HobLib
+  PrintLib
+  SerialPortLib
+  TimerLib
+  UefiApplicationEntryPoint
+  UefiBootServicesTableLib
+  UefiLib
+  UefiRuntimeServicesTableLib
+[Protocols]
+  gEfiLoadedImageProtocolGuid

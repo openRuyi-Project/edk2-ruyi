@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001b
+  BASE_NAME = FastbootStorageLib
+  FILE_GUID = 83ef91f6-a1bc-4ea9-b528-e931a820fbbc
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = FastbootStorageLib
+[Sources]
+  Image.c
+  Nvme.c
+[Packages]
+  MdePkg/MdePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  MemoryAllocationLib
+  DevicePathLib
+  PrintLib
+  UefiBootServicesTableLib
+[Protocols]
+  gEfiBlockIoProtocolGuid
+  gEfiDevicePathProtocolGuid
+  gEfiPciIoProtocolGuid
