@@ -1,0 +1,56 @@
+## @file
+#   Generic PCI Host Bridge driver.
+#
+#  Copyright (c) 2009 - 2018, Intel Corporation. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = SpacemitPciHostBridgeDxe
+  FILE_GUID                      = 54ac5b59-a620-4102-8dd9-a704a95074d2
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = InitializePciHostBridge
+
+[Sources]
+  PciHostBridge.h
+  PciRootBridge.h
+  PciHostBridge.c
+  PciRootBridgeIo.c
+  PciHostResource.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  EmbeddedPkg/EmbeddedPkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+
+[LibraryClasses]
+  DmaLib
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  DebugLib
+  DxeServicesTableLib
+  DevicePathLib
+  BaseMemoryLib
+  BaseLib
+  PciSegmentLib
+  UefiLib
+  PciHostBridgeLib
+  TimerLib
+
+[Protocols]
+  gSpacemitPciControllerProtocolGuid
+  gEfiCpuIo2ProtocolGuid                          ## CONSUMES
+  gEfiDevicePathProtocolGuid                      ## BY_START
+  gEfiPciRootBridgeIoProtocolGuid                 ## BY_START
+  gEfiPciHostBridgeResourceAllocationProtocolGuid ## BY_START
+
+[Depex]
+  gEfiCpuIo2ProtocolGuid AND
+  gEfiCpuArchProtocolGuid AND
+  gSpacemitPciControllerProtocolGuid

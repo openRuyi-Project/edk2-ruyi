@@ -1,0 +1,21 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = SpacemitPciHostBridgeLib
+  FILE_GUID = 2ac90ca4-889c-48f1-a781-9f82e0bc1931
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = PciHostBridgeLib
+[Sources]
+  Host.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseMemoryLib
+  DebugLib
+  DevicePathLib
+  MemoryAllocationLib
+  UefiBootServicesTableLib
+[Protocols]
+  gSpacemitPciControllerProtocolGuid

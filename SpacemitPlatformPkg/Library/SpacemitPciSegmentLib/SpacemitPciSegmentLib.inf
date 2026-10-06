@@ -1,0 +1,21 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = SpacemitPciSegmentLib
+  FILE_GUID = 93f7aa7b-2d24-4249-a576-e6fcb2c18551
+  MODULE_TYPE = DXE_DRIVER
+  LIBRARY_CLASS = PciSegmentLib|DXE_DRIVER UEFI_APPLICATION
+  CONSTRUCTOR = SpacemitPciSegmentConstructor
+  DESTRUCTOR = SpacemitPciSegmentDestructor
+[Sources]
+  Segment.c
+[Packages]
+  MdePkg/MdePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  UefiBootServicesTableLib
+[Protocols]
+  gSpacemitPciControllerProtocolGuid
