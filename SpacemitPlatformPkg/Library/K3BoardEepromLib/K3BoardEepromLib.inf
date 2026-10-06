@@ -1,0 +1,24 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3BoardEepromLib
+  FILE_GUID = 5eebac1e-cb2a-48e8-bb14-374b3f79c161
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = K3BoardEepromLib
+[Sources]
+  Eeprom.c
+[Packages]
+  MdePkg/MdePkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseMemoryLib
+  DebugLib
+  FdtLib
+  HobLib
+  IoLib
+  K3HardwareLib
+  TimerLib
+  UefiLib
+[Guids]
+  gFdtTableGuid

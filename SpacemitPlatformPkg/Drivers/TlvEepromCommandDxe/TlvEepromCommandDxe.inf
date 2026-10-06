@@ -1,0 +1,33 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = TlvEepromCommandDxe
+  FILE_GUID = 60d06b5f-e1db-4280-a737-f855906ccce3
+  MODULE_TYPE = DXE_DRIVER
+  ENTRY_POINT = TlvEepromCommandEntry
+  UNLOAD_IMAGE = TlvEepromCommandUnload
+[Sources]
+  Command.c
+[Packages]
+  MdePkg/MdePkg.dec
+  ShellPkg/ShellPkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  K3BoardEepromLib
+  MemoryAllocationLib
+  ShellLib
+  SpacemitTlvLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiLib
+[Protocols]
+  gEfiShellDynamicCommandProtocolGuid
+  gEfiHiiStringProtocolGuid
+  gEfiHiiDatabaseProtocolGuid
+  gEfiHiiConfigRoutingProtocolGuid
+[Depex]
+  gEfiHiiStringProtocolGuid AND
+  gEfiHiiDatabaseProtocolGuid AND
+  gEfiHiiConfigRoutingProtocolGuid

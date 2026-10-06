@@ -1,0 +1,15 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = SpacemitTlvLib
+  FILE_GUID = d6685db8-9299-4861-b53f-b11924ee66a1
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = SpacemitTlvLib
+[Sources]
+  Tlv.c
+[Packages]
+  MdePkg/MdePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
