@@ -1,0 +1,64 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  DEC_SPECIFICATION = 0x0001001B
+  PACKAGE_NAME = SpacemitPlatformPkg
+  PACKAGE_GUID = 58a2bb2b-6767-4f9f-b069-220d943ce771
+  PACKAGE_VERSION = 0.1
+
+[Includes]
+  Include
+
+[LibraryClasses]
+  K3QspiLib|Include/Library/K3QspiLib.h
+  K3PowerDomainLib|Include/Library/K3PowerDomainLib.h
+  K3FirmwareUpdateLib|Include/Library/K3FirmwareUpdateLib.h
+  BootProgressLib|Include/Library/BootProgressLib.h
+  SnpAdapterInfoLib|Include/Library/SnpAdapterInfoLib.h
+  Rtl8127SnpLib|Include/Library/Rtl8127SnpLib.h
+  PlatformMacAddressLib|Include/Library/PlatformMacAddressLib.h
+  SpacemitTlvLib|Include/Library/SpacemitTlvLib.h
+  K3BoardEepromLib|Include/Library/K3BoardEepromLib.h
+  Rtl8127Lib|Include/Library/Rtl8127Lib.h
+  Rtl8127PacketsLib|Include/Library/Rtl8127PacketsLib.h
+  K3NvFvbLib|Include/Library/K3NvFvbLib.h
+  UfsStorageLib|Include/Library/UfsStorageLib.h
+  K3DisplayModeLib|Include/Library/K3DisplayModeLib.h
+  K3GopLib|Include/Library/K3GopLib.h
+  K3DisplayClockLib|Include/Library/K3DisplayClockLib.h
+  K3DisplaySurfaceLib|Include/Library/K3DisplaySurfaceLib.h
+  K3DpuLib|Include/Library/K3DpuLib.h
+  K3InnoDpLib|Include/Library/K3InnoDpLib.h
+  K3HardwareLib|Include/Library/K3HardwareLib.h
+  K3EqosLib|Include/Library/K3EqosLib.h
+  DesignWarePciLib|Include/Library/DesignWarePciLib.h
+  FastbootTransportLib|Include/Library/FastbootTransportLib.h
+  FastbootPlatformLib|Include/Library/FastbootPlatformLib.h
+  FastbootStorageLib|Include/Library/FastbootStorageLib.h
+  UsbDevicePlatformLib|Include/Library/UsbDevicePlatformLib.h
+
+[Protocols]
+  gSpacemitClockProtocolGuid = { 0xee06e639, 0xc2e1, 0x4751, { 0xb2, 0x4d, 0x2c, 0x0a, 0x45, 0x46, 0xaa, 0xb7 } }
+  gSpacemitComboPhyProtocolGuid = { 0x4b15e682, 0x47c4, 0x40f8, { 0x9a, 0x9a, 0xb2, 0x66, 0x34, 0x82, 0xc2, 0x48 } }
+  gSpacemitPciControllerProtocolGuid = { 0x6278c94a, 0x9388, 0x4faf, { 0x9a, 0xad, 0x28, 0xe6, 0x2e, 0xd5, 0x0e, 0x69 } }
+
+[Guids]
+  gSpacemitDdrTrainingGuid = { 0x8ba9980c, 0x48cb, 0x4232, { 0x8b, 0x33, 0x59, 0x58, 0xe6, 0x34, 0xbe, 0x69 } }
+  gSpacemitNvFvbReadyGuid = { 0x714e287b, 0x83aa, 0x44ab, { 0xb9, 0x67, 0x11, 0x69, 0x5d, 0x56, 0x16, 0xa2 } }
+  # MultiArchUefiPkg uses its driver FILE_GUID as the emulator device marker.
+  gMultiArchUefiEmulatorDeviceGuid = { 0xe6727a5e, 0xcbcd, 0x44c8, { 0xb3, 0x7f, 0x78, 0xbc, 0x3a, 0x0c, 0x16, 0xc8 } }
+  gOpenRuyiLogoGuid = {0xb9317e41, 0x2a84, 0x4d83, {0x8e, 0x31, 0xa6, 0x78, 0x38, 0x81, 0x5f, 0xf2}}
+  gSpacemitPlatformTokenSpaceGuid = { 0x3495cf06, 0xf8b4, 0x42ba, { 0x89, 0x2d, 0x03, 0x38, 0xd0, 0x21, 0x8a, 0x68 } }
+
+[PcdsFixedAtBuild]
+  gSpacemitPlatformTokenSpaceGuid.PcdFdBase|0x102000000|UINT64|0x1
+  gSpacemitPlatformTokenSpaceGuid.PcdFdSize|0x300000|UINT32|0x2
+  gSpacemitPlatformTokenSpaceGuid.PcdSecMemoryBase|0x122000000|UINT64|0x3
+  gSpacemitPlatformTokenSpaceGuid.PcdSecMemorySize|0x2000000|UINT64|0x4
+  gSpacemitPlatformTokenSpaceGuid.PcdSecStackSize|0x10000|UINT32|0x5
+  gSpacemitPlatformTokenSpaceGuid.PcdSystemProductName|"SpacemiT K3 Pico ITX"|VOID*|0x6
+  gSpacemitPlatformTokenSpaceGuid.PcdDramDeviceCount|2|UINT16|0x7
+
+  gSpacemitPlatformTokenSpaceGuid.PcdRtl8127MacAddressIndex|1|UINT16|0xa
+
+  # X100 CBOM granule from the current K3 CPU description.
+  gSpacemitPlatformTokenSpaceGuid.PcdDmaCacheLineSize|64|UINT32|0x8
