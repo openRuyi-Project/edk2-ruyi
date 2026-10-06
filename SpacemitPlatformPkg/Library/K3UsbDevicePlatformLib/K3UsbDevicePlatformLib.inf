@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3UsbDevicePlatformLib
+  FILE_GUID = f12e6a12-129a-4e6c-8e6f-a958cd434f0a
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = UsbDevicePlatformLib
+[Sources]
+  Platform.c
+[Packages]
+  MdePkg/MdePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  K3HardwareLib
+  FdtLib
+  IoLib
+  TimerLib
+  UefiLib
+[Guids]
+  gFdtTableGuid

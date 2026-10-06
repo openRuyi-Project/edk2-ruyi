@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Dwc3FastbootLib
+  FILE_GUID = 259ad186-8f1a-4c49-98be-5131681c0d06
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = FastbootTransportLib
+[Sources]
+  Usb.c
+  Dwc3.h
+[Packages]
+  MdePkg/MdePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  CacheMaintenanceLib
+  IoLib
+  MemoryAllocationLib
+  TimerLib
+  UefiLib
+  UsbDevicePlatformLib

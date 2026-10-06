@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3FastbootPlatformLib
+  FILE_GUID = 563c1d96-7e3f-4692-a24b-fbf5bd3bb182
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = FastbootPlatformLib
+[Sources]
+  Storage.c
+  Spi.c
+  Spi.h
+[Packages]
+  MdePkg/MdePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  K3FirmwareUpdateLib
+  BaseLib
+  BaseMemoryLib
+  UfsStorageLib
+  FastbootStorageLib
+  MemoryAllocationLib
+  PcdLib
+  PrintLib
+  UefiLib
+  UefiBootServicesTableLib
+[Protocols]
+  gEfiSpiNorFlashProtocolGuid
+[Pcd]
+  gSpacemitPlatformTokenSpaceGuid.PcdSystemProductName
