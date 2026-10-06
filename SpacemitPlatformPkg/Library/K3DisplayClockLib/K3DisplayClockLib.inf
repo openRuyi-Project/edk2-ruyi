@@ -1,0 +1,23 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3DisplayClockLib
+  FILE_GUID = 5bcf58c3-2cb4-4dbe-ac2a-9df9e9a1b360
+  MODULE_TYPE = DXE_DRIVER
+  LIBRARY_CLASS = K3DisplayClockLib
+[Sources]
+  Clock.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  FdtLib
+  IoLib
+  K3HardwareLib
+  K3PowerDomainLib
+  UefiBootServicesTableLib
+[Protocols]
+  gSpacemitClockProtocolGuid

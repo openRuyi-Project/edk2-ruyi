@@ -1,0 +1,22 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3DpuLib
+  FILE_GUID = 19e43a6e-1b3a-4c99-8bbd-90cdb37631dc
+  MODULE_TYPE = DXE_DRIVER
+  LIBRARY_CLASS = K3DpuLib
+[Sources]
+  Platform.c
+  Scanout.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  FdtLib
+  IoLib
+  K3HardwareLib
+  K3InnoDpLib
+  TimerLib

@@ -1,0 +1,20 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3DisplaySurfaceLib
+  FILE_GUID = 544c1d2c-cce8-409b-ab38-4d3a970a3f79
+  MODULE_TYPE = DXE_DRIVER
+  LIBRARY_CLASS = K3DisplaySurfaceLib
+[Sources]
+  Surface.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  EmbeddedPkg/EmbeddedPkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DmaLib
+  FrameBufferBltLib
+  MemoryAllocationLib
