@@ -1,0 +1,49 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3NvStorageDxe
+  FILE_GUID = 390171af-d1c9-4c53-b45e-21b8d7056746
+  MODULE_TYPE = DXE_RUNTIME_DRIVER
+  ENTRY_POINT = K3NvStorageEntry
+[Sources]
+  NvStorage.c
+  Flash.c
+  Flash.h
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  EmbeddedPkg/EmbeddedPkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+  UefiRuntimeLib
+  UefiLib
+  BaseLib
+  BaseMemoryLib
+  MemoryAllocationLib
+  PcdLib
+  DebugLib
+  K3NvFvbLib
+  HobLib
+  K3QspiLib
+  DxeServicesTableLib
+  IoLib
+  TimerLib
+[Protocols]
+  gEfiSpiNorFlashProtocolGuid
+  gEfiFirmwareVolumeBlockProtocolGuid
+  gEfiFaultTolerantWriteProtocolGuid
+  gEfiDevicePathProtocolGuid
+[Guids]
+  gSpacemitNvFvbReadyGuid
+  gEdkiiNvVarStoreFormattedGuid
+  gEfiEventVirtualAddressChangeGuid
+[Pcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase64
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingBase64
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase64
+[Depex]
+  gEfiSpiNorFlashProtocolGuid

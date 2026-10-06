@@ -1,0 +1,19 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3NvFvbLib
+  FILE_GUID = 8b13b110-eb70-4fb7-b0fb-2481f6683e99
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = K3NvFvbLib
+[Sources]
+  Fvb.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+[Guids]
+  gEfiSystemNvDataFvGuid
+  gEfiAuthenticatedVariableGuid

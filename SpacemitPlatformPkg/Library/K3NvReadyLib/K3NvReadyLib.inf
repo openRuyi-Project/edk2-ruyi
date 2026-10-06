@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3NvReadyLib
+  FILE_GUID = 935191d9-0726-46ca-b15a-0b28235633a5
+  MODULE_TYPE = DXE_RUNTIME_DRIVER
+  LIBRARY_CLASS = NULL
+  CONSTRUCTOR = K3NvReadyConstructor
+[Sources]
+  Ready.c
+[LibraryClasses]
+  PcdLib
+[Pcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase64
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  EmbeddedPkg/EmbeddedPkg.dec
+[Guids]
+  gEdkiiNvVarStoreFormattedGuid
+[Depex]
+  gEdkiiNvVarStoreFormattedGuid
