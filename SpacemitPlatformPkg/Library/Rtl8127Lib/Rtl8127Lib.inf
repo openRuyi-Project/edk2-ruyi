@@ -1,0 +1,14 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Rtl8127Lib
+  FILE_GUID = ce58a2b3-a32b-4d78-a1e6-1792f6971af2
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = Rtl8127Lib
+[Sources]
+  Sfp.c
+[Packages]
+  MdePkg/MdePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  TimerLib
