@@ -1,0 +1,36 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Rtl8127SnpDxe
+  FILE_GUID = d31c4189-bc71-4388-9593-df40867264b9
+  MODULE_TYPE = DXE_DRIVER
+  ENTRY_POINT = Rtl8127SnpEntry
+[Sources]
+  Driver.c
+[Packages]
+  MdePkg/MdePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseMemoryLib
+  DebugLib
+  DevicePathLib
+  MemoryAllocationLib
+  PcdLib
+  PlatformMacAddressLib
+  Rtl8127SnpLib
+  SnpAdapterInfoLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiLib
+[Protocols]
+  gEfiAdapterInformationProtocolGuid
+  gEfiDriverBindingProtocolGuid
+  gEfiPciIoProtocolGuid
+  gEfiSimpleNetworkProtocolGuid
+  gEfiDevicePathProtocolGuid
+[Guids]
+  gEfiEventBeforeExitBootServicesGuid
+[FixedPcd]
+  gSpacemitPlatformTokenSpaceGuid.PcdRtl8127MacAddressIndex
+[Depex]
+  gEfiCpuArchProtocolGuid

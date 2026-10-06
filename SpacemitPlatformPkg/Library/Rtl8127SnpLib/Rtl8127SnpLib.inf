@@ -1,0 +1,18 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Rtl8127SnpLib
+  FILE_GUID = 59f66848-5a09-4a3c-83a9-1a4441f4129a
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = Rtl8127SnpLib
+[Sources]
+  Snp.c
+[Packages]
+  MdePkg/MdePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  MemoryAllocationLib
+  Rtl8127PacketsLib
+  UefiBootServicesTableLib
