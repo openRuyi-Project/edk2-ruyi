@@ -1,0 +1,17 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3HardwareLib
+  FILE_GUID = f1c09a2d-98bf-40c4-b63d-cab92c24b417
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = K3HardwareLib
+[Sources]
+  Hardware.c
+[Packages]
+  MdePkg/MdePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  FdtLib
+  IoLib
+  DxeServicesTableLib

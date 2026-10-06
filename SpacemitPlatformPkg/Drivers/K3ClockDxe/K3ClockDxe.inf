@@ -1,0 +1,29 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3ClockDxe
+  FILE_GUID = ee06e639-c2e1-4751-b24d-2c0a4546aab7
+  MODULE_TYPE = DXE_DRIVER
+  ENTRY_POINT = K3ClockEntry
+[Sources]
+  Core.c
+  Entry.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  FdtLib
+  HobLib
+  IoLib
+  K3HardwareLib
+  TimerLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+[Protocols]
+  gSpacemitClockProtocolGuid
+[Depex]
+  gEfiCpuArchProtocolGuid
