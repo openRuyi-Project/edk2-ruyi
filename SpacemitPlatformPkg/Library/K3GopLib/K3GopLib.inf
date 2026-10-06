@@ -1,0 +1,19 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3GopLib
+  FILE_GUID = 9c39e6a8-3d0f-4932-9f85-ed99fca89f85
+  MODULE_TYPE = DXE_DRIVER
+  LIBRARY_CLASS = K3GopLib
+[Sources]
+  Gop.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  K3DisplaySurfaceLib
+  K3InnoDpLib
+  MemoryAllocationLib
