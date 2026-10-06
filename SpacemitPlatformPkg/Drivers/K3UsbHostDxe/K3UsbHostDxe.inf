@@ -1,0 +1,30 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3UsbHostDxe
+  FILE_GUID = e9ff39f8-9b7a-4e7a-bf90-259025786931
+  MODULE_TYPE = DXE_DRIVER
+  ENTRY_POINT = K3UsbHostEntry
+[Sources]
+  Usb.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  FdtLib
+  HobLib
+  IoLib
+  K3HardwareLib
+  NonDiscoverableDeviceRegistrationLib
+  TimerLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+[Protocols]
+  gSpacemitComboPhyProtocolGuid
+[Depex]
+  gEfiCpuArchProtocolGuid
