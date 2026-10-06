@@ -1,0 +1,50 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = SpacemitSec
+  FILE_GUID = 0657845b-4da4-4975-81e6-f1bc0f82d75c
+  MODULE_TYPE = SEC
+  VERSION_STRING = 0.1
+  ENTRY_POINT = SecEntry
+
+[Sources]
+  SecEntry.S
+  Sec.c
+  Memory.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  EmbeddedPkg/EmbeddedPkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  FdtLib
+  HobLib
+  IoLib
+  MemoryAllocationLib
+  PrePiLib
+  PrePiHobListPointerLib
+  SerialPortLib
+  PcdLib
+
+[FixedPcd]
+  gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiRuntimeServicesCode
+  gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiRuntimeServicesData
+  gSpacemitPlatformTokenSpaceGuid.PcdFdBase
+  gSpacemitPlatformTokenSpaceGuid.PcdFdSize
+  gSpacemitPlatformTokenSpaceGuid.PcdSecMemoryBase
+  gSpacemitPlatformTokenSpaceGuid.PcdSecMemorySize
+  gSpacemitPlatformTokenSpaceGuid.PcdSecStackSize
+
+[Guids]
+  gSpacemitDdrTrainingGuid
+  gEfiMemoryTypeInformationGuid
+  gFdtHobGuid
+
+[BuildOptions]
+  GCC:*_*_*_PP_FLAGS = -D__ASSEMBLY__

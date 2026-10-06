@@ -1,0 +1,38 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = SpacemitFdtDxe
+  FILE_GUID = 487a99b2-7948-49f6-9c1c-d556bf94bfbf
+  MODULE_TYPE = DXE_DRIVER
+  VERSION_STRING = 0.1
+  ENTRY_POINT = PublishFdt
+[Sources]
+  FdtDxe.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  EmbeddedPkg/EmbeddedPkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseMemoryLib
+  DebugLib
+  FdtLib
+  HobLib
+  MemoryAllocationLib
+  PlatformMacAddressLib
+  PrintLib
+  PcdLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+[Guids]
+  gFdtHobGuid
+  gFdtTableGuid
+[Protocols]
+  gEfiVariableArchProtocolGuid
+  gEfiCpuArchProtocolGuid
+[Depex]
+  gEfiCpuArchProtocolGuid AND gEfiVariableArchProtocolGuid
+
+[Pcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable
