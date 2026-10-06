@@ -1,0 +1,34 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3PicoSmbiosDxe
+  FILE_GUID = 05cf6eb2-c0fb-4c1a-bfe4-9c1261fc3d9a
+  MODULE_TYPE = DXE_DRIVER
+  VERSION_STRING = 0.1
+  ENTRY_POINT = PublishBoardInfo
+[Sources]
+  SmbiosDxe.c
+[Packages]
+  UefiCpuPkg/UefiCpuPkg.dec
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  FdtLib
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  HobLib
+  MemoryAllocationLib
+  PcdLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+[Protocols]
+  gSpacemitClockProtocolGuid
+  gEfiSmbiosProtocolGuid
+[FixedPcd]
+  gSpacemitPlatformTokenSpaceGuid.PcdFdSize
+  gSpacemitPlatformTokenSpaceGuid.PcdSystemProductName
+  gSpacemitPlatformTokenSpaceGuid.PcdDramDeviceCount
+[Depex]
+  gEfiSmbiosProtocolGuid AND gSpacemitClockProtocolGuid
