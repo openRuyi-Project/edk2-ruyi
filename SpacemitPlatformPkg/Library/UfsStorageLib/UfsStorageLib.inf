@@ -1,0 +1,22 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = UfsStorageLib
+  FILE_GUID = 4b37dce3-6904-45e0-9170-cb29aab934f0
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = UfsStorageLib
+[Sources]
+  Ufs.c
+[Packages]
+  MdePkg/MdePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DevicePathLib
+  MemoryAllocationLib
+  UefiBootServicesTableLib
+[Protocols]
+  gEfiBlockIoProtocolGuid
+  gEfiDevicePathProtocolGuid
+  gEfiUfsDeviceConfigProtocolGuid
