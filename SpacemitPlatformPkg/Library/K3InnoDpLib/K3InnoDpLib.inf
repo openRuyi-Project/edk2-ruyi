@@ -1,0 +1,21 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3InnoDpLib
+  FILE_GUID = 26a18cd7-aace-407a-a0ab-3d12c875644b
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = K3InnoDpLib
+[Sources]
+  InnoDp.c
+  InnoDpPhy.c
+  InnoDpReg.h
+  DpErrors.h
+[Packages]
+  MdePkg/MdePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  IoLib
+  TimerLib
