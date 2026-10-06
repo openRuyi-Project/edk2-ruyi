@@ -1,0 +1,36 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3EqosSnpDxe
+  FILE_GUID = d61a008a-35e9-43e3-9542-284c759631da
+  MODULE_TYPE = DXE_DRIVER
+  ENTRY_POINT = K3EqosEntry
+[Sources]
+  Snp.c
+[Packages]
+  MdePkg/MdePkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  DevicePathLib
+  FdtLib
+  HobLib
+  IoLib
+  K3EqosLib
+  MemoryAllocationLib
+  PlatformMacAddressLib
+  PrintLib
+  SnpAdapterInfoLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+[Protocols]
+  gEfiAdapterInformationProtocolGuid
+  gEfiSimpleNetworkProtocolGuid
+  gEfiDevicePathProtocolGuid
+[Guids]
+  gEfiEventExitBootServicesGuid
+[Depex]
+  gEfiCpuArchProtocolGuid
