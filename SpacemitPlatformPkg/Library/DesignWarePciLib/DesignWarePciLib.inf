@@ -1,0 +1,20 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = DesignWarePciLib
+  FILE_GUID = 10569345-2ae7-4338-a48e-166506cb69a8
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = DesignWarePciLib
+[Sources]
+  Controller.c
+  Resources.c
+[Packages]
+  MdePkg/MdePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  FdtLib
+  IoLib
+  TimerLib
+  UefiBootServicesTableLib

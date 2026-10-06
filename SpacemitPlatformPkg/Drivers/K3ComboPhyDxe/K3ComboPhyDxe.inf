@@ -1,0 +1,28 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3ComboPhyDxe
+  FILE_GUID = f29442a7-5747-4e0a-a124-0f908346f5a5
+  MODULE_TYPE = DXE_DRIVER
+  ENTRY_POINT = K3ComboEntry
+[Sources]
+  Combo.c
+[Packages]
+  MdePkg/MdePkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  FdtLib
+  HobLib
+  IoLib
+  K3HardwareLib
+  TimerLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+[Protocols]
+  gSpacemitComboPhyProtocolGuid
+[Depex]
+  gEfiCpuArchProtocolGuid

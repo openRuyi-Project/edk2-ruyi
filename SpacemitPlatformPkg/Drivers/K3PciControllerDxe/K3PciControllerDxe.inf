@@ -1,0 +1,30 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3PciControllerDxe
+  FILE_GUID = b501cb39-2674-4262-a6d8-5ff1e8106a03
+  MODULE_TYPE = DXE_DRIVER
+  ENTRY_POINT = K3PciEntry
+[Sources]
+  Pci.c
+[Packages]
+  MdePkg/MdePkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  DesignWarePciLib
+  FdtLib
+  HobLib
+  IoLib
+  K3HardwareLib
+  TimerLib
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+[Protocols]
+  gSpacemitComboPhyProtocolGuid
+  gSpacemitPciControllerProtocolGuid
+[Depex]
+  gEfiCpuArchProtocolGuid AND gSpacemitComboPhyProtocolGuid
