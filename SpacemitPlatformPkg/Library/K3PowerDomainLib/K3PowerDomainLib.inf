@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3PowerDomainLib
+  FILE_GUID = 2afdf73b-c3de-410f-8e0a-2c280f453213
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = K3PowerDomainLib
+[Sources]
+  Power.c
+[Packages]
+  MdePkg/MdePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  FdtLib
+  IoLib
+  TimerLib
+  K3HardwareLib
+  UefiBootServicesTableLib
