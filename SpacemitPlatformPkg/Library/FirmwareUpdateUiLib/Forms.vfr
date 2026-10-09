@@ -1,0 +1,18 @@
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+#include "Forms.h"
+formset
+  guid = K3_UPDATE_FORMSET_GUID,
+  title = STRING_TOKEN(STR_TITLE),
+  help = STRING_TOKEN(STR_HELP),
+  classguid = gEfiIfrFrontPageGuid,
+  form formid = 1,
+    title = STRING_TOKEN(STR_TITLE);
+    subtitle text = STRING_TOKEN(STR_PRESERVE);
+    action questionid = UPDATE_FILE,
+      prompt = STRING_TOKEN(STR_SELECT),
+      help = STRING_TOKEN(STR_HELP),
+      flags = INTERACTIVE,
+      config = STRING_TOKEN(0),
+    endaction;
+  endform;
+endformset;

@@ -1,0 +1,35 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = FirmwareUpdateUiLib
+  FILE_GUID = a234efbe-1e98-4b18-8b3b-0299500992ee
+  MODULE_TYPE = DXE_DRIVER
+  LIBRARY_CLASS = NULL|UEFI_APPLICATION
+  CONSTRUCTOR = FirmwareUpdateUiConstructor
+  DESTRUCTOR = FirmwareUpdateUiDestructor
+[Sources]
+  Update.c
+  Forms.h
+  Forms.vfr
+  Strings.uni
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  UefiBootServicesTableLib
+  UefiBootManagerLib
+  UefiRuntimeServicesTableLib
+  UefiLib
+  MemoryAllocationLib
+  BaseMemoryLib
+  FileHandleLib
+  FileExplorerLib
+  HiiLib
+  PrintLib
+  K3FirmwareUpdateLib
+[Protocols]
+  gEfiDevicePathProtocolGuid
+  gEfiHiiConfigAccessProtocolGuid
+[Guids]
+  gEfiIfrFrontPageGuid

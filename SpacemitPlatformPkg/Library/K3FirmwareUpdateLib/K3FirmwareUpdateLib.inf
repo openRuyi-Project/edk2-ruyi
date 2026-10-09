@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3FirmwareUpdateLib
+  FILE_GUID = 5d108d5b-a5ac-43b8-8f88-fcbaf3568296
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = K3FirmwareUpdateLib
+[Sources]
+  Internal.h
+  Image.c
+  Flash.c
+[Packages]
+  MdePkg/MdePkg.dec
+  CryptoPkg/CryptoPkg.dec
+  EmbeddedPkg/EmbeddedPkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  BaseCryptLib
+  FdtLib
+  MemoryAllocationLib
+  UefiBootServicesTableLib
+[Guids]
+  gEdkiiNvVarStoreFormattedGuid
+[Protocols]
+  gEfiFirmwareVolumeBlockProtocolGuid
+  gEfiSpiNorFlashProtocolGuid
