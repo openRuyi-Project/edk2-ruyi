@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3DdrTrainingDxe
+  FILE_GUID = 6b6e61c8-94e2-4bb9-87c7-0a2c60b879d9
+  MODULE_TYPE = DXE_DRIVER
+  ENTRY_POINT = K3DdrTrainingEntry
+[Sources]
+  DdrTraining.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  UefiDriverEntryPoint
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  HobLib
+  IoLib
+  MemoryAllocationLib
+  UefiBootServicesTableLib
+[Protocols]
+  gEfiSpiNorFlashProtocolGuid
+[Guids]
+  gSpacemitDdrTrainingGuid
+[Depex]
+  gEfiSpiNorFlashProtocolGuid
