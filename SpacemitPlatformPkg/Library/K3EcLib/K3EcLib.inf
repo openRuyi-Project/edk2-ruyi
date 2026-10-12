@@ -1,0 +1,18 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3EcLib
+  FILE_GUID = 0a90c89d-43d2-4b49-8c89-1e794eb8652f
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = K3EcLib
+[Sources]
+  Ec.c
+[Packages]
+  MdePkg/MdePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  IoLib
+  K3HardwareLib
+  TimerLib

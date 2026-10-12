@@ -66,6 +66,7 @@
   GptLib|MdeModulePkg/Library/GptLib/GptLib.inf
   NonDiscoverableDeviceRegistrationLib|MdeModulePkg/Library/NonDiscoverableDeviceRegistrationLib/NonDiscoverableDeviceRegistrationLib.inf
   K3HardwareLib|SpacemitPlatformPkg/Library/K3HardwareLib/K3HardwareLib.inf
+  K3EcLib|SpacemitPlatformPkg/Library/K3EcLib/K3EcLib.inf
   K3EqosLib|SpacemitPlatformPkg/Library/K3EqosLib/K3EqosLib.inf
   DesignWarePciLib|SpacemitPlatformPkg/Library/DesignWarePciLib/DesignWarePciLib.inf
   PciSegmentLib|SpacemitPlatformPkg/Library/SpacemitPciSegmentLib/SpacemitPciSegmentLib.inf

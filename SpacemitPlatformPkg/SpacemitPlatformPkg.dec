@@ -29,6 +29,7 @@
   K3DpuLib|Include/Library/K3DpuLib.h
   K3InnoDpLib|Include/Library/K3InnoDpLib.h
   K3HardwareLib|Include/Library/K3HardwareLib.h
+  K3EcLib|Include/Library/K3EcLib.h
   K3EqosLib|Include/Library/K3EqosLib.h
   DesignWarePciLib|Include/Library/DesignWarePciLib.h
   FastbootTransportLib|Include/Library/FastbootTransportLib.h

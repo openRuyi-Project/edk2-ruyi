@@ -15,6 +15,11 @@ FastbootPlatformStop (
   );
 
 EFI_STATUS
+FastbootRebootEc (
+  VOID
+  );
+
+EFI_STATUS
 FastbootGetVar (
   CONST CHAR8  *Name,
   CHAR8        *Value,

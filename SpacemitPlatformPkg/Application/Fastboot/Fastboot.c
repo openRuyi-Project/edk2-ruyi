@@ -143,16 +143,19 @@ FlashProgress (
                                                       99,
                                                       (Done >> 10) * 100 / MAX (Total >> 10, 1)
                                                       );
-    UINT64  TotalMib = (Total >> 20) + ((Total & (SIZE_1MB - 1)) != 0);
-    UINT64  DoneMib  = Done == Total ? TotalMib : Done >> 20;
+    UINTN        Shift      = Total && Total < SIZE_1MB ? 10 : 20;
+    CONST CHAR8  *Unit      = Shift == 10 ? "KiB" : "MiB";
+    UINT64       TotalUnits = (Total >> Shift) + ((Total & ((1ULL << Shift) - 1)) != 0);
+    UINT64       DoneUnits  = Done == Total ? TotalUnits : Done >> Shift;
     AsciiSPrint (
       SerialLine,
       sizeof (SerialLine),
-      "\rFastboot %a %a: %Lu/%Lu MiB (%u%%)    %a",
+      "\rFastboot %a %a: %Lu/%Lu %a (%u%%)    %a",
       mFlashTarget,
       Label,
-      DoneMib,
-      TotalMib,
+      DoneUnits,
+      TotalUnits,
+      Unit,
       Percent,
       Done == Total ? "\r\n" : ""
       );
@@ -160,10 +163,11 @@ FlashProgress (
     AsciiSPrint (
       Value,
       sizeof (Value),
-      "%a %Lu/%Lu MiB",
+      "%a %Lu/%Lu %a",
       Action,
-      DoneMib,
-      TotalMib
+      DoneUnits,
+      TotalUnits,
+      Unit
       );
     mProgressUsbStatus = Reply ("INFO", Value);
     mProgressNow       = FALSE;
@@ -484,11 +488,14 @@ FastbootMain (
           );
         Status = Reply ("OKAY", Value);
       } else if (!AsciiStrCmp (Name, "all")) {
-        Status = FastbootGetVar ("product", Value, sizeof (Value));
-        if (!EFI_ERROR (Status)) {
-          CHAR8  Info[64];
-          AsciiSPrint (Info, sizeof (Info), "product: %a", Value);
-          Status = Reply ("INFO", Info);
+        CONST CHAR8  *Variables[] = { "product", "version-bootloader", "version-ec" };
+        Status = EFI_SUCCESS;
+        for (UINTN I = 0; !EFI_ERROR (Status) && I < ARRAY_SIZE (Variables); I++) {
+          if (!EFI_ERROR (FastbootGetVar (Variables[I], Value, sizeof (Value)))) {
+            CHAR8  Info[64];
+            AsciiSPrint (Info, sizeof (Info), "%a: %a", Variables[I], Value);
+            Status = Reply ("INFO", Info);
+          }
         }
 
         if (!EFI_ERROR (Status)) {
@@ -496,9 +503,13 @@ FastbootMain (
         }
       } else {
         Status = FastbootGetVar (Name, Value, sizeof (Value));
+        if (EFI_ERROR (Status) && (Status != EFI_NOT_FOUND)) {
+          AsciiSPrint (Value, sizeof (Value), "variable unavailable: %r", Status);
+        }
+
         Status = Reply (
                    EFI_ERROR (Status) ? "FAIL" : "OKAY",
-                   EFI_ERROR (Status) ? "unknown variable" : Value
+                   Status == EFI_NOT_FOUND ? "unknown variable" : Value
                    );
       }
     } else if (!AsciiStrnCmp (Command, "flash:", 6)) {
@@ -533,6 +544,13 @@ FastbootMain (
         goto Reconnect;
       }
 
+      if (!EFI_ERROR (Status) && !AsciiStrCmp (mFlashTarget, "ec")) {
+        Status = Reply ("INFO", "EC verified; use oem reboot-ec to activate");
+        if (EFI_ERROR (Status)) {
+          goto Reconnect;
+        }
+      }
+
       AsciiSPrint (Value, sizeof (Value), "%r", Status);
       Status = Reply (
                  EFI_ERROR (Status) ? "FAIL" : "OKAY",
@@ -541,6 +559,13 @@ FastbootMain (
     } else if (!AsciiStrnCmp (Command, "fetch:", 6)) {
       Complete = FALSE;
       Status   = Fetch (Command + 6, Download);
+    } else if (!AsciiStrCmp (Command, "oem reboot-ec")) {
+      Complete = FALSE;
+      Status   = FastbootRebootEc ();
+      Status   = Reply (
+                   EFI_ERROR (Status) ? "FAIL" : "OKAY",
+                   EFI_ERROR (Status) ? "EC reboot failed" : "Wait 15 seconds, then reboot the board"
+                   );
     } else if (!AsciiStrCmp (Command, "reboot")) {
       Status = Reply ("OKAY", "");
       Reboot = !EFI_ERROR (Status);

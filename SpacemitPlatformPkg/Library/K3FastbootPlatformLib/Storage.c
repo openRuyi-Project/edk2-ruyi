@@ -3,6 +3,7 @@
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/FastbootPlatformLib.h>
+#include <Library/K3EcLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PcdLib.h>
 #include <Library/PrintLib.h>
@@ -57,9 +58,15 @@ FastbootPlatformInit (
   )
 {
   EFI_STATUS  Status;
+  CHAR8       EcVersion[K3_EC_VERSION_SIZE];
 
   mTargets = NULL;
   mCount   = 0;
+  if (!EFI_ERROR (K3EcGetVersion (EcVersion))) {
+    Print (L"EC firmware: %a\r\n", EcVersion);
+    Print (L"Fastboot ec: external EC image, explicit activation required\r\n");
+  }
+
   ZeroMem (&mUfs, sizeof (mUfs));
   Status = UfsFindUserMedia (&mUfs);
   if (!EFI_ERROR (Status)) {
@@ -127,6 +134,12 @@ FastbootGetVar (
     return AsciiStrCpyS (Value, Size, "edk2-ruyi");
   }
 
+  if (!AsciiStrCmp (Name, "version-ec")) {
+    CHAR8       Version[K3_EC_VERSION_SIZE];
+    EFI_STATUS  Status = K3EcGetVersion (Version);
+    return EFI_ERROR (Status) ? Status : AsciiStrCpyS (Value, Size, Version);
+  }
+
   if (!AsciiStrnCmp (Name, "partition-size:", 15) || !AsciiStrnCmp (Name, "partition-type:", 15)) {
     Partition = Name + 15;
   } else if (!AsciiStrnCmp (Name, "has-slot:", 9)) {
@@ -135,8 +148,10 @@ FastbootGetVar (
     return EFI_NOT_FOUND;
   }
 
-  if ((!AsciiStrCmp (Partition, K3_SPI_TARGET) ||
-       !AsciiStrCmp (Partition, K3_FIRMWARE_TARGET)) && K3FastbootSpiAvailable ())
+  if (!AsciiStrCmp (Partition, "ec")) {
+    Bytes = K3_EC_UPDATE_SIZE;
+  } else if ((!AsciiStrCmp (Partition, K3_SPI_TARGET) ||
+              !AsciiStrCmp (Partition, K3_FIRMWARE_TARGET)) && K3FastbootSpiAvailable ())
   {
     Bytes = K3FastbootSpiSize ();
   } else if (EFI_ERROR (Capacity (Target (Partition), &Bytes))) {
@@ -164,6 +179,14 @@ FastbootRead (
 {
   if ((Name == NULL) || ((Size != 0) && (Data == NULL))) {
     return EFI_INVALID_PARAMETER;
+  }
+
+  if (!AsciiStrCmp (Name, "ec")) {
+    if (Offset > MAX_UINT32) {
+      return EFI_INVALID_PARAMETER;
+    }
+
+    return K3EcFlashRead ((UINT32)Offset, Size, Data, Progress);
   }
 
   if (!AsciiStrCmp (Name, K3_SPI_TARGET) || !AsciiStrCmp (Name, K3_FIRMWARE_TARGET)) {
@@ -257,6 +280,10 @@ FastbootFlash (
     return EFI_INVALID_PARAMETER;
   }
 
+  if (!AsciiStrCmp (Name, "ec")) {
+    return K3EcUpdate (Data, Size, Progress);
+  }
+
   if (!AsciiStrCmp (Name, K3_SPI_TARGET)) {
     return K3FastbootSpiFlash (Data, Size, Progress);
   }
@@ -276,4 +303,12 @@ FastbootFlash (
   }
 
   return FastbootWriteImage (Io, Data, Size, TRUE, Progress);
+}
+
+EFI_STATUS
+FastbootRebootEc (
+  VOID
+  )
+{
+  return K3EcReboot ();
 }
