@@ -406,7 +406,9 @@ PlatformBootManagerAfterConsole (
   EFI_INPUT_KEY                 ContinueKey = { SCAN_NULL, CHAR_CARRIAGE_RETURN };
   EFI_STATUS                    Status;
 
-  mConsoleReady = TRUE;
+  // GOP notifications can run inside a display driver's Start().
+  // Complete device connection before attaching the graphics console.
+  mConsoleReady = FALSE;
   UpdateConsoleGeometry ();
   if (GetBootModeHob () == BOOT_IN_RECOVERY_MODE) {
     BootProgressStop ();
@@ -418,6 +420,8 @@ PlatformBootManagerAfterConsole (
   }
 
   EfiBootManagerConnectAll ();
+  mConsoleReady = TRUE;
+  EfiBootManagerConnectAllDefaultConsoles ();
   UpdateConsoleGeometry ();
   Status = InstallStorageBootPolicy ();
   DEBUG ((DEBUG_INFO, "UFS boot policy: %r\n", Status));
