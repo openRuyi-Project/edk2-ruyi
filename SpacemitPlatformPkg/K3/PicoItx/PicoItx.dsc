@@ -214,6 +214,8 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVersionString|L"EDK II stable202608"
 
 [PcdsFeatureFlag]
+  # Allow 64-bit BARs for UEFI option ROMs.
+  gEfiMdeModulePkgTokenSpaceGuid.PcdPciDegradeResourceForOptionRom|FALSE
   # OS handoff uses FDT/UEFI protocols; no runtime HII export consumer.
   gEfiMdeModulePkgTokenSpaceGuid.PcdHiiOsRuntimeSupport|FALSE
 
