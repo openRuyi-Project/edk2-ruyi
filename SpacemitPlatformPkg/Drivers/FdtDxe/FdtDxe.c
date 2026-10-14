@@ -76,6 +76,61 @@ PublishBoardMacs (
   return EFI_SUCCESS;
 }
 
+STATIC EFI_STATUS
+PublishCpuCompatibility (
+  VOID  *Fdt
+  )
+{
+  STATIC CONST CHAR8  A100[] = "spacemit,k3-a100";
+  STATIC CONST CHAR8  Mixed[] = "spacemit,k3-x100-a100";
+  BOOLEAN             HasX100 = FALSE, HasA100 = FALSE;
+  INT32               Cpus, Node, Length;
+  CONST CHAR8         *Value, *Compatible;
+  UINT32              Size;
+
+  if (FdtStringListSearch (Fdt, 0, "compatible", "spacemit,k3") < 0) {
+    return EFI_SUCCESS;
+  }
+
+  Cpus = FdtPathOffset (Fdt, "/cpus");
+  if (Cpus < 0) {
+    return EFI_NOT_FOUND;
+  }
+
+  FdtForEachSubnode (Node, Fdt, Cpus) {
+    Value = FdtGetProp (Fdt, Node, "device_type", &Length);
+    if (!Value || (Length != 4) || CompareMem (Value, "cpu", 4)) {
+      continue;
+    }
+
+    Value = FdtGetProp (Fdt, Node, "status", &Length);
+    if (Value && !(((Length == 5) && !CompareMem (Value, "okay", 5)) ||
+                   ((Length == 3) && !CompareMem (Value, "ok", 3))))
+    {
+      continue;
+    }
+
+    HasX100 |= FdtStringListSearch (Fdt, Node, "compatible", "spacemit,x100") >= 0;
+    HasA100 |= FdtStringListSearch (Fdt, Node, "compatible", "spacemit,a100") >= 0;
+  }
+
+  // Preserve the original root description when only X100 is enabled.
+  if (!HasA100) {
+    return EFI_SUCCESS;
+  }
+
+  Compatible = HasX100 ? Mixed : A100;
+  Size       = HasX100 ? sizeof (Mixed) : sizeof (A100);
+  if (FdtStringListSearch (Fdt, 0, "compatible", Compatible) >= 0) {
+    return EFI_SUCCESS;
+  }
+
+  // Keep existing driver matches first, then identify the active CPU profile
+  // for userspace consumers which take the last SoC-compatible string.
+  return FdtAppendProp (Fdt, 0, "compatible", Compatible, Size) < 0 ?
+         EFI_OUT_OF_RESOURCES : EFI_SUCCESS;
+}
+
 EFI_STATUS
 EFIAPI
 PublishFdt (
@@ -139,6 +194,12 @@ PublishFdt (
       FreePool (Copy);
       return EFI_DEVICE_ERROR;
     }
+  }
+
+  Status = PublishCpuCompatibility (Copy);
+  if (EFI_ERROR (Status)) {
+    FreePool (Copy);
+    return Status;
   }
 
   Status = PublishBoardMacs (Copy);

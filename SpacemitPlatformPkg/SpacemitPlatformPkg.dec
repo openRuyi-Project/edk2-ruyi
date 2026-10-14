@@ -9,6 +9,7 @@
   Include
 
 [LibraryClasses]
+  K3CpuConfigLib|Include/Library/K3CpuConfigLib.h
   K3QspiLib|Include/Library/K3QspiLib.h
   K3PowerDomainLib|Include/Library/K3PowerDomainLib.h
   K3FirmwareUpdateLib|Include/Library/K3FirmwareUpdateLib.h

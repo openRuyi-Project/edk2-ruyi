@@ -2,6 +2,7 @@
 #include <Uefi.h>
 #include <Guid/NvVarStoreFormatted.h>
 #include <Guid/K3DdrTraining.h>
+#include <Library/K3CpuConfigLib.h>
 #include <Protocol/DevicePath.h>
 #include <Protocol/SpiNorFlash.h>
 #include <Library/BaseLib.h>
@@ -144,6 +145,17 @@ K3FirmwareFreezeNv (
 }
 
 STATIC BOOLEAN
+EraseOnly (
+  UINT32  Offset
+  )
+{
+  // Firmware updates reset CPU policy and discard saved DDR training.
+  return ((Offset >= K3_DDR_TRAINING_OFFSET) &&
+          (Offset < K3_DDR_TRAINING_OFFSET + SIZE_64KB)) ||
+         (Offset == K3_CPU_CONFIG_OFFSET);
+}
+
+STATIC BOOLEAN
 InNv (
   UINT32  Offset
   )
@@ -256,8 +268,8 @@ K3FirmwareUpdate (
       if (Phase == K3FirmwareErase) {
         Status = Nor->Erase (Nor, Offset, Step / SIZE_4KB);
       } else if (Phase == K3FirmwareWrite) {
-        // Never install another board's training cache from a saved SPI image.
-        if ((Offset >= K3_DDR_TRAINING_OFFSET) && (Offset < K3_DDR_TRAINING_OFFSET + SIZE_64KB)) {
+        // Keep per-boot policy and training defaults even for saved SPI images.
+        if (EraseOnly (Offset)) {
           Status = EFI_SUCCESS;
         } else {
           Status = Nor->WriteData (Nor, Offset, Step, (UINT8 *)Image + Offset);
@@ -267,7 +279,7 @@ K3FirmwareUpdate (
         CONST UINT8  *Expected = InNv (Offset) ? Nv + Offset - K3_FIRMWARE_NV_OFFSET
                                              : Image + Offset;
         if (!EFI_ERROR (Status)) {
-          if ((Offset >= K3_DDR_TRAINING_OFFSET) && (Offset < K3_DDR_TRAINING_OFFSET + SIZE_64KB)) {
+          if (EraseOnly (Offset)) {
             for (UINT32 Index = 0; Index < Step; Index++) {
               if (Scratch[Index] != 0xff) {
                 Status = EFI_CRC_ERROR;

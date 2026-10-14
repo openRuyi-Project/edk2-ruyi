@@ -1,0 +1,8 @@
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+#langdef en-US "English"
+#string STR_CPU_TITLE #language en-US "CPU Configuration"
+#string STR_CPU_MODE #language en-US "CPU mode"
+#string STR_X100_ONLY #language en-US "X100 only (8 cores)"
+#string STR_MIXED #language en-US "X100 + A100 (16 cores, no vector)"
+#string STR_A100_ONLY #language en-US "A100 only (8 cores, vector enabled)"
+#string STR_CPU_HELP #language en-US "X100 only retains the original CPU features. Mixed mode disables vector and hypervisor extensions. A100 only enables vectors and has no hypervisor extension. Save and restart to apply. Firmware updates restore X100 only."

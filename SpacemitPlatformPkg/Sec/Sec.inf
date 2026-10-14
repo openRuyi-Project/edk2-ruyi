@@ -11,6 +11,8 @@
   SecEntry.S
   Sec.c
   Memory.c
+  Cpu.c
+  Cpu.h
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -21,6 +23,8 @@
 
 [LibraryClasses]
   BaseLib
+  RiscVSbiLib
+  PrintLib
   BaseMemoryLib
   DebugLib
   FdtLib

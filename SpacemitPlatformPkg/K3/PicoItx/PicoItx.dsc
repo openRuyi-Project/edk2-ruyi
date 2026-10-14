@@ -45,6 +45,7 @@
   K3BoardEepromLib|SpacemitPlatformPkg/Library/K3BoardEepromLib/K3BoardEepromLib.inf
   Rtl8127Lib|SpacemitPlatformPkg/Library/Rtl8127Lib/Rtl8127Lib.inf
   Rtl8127PacketsLib|SpacemitPlatformPkg/Library/Rtl8127PacketsLib/Rtl8127PacketsLib.inf
+  K3CpuConfigLib|SpacemitPlatformPkg/Library/K3CpuConfigLib/K3CpuConfigLib.inf
   K3FirmwareUpdateLib|SpacemitPlatformPkg/Library/K3FirmwareUpdateLib/K3FirmwareUpdateLib.inf
   K3NvFvbLib|SpacemitPlatformPkg/Library/K3NvFvbLib/K3NvFvbLib.inf
   UfsStorageLib|SpacemitPlatformPkg/Library/UfsStorageLib/UfsStorageLib.inf
@@ -339,6 +340,7 @@
       NULL|MdeModulePkg/Library/BootManagerUiLib/BootManagerUiLib.inf
       NULL|MdeModulePkg/Library/BootMaintenanceManagerUiLib/BootMaintenanceManagerUiLib.inf
       NULL|SpacemitPlatformPkg/Library/FirmwareUpdateUiLib/FirmwareUpdateUiLib.inf
+      NULL|SpacemitPlatformPkg/Library/CpuConfigUiLib/CpuConfigUiLib.inf
       # Firmware integrity checks only use deterministic SHA-256.
       RngLib|MdePkg/Library/BaseRngLibNull/BaseRngLibNull.inf
   }

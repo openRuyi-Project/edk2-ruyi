@@ -14,6 +14,7 @@
 #include <Library/PrePiLib.h>
 #include <Library/PrePiHobListPointerLib.h>
 #include <Library/SerialPortLib.h>
+#include "Cpu.h"
 
 VOID EFIAPI
 ProcessLibraryConstructorList (
@@ -57,6 +58,12 @@ SecEntry (
 
   FdtSize = FdtTotalSize (Fdt);
   if ((FdtSize < sizeof (FDT_HEADER)) || (FdtSize > SIZE_1MB)) {
+    CpuDeadLoop ();
+  }
+
+  Status = SelectBootHart (BootHart, Fdt);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "CPU boot-hart handoff failed: %r\n", Status));
     CpuDeadLoop ();
   }
 
@@ -104,6 +111,12 @@ SecEntry (
   Pages = EFI_SIZE_TO_PAGES (FdtSize + SIZE_4KB);
   Copy  = AllocatePages (Pages);
   if ((Copy == NULL) || (FdtOpenInto (Fdt, Copy, EFI_PAGES_TO_SIZE (Pages)) != 0)) {
+    CpuDeadLoop ();
+  }
+
+  Status = FixupCpuStatus (BootHart, Copy);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "CPU device tree selection failed: %r\n", Status));
     CpuDeadLoop ();
   }
 

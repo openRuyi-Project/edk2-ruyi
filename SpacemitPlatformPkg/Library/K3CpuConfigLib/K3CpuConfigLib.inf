@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3CpuConfigLib
+  FILE_GUID = 70a36151-c5f8-44c5-aeb1-13c625453668
+  MODULE_TYPE = DXE_DRIVER
+  LIBRARY_CLASS = K3CpuConfigLib|UEFI_APPLICATION
+[Sources]
+  Config.c
+[Packages]
+  MdePkg/MdePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  K3FirmwareUpdateLib
