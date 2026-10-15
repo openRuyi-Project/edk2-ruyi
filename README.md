@@ -4,7 +4,8 @@ EDK2 platform support for [ruyifirmware](https://github.com/openRuyi-Project/ruy
 
 Currently, only SpacemiT K3 Pico ITX is supported.
 
-UEFI Setup → UEFI Driver Emulation controls non-native UEFI drivers.
+UEFI Setup → Platform Settings → UEFI driver emulation controls
+non-native UEFI drivers.
 Emulation is disabled by default. Save and restart to apply; the setting
 is stored in a dedicated SPI sector, including when saved from RAM
 recovery. Firmware updates reset emulation to disabled.
@@ -21,7 +22,7 @@ The build fetches unmodified `Arm64Gop_1_68.efi` from AMD's RN-AAR
 release and checks its fixed SHA-256 hash. Set `AMD_GOP_DIR` to a
 directory containing this file to build without downloading it.
 
-UEFI Setup → CPU Configuration → CPU mode selects one of three profiles:
+UEFI Setup → Platform Settings → CPU mode selects one of three profiles:
 
 - X100 only: eight X100 cores with the original CPU features (default).
 - X100 + A100: sixteen cores without vector or hypervisor extensions.

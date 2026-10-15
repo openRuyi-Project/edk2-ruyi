@@ -243,6 +243,7 @@
 !if $(X64EMU_ENABLE) == TRUE
 [BuildOptions]
   GCC:*_*_*_CC_FLAGS = -DK3_X64EMU
+  GCC:*_*_*_VFRPP_FLAGS = -DK3_X64EMU
 !endif
 
 [Components]
@@ -368,10 +369,7 @@
       NULL|MdeModulePkg/Library/BootManagerUiLib/BootManagerUiLib.inf
       NULL|MdeModulePkg/Library/BootMaintenanceManagerUiLib/BootMaintenanceManagerUiLib.inf
       NULL|SpacemitPlatformPkg/Library/FirmwareUpdateUiLib/FirmwareUpdateUiLib.inf
-      NULL|SpacemitPlatformPkg/Library/CpuConfigUiLib/CpuConfigUiLib.inf
-!if $(X64EMU_ENABLE) == TRUE
-      NULL|SpacemitPlatformPkg/Library/X64EmulationUiLib/X64EmulationUiLib.inf
-!endif
+      NULL|SpacemitPlatformPkg/Library/PlatformConfigUiLib/PlatformConfigUiLib.inf
       # Firmware integrity checks only use deterministic SHA-256.
       RngLib|MdePkg/Library/BaseRngLibNull/BaseRngLibNull.inf
   }

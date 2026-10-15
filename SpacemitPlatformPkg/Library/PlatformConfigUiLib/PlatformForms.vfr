@@ -1,0 +1,34 @@
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+#include "Forms.h"
+formset
+  guid = K3_PLATFORM_FORMSET_GUID,
+  title = STRING_TOKEN(STR_PLATFORM_TITLE),
+  help = STRING_TOKEN(STR_PLATFORM_HELP),
+  classguid = gEfiIfrFrontPageGuid,
+
+  varstore K3_PLATFORM_CONFIGURATION,
+    varid = 1,
+    name = PlatformConfig,
+    guid = K3_PLATFORM_FORMSET_GUID;
+
+  form formid = 1,
+    title = STRING_TOKEN(STR_PLATFORM_TITLE);
+    oneof varid = PlatformConfig.CpuMode,
+      prompt = STRING_TOKEN(STR_CPU_MODE),
+      help = STRING_TOKEN(STR_CPU_HELP),
+      flags = RESET_REQUIRED,
+      option text = STRING_TOKEN(STR_X100_ONLY), value = 0, flags = DEFAULT | MANUFACTURING;
+      option text = STRING_TOKEN(STR_MIXED), value = 1, flags = 0;
+      option text = STRING_TOKEN(STR_A100_ONLY), value = 2, flags = 0;
+    endoneof;
+#ifdef K3_X64EMU
+    oneof varid = PlatformConfig.EmulationEnabled,
+      prompt = STRING_TOKEN(STR_EMULATION_MODE),
+      help = STRING_TOKEN(STR_EMULATION_HELP),
+      flags = RESET_REQUIRED,
+      option text = STRING_TOKEN(STR_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING;
+      option text = STRING_TOKEN(STR_ENABLED), value = 1, flags = 0;
+    endoneof;
+#endif
+  endform;
+endformset;

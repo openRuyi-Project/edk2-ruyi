@@ -1,7 +1,0 @@
-// SPDX-License-Identifier: BSD-2-Clause-Patent
-#langdef en-US "English"
-#string STR_X64_TITLE #language en-US "UEFI Driver Emulation"
-#string STR_X64_ENABLE #language en-US "Enable driver emulation"
-#string STR_DISABLED #language en-US "Disabled"
-#string STR_ENABLED #language en-US "Enabled"
-#string STR_X64_HELP #language en-US "Run compatible non-native UEFI drivers. Onboard option ROMs use x64 by default; listed AMD GCN graphics devices use the platform ARM64 GOP. Disabled by default. Save and restart to apply."
