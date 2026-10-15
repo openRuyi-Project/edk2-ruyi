@@ -43,10 +43,7 @@ APRIORI DXE {
 }
 !endif
 !if $(X64EMU_ENABLE) == TRUE
-FILE DRIVER = E6727A5E-CBCD-44C8-B37F-78BC3A0C16C8 {
-  SECTION DXE_DEPEX = $(X64EMU_DEPEX)
-  SECTION PE32 = $(X64EMU_EFI)
-}
+INF RuleOverride = BINARY SpacemitPlatformPkg/Drivers/X64EmulatorDxe/X64EmulatorDxe.inf
 !endif
 INF SecurityPkg/Hash2DxeCrypto/Hash2DxeCrypto.inf
 !include NetworkPkg/Network.fdf.inc
@@ -142,6 +139,11 @@ INF MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
   FILE DRIVER = $(NAMED_GUID) {
     DXE_DEPEX DXE_DEPEX Optional $(INF_OUTPUT)/$(MODULE_NAME).depex
     PE32 PE32 $(INF_OUTPUT)/$(MODULE_NAME).efi
+  }
+[Rule.Common.DXE_DRIVER.BINARY]
+  FILE DRIVER = $(NAMED_GUID) {
+    DXE_DEPEX DXE_DEPEX |.depex
+    PE32 PE32 |.efi
   }
 [Rule.Common.DXE_RUNTIME_DRIVER]
   FILE DRIVER = $(NAMED_GUID) {

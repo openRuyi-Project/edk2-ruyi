@@ -24,11 +24,6 @@ typedef EFI_STATUS (*K3_FIRMWARE_PROGRESS)(
   );
 
 EFI_STATUS
-K3FirmwareFindFlash (
-  EFI_SPI_NOR_FLASH_PROTOCOL  **Nor
-  );
-
-EFI_STATUS
 K3FirmwareValidate (
   CONST VOID  *Image,
   UINTN       Size

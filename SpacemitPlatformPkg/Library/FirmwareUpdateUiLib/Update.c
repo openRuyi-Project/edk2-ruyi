@@ -7,6 +7,7 @@
 #include <Library/FileHandleLib.h>
 #include <Library/HiiLib.h>
 #include <Library/K3FirmwareUpdateLib.h>
+#include <Library/K3SpiNorLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PrintLib.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -120,7 +121,7 @@ SelectAndUpdate (
     goto Done;
   }
 
-  Status = K3FirmwareFindFlash (&Nor);
+  Status = K3SpiNorFindFlash (&Nor);
   if (EFI_ERROR (Status)) {
     goto Done;
   }

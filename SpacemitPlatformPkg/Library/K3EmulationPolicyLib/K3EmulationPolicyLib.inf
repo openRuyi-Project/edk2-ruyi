@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3EmulationPolicyLib
+  FILE_GUID = 18f19603-b773-4f94-b19a-98449eafcc66
+  MODULE_TYPE = DXE_DRIVER
+  LIBRARY_CLASS = NULL|DXE_RUNTIME_DRIVER
+  CONSTRUCTOR = K3EmulationPolicyConstructor
+[Sources]
+  Policy.c
+[Packages]
+  MdePkg/MdePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+  MultiArchUefiPkg/MultiArchUefiPkg.dec
+[LibraryClasses]
+  DebugLib
+  PcdLib
+  K3SpiConfigLib
+[PcdEx]
+  gMauPkgTokenSpaceGuid.PcdMauEmulationEnabled

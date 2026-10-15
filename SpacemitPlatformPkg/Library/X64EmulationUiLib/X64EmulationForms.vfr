@@ -1,0 +1,24 @@
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+#include <Guid/K3X64Emulation.h>
+formset
+  guid = K3_X64_EMULATION_GUID,
+  title = STRING_TOKEN(STR_X64_TITLE),
+  help = STRING_TOKEN(STR_X64_HELP),
+  classguid = gEfiIfrFrontPageGuid,
+
+  varstore K3_X64_EMULATION_CONFIGURATION,
+    varid = 1,
+    name = K3X64Emulation,
+    guid = K3_X64_EMULATION_GUID;
+
+  form formid = 1,
+    title = STRING_TOKEN(STR_X64_TITLE);
+    oneof varid = K3X64Emulation.Enabled,
+      prompt = STRING_TOKEN(STR_X64_ENABLE),
+      help = STRING_TOKEN(STR_X64_HELP),
+      flags = RESET_REQUIRED,
+      option text = STRING_TOKEN(STR_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING;
+      option text = STRING_TOKEN(STR_ENABLED), value = 1, flags = 0;
+    endoneof;
+  endform;
+endformset;

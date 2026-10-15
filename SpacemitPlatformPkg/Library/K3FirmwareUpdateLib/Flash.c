@@ -3,7 +3,7 @@
 #include <Guid/NvVarStoreFormatted.h>
 #include <Guid/K3DdrTraining.h>
 #include <Library/K3CpuConfigLib.h>
-#include <Protocol/DevicePath.h>
+#include <Library/K3SpiConfigLib.h>
 #include <Protocol/SpiNorFlash.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -11,83 +11,6 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/K3FirmwareUpdateLib.h>
 #include "Internal.h"
-
-STATIC BOOLEAN
-ControllerMatches (
-  CONST EFI_SPI_NOR_FLASH_PROTOCOL  *Nor
-  )
-{
-  if (!Nor || !Nor->SpiPeripheral || !Nor->SpiPeripheral->SpiBus ||
-      !Nor->SpiPeripheral->SpiBus->ControllerPath)
-  {
-    return FALSE;
-  }
-
-  CONST MEMMAP_DEVICE_PATH  *Path = (CONST VOID *)Nor->SpiPeripheral->SpiBus->ControllerPath;
-
-  return Path->Header.Type == HARDWARE_DEVICE_PATH && Path->Header.SubType == HW_MEMMAP_DP &&
-         (Path->Header.Length[0] | (Path->Header.Length[1] << 8)) == sizeof (*Path) &&
-         Path->StartingAddress == 0xd420c000 && Path->EndingAddress == 0xd420cfff;
-}
-
-EFI_STATUS
-K3FirmwareFindFlash (
-  EFI_SPI_NOR_FLASH_PROTOCOL  **Result
-  )
-{
-  EFI_HANDLE  *Handles;
-  UINTN       Count;
-  EFI_STATUS  Status;
-
-  *Result = NULL;
-  Status  = gBS->LocateHandleBuffer (
-                   ByProtocol,
-                   &gEfiSpiNorFlashProtocolGuid,
-                   NULL,
-                   &Count,
-                   &Handles
-                   );
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  EFI_SPI_NOR_FLASH_PROTOCOL  *Found = NULL;
-
-  for (UINTN Index = 0; Index < Count; Index++) {
-    EFI_SPI_NOR_FLASH_PROTOCOL  *Nor;
-    Status = gBS->HandleProtocol (Handles[Index], &gEfiSpiNorFlashProtocolGuid, (VOID **)&Nor);
-    if (EFI_ERROR (Status) || !ControllerMatches (Nor)) {
-      continue;
-    }
-
-    if (Found || !Nor->FlashSize || (Nor->EraseBlockBytes < SIZE_4KB) ||
-        Nor->EraseBlockBytes % SIZE_4KB || Nor->FlashSize % Nor->EraseBlockBytes ||
-        !Nor->GetFlashid || !Nor->ReadData || !Nor->WriteData || !Nor->Erase)
-    {
-      Status = EFI_UNSUPPORTED;
-      goto Done;
-    }
-
-    UINT8  Id[3];
-    Status = Nor->GetFlashid (Nor, Id);
-    if (EFI_ERROR (Status)) {
-      goto Done;
-    }
-
-    if (CompareMem (Id, Nor->Deviceid, 3)) {
-      Status = EFI_UNSUPPORTED;
-      goto Done;
-    }
-
-    Found = Nor;
-  }
-
-  *Result = Found;
-  Status  = Found ? EFI_SUCCESS : EFI_NOT_FOUND;
-Done:
-  FreePool (Handles);
-  return Status;
-}
 
 EFI_STATUS
 K3FirmwareFreezeNv (
@@ -149,10 +72,10 @@ EraseOnly (
   UINT32  Offset
   )
 {
-  // Firmware updates reset CPU policy and discard saved DDR training.
+  // Firmware updates reset platform settings and discard saved DDR training.
   return ((Offset >= K3_DDR_TRAINING_OFFSET) &&
           (Offset < K3_DDR_TRAINING_OFFSET + SIZE_64KB)) ||
-         (Offset == K3_CPU_CONFIG_OFFSET);
+         (Offset == K3_CPU_CONFIG_OFFSET) || (Offset == K3_EMULATION_CONFIG_OFFSET);
 }
 
 STATIC BOOLEAN

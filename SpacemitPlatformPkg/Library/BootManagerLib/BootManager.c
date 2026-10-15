@@ -171,6 +171,11 @@ ConnectX64Emulator (
                   &Count,
                   &Handles
                   );
+  if (Status == EFI_NOT_FOUND) {
+    DEBUG ((DEBUG_INFO, "X64 UEFI emulation disabled\n"));
+    return;
+  }
+
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "X64 UEFI emulator unavailable: %r\n", Status));
     return;

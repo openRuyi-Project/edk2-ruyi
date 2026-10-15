@@ -25,4 +25,3 @@
   gEdkiiNvVarStoreFormattedGuid
 [Protocols]
   gEfiFirmwareVolumeBlockProtocolGuid
-  gEfiSpiNorFlashProtocolGuid

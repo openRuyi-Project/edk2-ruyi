@@ -42,11 +42,10 @@ case "$k3_x64emu" in
 esac
 if [[ "$k3_x64emu" == TRUE ]]; then
     make -C "$k3_pkg/../MultiArchUefiPkg" EDK2_DIR="$k3_edk2" \
-        MAU_BUILD_DIR="$k3_pkg/build/multiarch" TARGET="$k3_target" JOBS="$k3_jobs" \
+        MAU_BUILD_DIR="$k3_pkg/build/multiarch" TARGET="$k3_target" JOBS="$k3_jobs" MAU_DYNAMIC_POLICY=TRUE \
         CROSS_COMPILE="${CROSS_COMPILE:-riscv64-linux-gnu-}" PYTHON="${PYTHON:-python3}"
     k3_emu="$k3_pkg/build/multiarch/Build/MultiArchUefiPkg/${k3_target}_GCC/RISCV64"
-    k3_args+=(-D X64EMU_ENABLE=TRUE -D "X64EMU_EFI=$k3_emu/EmulatorDxe.efi"
-        -D "X64EMU_DEPEX=$k3_emu/MultiArchUefiPkg/Drivers/Emulator/Emulator/OUTPUT/EmulatorDxe.depex")
+    k3_args+=(-D X64EMU_ENABLE=TRUE)
 else
     k3_args+=(-D X64EMU_ENABLE=FALSE)
 fi
@@ -54,7 +53,12 @@ fi
 k3_platforms=$(cd -- "$k3_platforms" && pwd)
 mkdir -p "$k3_pkg/build/workspace" "$k3_pkg/build/logs"
 export WORKSPACE="$k3_pkg/build/workspace"
-export PACKAGES_PATH="$k3_pkg:$k3_platforms:$k3_edk2"
+if [[ "$k3_x64emu" == TRUE ]]; then
+    mkdir -p "$WORKSPACE/X64EmulatorBin"
+    cp "$k3_emu/EmulatorDxe.efi" "$WORKSPACE/X64EmulatorBin/"
+    cp "$k3_emu/MultiArchUefiPkg/Drivers/Emulator/Emulator/OUTPUT/EmulatorDxe.depex" "$WORKSPACE/X64EmulatorBin/"
+fi
+export PACKAGES_PATH="$WORKSPACE:$k3_pkg/..:$k3_pkg:$k3_platforms:$k3_edk2"
 export GCC_RISCV64_PREFIX=${CROSS_COMPILE:-riscv64-linux-gnu-}
 export PYTHON_COMMAND=${PYTHON:-python3}
 

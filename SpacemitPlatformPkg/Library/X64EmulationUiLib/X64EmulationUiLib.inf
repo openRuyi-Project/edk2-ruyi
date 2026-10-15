@@ -1,0 +1,31 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = X64EmulationUiLib
+  FILE_GUID = b90e65a7-900e-472c-9d09-ad33f370f248
+  MODULE_TYPE = DXE_DRIVER
+  LIBRARY_CLASS = NULL|UEFI_APPLICATION
+  CONSTRUCTOR = X64EmulationUiConstructor
+  DESTRUCTOR = X64EmulationUiDestructor
+[Sources]
+  Config.c
+  X64EmulationForms.vfr
+  Strings.uni
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  MemoryAllocationLib
+  PrintLib
+  K3SpiConfigLib
+  HiiLib
+  UefiBootServicesTableLib
+[Protocols]
+  gEfiDevicePathProtocolGuid
+  gEfiHiiConfigAccessProtocolGuid
+  gEfiHiiConfigRoutingProtocolGuid
+[Guids]
+  gK3X64EmulationGuid
+  gEfiIfrFrontPageGuid

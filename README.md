@@ -4,6 +4,12 @@ EDK2 platform support for [ruyifirmware](https://github.com/openRuyi-Project/ruy
 
 Currently, only SpacemiT K3 Pico ITX is supported.
 
+Builds containing the x64 emulator expose UEFI Setup → x64 UEFI Emulation.
+Emulation is disabled by default. Save the setting and restart to apply;
+it is stored in a dedicated SPI sector, including saves from RAM recovery.
+Firmware updates reset emulation to disabled.
+Builds with `X64EMU_ENABLE=FALSE` omit the emulator and its setup option.
+
 UEFI Setup → CPU Configuration → CPU mode selects one of three profiles:
 
 - X100 only: eight X100 cores with the original CPU features (default).

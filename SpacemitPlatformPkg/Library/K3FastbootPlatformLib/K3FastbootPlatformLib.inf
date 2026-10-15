@@ -15,6 +15,7 @@
 [LibraryClasses]
   K3EcLib
   K3FirmwareUpdateLib
+  K3SpiNorLib
   BaseLib
   BaseMemoryLib
   UfsStorageLib

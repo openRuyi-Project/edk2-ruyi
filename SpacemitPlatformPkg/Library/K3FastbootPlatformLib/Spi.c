@@ -8,6 +8,7 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include "Spi.h"
 #include <Library/K3FirmwareUpdateLib.h>
+#include <Library/K3SpiNorLib.h>
 
 STATIC EFI_SPI_NOR_FLASH_PROTOCOL  *mNor;
 EFI_STATUS
@@ -15,7 +16,7 @@ K3FastbootSpiInitialize (
   VOID
   )
 {
-  return K3FirmwareFindFlash (&mNor);
+  return K3SpiNorFindFlash (&mNor);
 }
 
 VOID

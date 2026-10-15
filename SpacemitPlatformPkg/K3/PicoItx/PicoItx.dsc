@@ -45,6 +45,8 @@
   K3BoardEepromLib|SpacemitPlatformPkg/Library/K3BoardEepromLib/K3BoardEepromLib.inf
   Rtl8127Lib|SpacemitPlatformPkg/Library/Rtl8127Lib/Rtl8127Lib.inf
   Rtl8127PacketsLib|SpacemitPlatformPkg/Library/Rtl8127PacketsLib/Rtl8127PacketsLib.inf
+  K3SpiNorLib|SpacemitPlatformPkg/Library/K3SpiNorLib/K3SpiNorLib.inf
+  K3SpiConfigLib|SpacemitPlatformPkg/Library/K3SpiConfigLib/K3SpiConfigLib.inf
   K3CpuConfigLib|SpacemitPlatformPkg/Library/K3CpuConfigLib/K3CpuConfigLib.inf
   K3FirmwareUpdateLib|SpacemitPlatformPkg/Library/K3FirmwareUpdateLib/K3FirmwareUpdateLib.inf
   K3NvFvbLib|SpacemitPlatformPkg/Library/K3NvFvbLib/K3NvFvbLib.inf
@@ -214,6 +216,11 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVendor|L"SpacemiT"
   gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVersionString|L"EDK II stable202608"
 
+!if $(X64EMU_ENABLE) == TRUE
+[PcdsDynamicExDefault]
+  gMauPkgTokenSpaceGuid.PcdMauEmulationEnabled|FALSE
+!endif
+
 [PcdsFeatureFlag]
   # Allow 64-bit BARs for UEFI option ROMs.
   gEfiMdeModulePkgTokenSpaceGuid.PcdPciDegradeResourceForOptionRom|FALSE
@@ -233,6 +240,9 @@
 !endif
 
 [Components]
+!if $(X64EMU_ENABLE) == TRUE
+  SpacemitPlatformPkg/Drivers/X64EmulatorDxe/X64EmulatorDxe.inf
+!endif
 !if $(NETWORK_ENABLE) == TRUE
   SecurityPkg/Hash2DxeCrypto/Hash2DxeCrypto.inf
 !endif
@@ -303,7 +313,12 @@
   MdeModulePkg/Universal/Metronome/Metronome.inf
   MdeModulePkg/Universal/WatchdogTimerDxe/WatchdogTimer.inf
   MdeModulePkg/Core/RuntimeDxe/RuntimeDxe.inf
-  SpacemitPlatformPkg/Drivers/K3NvStorageDxe/K3NvStorageDxe.inf
+  SpacemitPlatformPkg/Drivers/K3NvStorageDxe/K3NvStorageDxe.inf {
+!if $(X64EMU_ENABLE) == TRUE
+    <LibraryClasses>
+      NULL|SpacemitPlatformPkg/Library/K3EmulationPolicyLib/K3EmulationPolicyLib.inf
+!endif
+  }
   MdeModulePkg/Universal/FaultTolerantWriteDxe/FaultTolerantWriteDxe.inf {
     <LibraryClasses>
       NULL|SpacemitPlatformPkg/Library/K3NvReadyLib/K3FtwReadyLib.inf
@@ -341,6 +356,9 @@
       NULL|MdeModulePkg/Library/BootMaintenanceManagerUiLib/BootMaintenanceManagerUiLib.inf
       NULL|SpacemitPlatformPkg/Library/FirmwareUpdateUiLib/FirmwareUpdateUiLib.inf
       NULL|SpacemitPlatformPkg/Library/CpuConfigUiLib/CpuConfigUiLib.inf
+!if $(X64EMU_ENABLE) == TRUE
+      NULL|SpacemitPlatformPkg/Library/X64EmulationUiLib/X64EmulationUiLib.inf
+!endif
       # Firmware integrity checks only use deterministic SHA-256.
       RngLib|MdePkg/Library/BaseRngLibNull/BaseRngLibNull.inf
   }

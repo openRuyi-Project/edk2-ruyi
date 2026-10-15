@@ -1,0 +1,7 @@
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+#langdef en-US "English"
+#string STR_X64_TITLE #language en-US "x64 UEFI Emulation"
+#string STR_X64_ENABLE #language en-US "Enable x64 emulation"
+#string STR_DISABLED #language en-US "Disabled"
+#string STR_ENABLED #language en-US "Enabled"
+#string STR_X64_HELP #language en-US "Run compatible x64 UEFI drivers and applications, including graphics option ROMs. Disabled by default. RX6400 has been tested; RX550 GOPs are unsupported. Save and restart to apply."

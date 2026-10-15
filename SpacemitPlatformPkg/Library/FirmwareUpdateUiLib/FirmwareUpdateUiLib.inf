@@ -28,6 +28,7 @@
   HiiLib
   PrintLib
   K3FirmwareUpdateLib
+  K3SpiNorLib
 [Protocols]
   gEfiDevicePathProtocolGuid
   gEfiHiiConfigAccessProtocolGuid

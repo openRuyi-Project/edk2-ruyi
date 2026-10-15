@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3SpiConfigLib
+  FILE_GUID = 0208240a-ec98-44bb-8340-4e355db7095d
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = K3SpiConfigLib
+[Sources]
+  Config.c
+[Packages]
+  MdePkg/MdePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  K3SpiNorLib

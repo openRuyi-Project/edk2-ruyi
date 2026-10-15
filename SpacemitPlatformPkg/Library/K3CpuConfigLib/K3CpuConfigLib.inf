@@ -11,6 +11,4 @@
   MdePkg/MdePkg.dec
   SpacemitPlatformPkg/SpacemitPlatformPkg.dec
 [LibraryClasses]
-  BaseLib
-  BaseMemoryLib
-  K3FirmwareUpdateLib
+  K3SpiConfigLib

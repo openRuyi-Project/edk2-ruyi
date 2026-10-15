@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = EmulatorDxe
+  FILE_GUID = E6727A5E-CBCD-44C8-B37F-78BC3A0C16C8
+  MODULE_TYPE = DXE_DRIVER
+  VERSION_STRING = 1.0
+[Binaries]
+  PE32|X64EmulatorBin/EmulatorDxe.efi|*
+  DXE_DEPEX|X64EmulatorBin/EmulatorDxe.depex|*
+[Packages]
+  MultiArchUefiPkg/MultiArchUefiPkg.dec
+[PcdEx]
+  gMauPkgTokenSpaceGuid.PcdMauEmulationEnabled
