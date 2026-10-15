@@ -1,0 +1,33 @@
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+#include "Info.h"
+formset
+  guid = K3_INFO_FORMSET_GUID,
+  title = STRING_TOKEN(STR_TITLE),
+  help = STRING_TOKEN(STR_HELP),
+  classguid = gEfiIfrFrontPageGuid,
+  form formid = INFO_MAIN,
+    title = STRING_TOKEN(STR_TITLE);
+    goto INFO_CPU, prompt = STRING_TOKEN(STR_CPU), help = STRING_TOKEN(STR_HELP), flags = INTERACTIVE, key = INFO_CPU;
+    goto INFO_MEMORY, prompt = STRING_TOKEN(STR_MEMORY), help = STRING_TOKEN(STR_HELP), flags = INTERACTIVE, key = INFO_MEMORY;
+    goto INFO_PCI, prompt = STRING_TOKEN(STR_PCI), help = STRING_TOKEN(STR_HELP), flags = INTERACTIVE, key = INFO_PCI;
+    goto INFO_STORAGE, prompt = STRING_TOKEN(STR_STORAGE), help = STRING_TOKEN(STR_HELP), flags = INTERACTIVE, key = INFO_STORAGE;
+  endform;
+#define INFO_PAGE(Id, Refresh, Previous, Next, Title) \
+  form formid = Id, title = STRING_TOKEN(Title); \
+    action questionid = Refresh, \
+      prompt = STRING_TOKEN(STR_REFRESH), help = STRING_TOKEN(STR_REFRESH_HELP), \
+      flags = INTERACTIVE, config = STRING_TOKEN(0), endaction; \
+    action questionid = Previous, \
+      prompt = STRING_TOKEN(STR_PREVIOUS), help = STRING_TOKEN(STR_NAV_HELP), \
+      flags = INTERACTIVE, config = STRING_TOKEN(0), endaction; \
+    action questionid = Next, \
+      prompt = STRING_TOKEN(STR_NEXT), help = STRING_TOKEN(STR_NAV_HELP), \
+      flags = INTERACTIVE, config = STRING_TOKEN(0), endaction; \
+    label Id; \
+    label INFO_END; \
+  endform;
+  INFO_PAGE(INFO_CPU, 0x102, 0x202, 0x302, STR_CPU)
+  INFO_PAGE(INFO_MEMORY, 0x103, 0x203, 0x303, STR_MEMORY)
+  INFO_PAGE(INFO_PCI, 0x104, 0x204, 0x304, STR_PCI)
+  INFO_PAGE(INFO_STORAGE, 0x105, 0x205, 0x305, STR_STORAGE)
+endformset;

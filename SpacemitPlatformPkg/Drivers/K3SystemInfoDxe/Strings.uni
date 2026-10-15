@@ -1,0 +1,13 @@
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+#langdef en-US "English"
+#string STR_TITLE       #language en-US "System Information"
+#string STR_HELP        #language en-US "View hardware detected by the firmware."
+#string STR_CPU         #language en-US "CPU"
+#string STR_MEMORY      #language en-US "Memory"
+#string STR_PCI         #language en-US "PCIe Devices"
+#string STR_STORAGE     #language en-US "Storage"
+#string STR_REFRESH     #language en-US "Refresh"
+#string STR_REFRESH_HELP #language en-US "Read information from devices already detected by the firmware."
+#string STR_PREVIOUS #language en-US "Previous page"
+#string STR_NEXT #language en-US "Next page"
+#string STR_NAV_HELP #language en-US "Browse the hardware information. No settings are changed."

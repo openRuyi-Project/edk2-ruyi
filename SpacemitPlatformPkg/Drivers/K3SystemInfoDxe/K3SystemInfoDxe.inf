@@ -1,0 +1,59 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3SystemInfoDxe
+  FILE_GUID = b0036865-f7da-4165-9327-d301f8848a21
+  MODULE_TYPE = DXE_DRIVER
+  ENTRY_POINT = K3SystemInfoEntry
+  UNLOAD_IMAGE = K3SystemInfoUnload
+[Sources]
+  Ui.c
+  Info.c
+  Info.h
+  SystemInfo.vfr
+  Strings.uni
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  UefiDriverEntryPoint
+  BaseLib
+  BaseMemoryLib
+  DevicePathLib
+  FdtLib
+  HobLib
+  HiiLib
+  MemoryAllocationLib
+  PcdLib
+  PrintLib
+  UefiBootServicesTableLib
+[Protocols]
+  gEfiHiiDatabaseProtocolGuid
+  gEfiHiiStringProtocolGuid
+  gEfiHiiConfigRoutingProtocolGuid
+  gEfiBlockIoProtocolGuid
+  gEfiComponentName2ProtocolGuid
+  gEfiDevicePathProtocolGuid
+  gEfiDiskInfoProtocolGuid
+  gEfiHiiConfigAccessProtocolGuid
+  gEdkiiNonDiscoverableDeviceProtocolGuid
+  gEfiPciIoProtocolGuid
+  gEfiSmbiosProtocolGuid
+  gSpacemitClockProtocolGuid
+[Guids]
+  gEfiDiskInfoAhciInterfaceGuid
+  gEfiDiskInfoIdeInterfaceGuid
+  gEfiDiskInfoNvmeInterfaceGuid
+  gEfiDiskInfoScsiInterfaceGuid
+  gEfiDiskInfoUfsInterfaceGuid
+  gEfiDiskInfoUsbInterfaceGuid
+  gEfiIfrFrontPageGuid
+  gEfiIfrTianoGuid
+[FixedPcd]
+  gSpacemitPlatformTokenSpaceGuid.PcdSystemProductName
+[Depex]
+  gEfiHiiDatabaseProtocolGuid AND
+  gEfiHiiStringProtocolGuid AND
+  gEfiHiiConfigRoutingProtocolGuid

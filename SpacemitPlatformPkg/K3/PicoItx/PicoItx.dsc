@@ -362,6 +362,7 @@
   MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf
   MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
   SpacemitPlatformPkg/K3/PicoItx/SmbiosDxe/SmbiosDxe.inf
+  SpacemitPlatformPkg/Drivers/K3SystemInfoDxe/K3SystemInfoDxe.inf
   MdeModulePkg/Application/BootManagerMenuApp/BootManagerMenuApp.inf
   MdeModulePkg/Application/UiApp/UiApp.inf {
     <LibraryClasses>

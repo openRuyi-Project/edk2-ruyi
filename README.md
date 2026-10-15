@@ -4,6 +4,11 @@ EDK2 platform support for [ruyifirmware](https://github.com/openRuyi-Project/ruy
 
 Currently, only SpacemiT K3 Pico ITX is supported.
 
+UEFI Setup → System Information displays the active CPU profile and clocks,
+installed memory, PCIe devices and link speeds, and whole-disk information.
+Each page can refresh information from devices already enumerated by UEFI.
+Unavailable details are shown as unknown.
+
 UEFI Setup → Platform Settings → UEFI driver emulation controls
 non-native UEFI drivers.
 Emulation is disabled by default. Save and restart to apply; the setting
