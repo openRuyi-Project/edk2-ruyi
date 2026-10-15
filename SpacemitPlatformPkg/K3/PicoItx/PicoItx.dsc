@@ -34,6 +34,12 @@
 !include NetworkPkg/Network.dsc.inc
 
 [LibraryClasses]
+  K3GopPolicyLib|SpacemitPlatformPkg/Library/K3GopPolicyLib/K3GopPolicyLib.inf
+!if $(X64EMU_ENABLE) == TRUE
+  K3GopLoaderLib|SpacemitPlatformPkg/Library/K3GopLoaderLib/K3GopLoaderLib.inf
+!else
+  K3GopLoaderLib|SpacemitPlatformPkg/Library/K3GopLoaderLibNull/K3GopLoaderLibNull.inf
+!endif
   K3QspiLib|SpacemitPlatformPkg/Library/K3QspiLib/K3QspiLib.inf
   BootProgressLib|SpacemitPlatformPkg/Library/BootProgressLib/BootProgressLib.inf
   BootLogoLib|MdeModulePkg/Library/BootLogoLib/BootLogoLib.inf
@@ -307,7 +313,11 @@
       DevicePathLib|MdePkg/Library/UefiDevicePathLib/UefiDevicePathLib.inf
       PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
   }
-  MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf
+  MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf {
+    <LibraryClasses>
+      NULL|SpacemitPlatformPkg/Library/K3GopSecurityLib/K3GopSecurityLib.inf
+      RngLib|MdePkg/Library/BaseRngLibNull/BaseRngLibNull.inf
+  }
   UefiCpuPkg/CpuDxeRiscV64/CpuDxeRiscV64.inf
   UefiCpuPkg/CpuTimerDxeRiscV64/CpuTimerDxeRiscV64.inf
   MdeModulePkg/Universal/Metronome/Metronome.inf
@@ -342,7 +352,10 @@
 !endif
   MdeModulePkg/Universal/Console/ConPlatformDxe/ConPlatformDxe.inf
   MdeModulePkg/Universal/Console/ConSplitterDxe/ConSplitterDxe.inf
-  MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
+  MdeModulePkg/Universal/BdsDxe/BdsDxe.inf {
+    <LibraryClasses>
+      RngLib|MdePkg/Library/BaseRngLibNull/BaseRngLibNull.inf
+  }
   MdeModulePkg/Universal/HiiDatabaseDxe/HiiDatabaseDxe.inf
   MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
   MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf

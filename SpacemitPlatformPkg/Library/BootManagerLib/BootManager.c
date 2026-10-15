@@ -9,6 +9,7 @@
 #include <Library/BaseLib.h>
 #include <Library/BootProgressLib.h>
 #include <Library/HobLib.h>
+#include <Library/K3GopLoaderLib.h>
 #include <Pi/PiBootMode.h>
 #include <Library/PcdLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -232,8 +233,13 @@ PlatformBootManagerBeforeConsole (
   EfiBootManagerDispatchDeferredImages ();
 
  #ifdef K3_X64EMU
-  // Install foreign-image support before PCI drivers process Option ROMs.
-  ConnectX64Emulator ();
+  // Install binding guards before foreign drivers become executable.
+  Status = K3GopInitialize ();
+  if (!EFI_ERROR (Status)) {
+    ConnectX64Emulator ();
+  } else {
+    DEBUG ((DEBUG_ERROR, "K3 GOP policy initialization failed: %r\n", Status));
+  }
  #endif
 
  #ifdef K3_USB_HOST_STACK
@@ -425,6 +431,7 @@ PlatformBootManagerAfterConsole (
   }
 
   EfiBootManagerConnectAll ();
+  K3GopConnectSelectedDrivers ();
   mConsoleReady = TRUE;
   EfiBootManagerConnectAllDefaultConsoles ();
   UpdateConsoleGeometry ();

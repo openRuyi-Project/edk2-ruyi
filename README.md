@@ -4,11 +4,22 @@ EDK2 platform support for [ruyifirmware](https://github.com/openRuyi-Project/ruy
 
 Currently, only SpacemiT K3 Pico ITX is supported.
 
-Builds containing the x64 emulator expose UEFI Setup → x64 UEFI Emulation.
-Emulation is disabled by default. Save the setting and restart to apply;
-it is stored in a dedicated SPI sector, including saves from RAM recovery.
-Firmware updates reset emulation to disabled.
-Builds with `X64EMU_ENABLE=FALSE` omit the emulator and its setup option.
+UEFI Setup → UEFI Driver Emulation controls non-native UEFI drivers.
+Emulation is disabled by default. Save and restart to apply; the setting
+is stored in a dedicated SPI sector, including when saved from RAM
+recovery. Firmware updates reset emulation to disabled.
+Onboard option ROMs use x64 by default. AMD GCN display devices in the
+platform PCI ID list instead use AMD ARM64 GOP 1.68 for early GCN,
+Polaris and Vega M. Other devices, including Vega 10/12/20 and RDNA,
+retain onboard x64 GOPs. The GCN replacement path is experimental.
+Image and binding policies select one driver family per controller while
+preserving the original ROM data. Failed replacements do not fall back
+to the onboard x64 GOP. Developer builds with `X64EMU_ENABLE=FALSE` omit
+the emulator and its setup option.
+
+The build fetches unmodified `Arm64Gop_1_68.efi` from AMD's RN-AAR
+release and checks its fixed SHA-256 hash. Set `AMD_GOP_DIR` to a
+directory containing this file to build without downloading it.
 
 UEFI Setup → CPU Configuration → CPU mode selects one of three profiles:
 

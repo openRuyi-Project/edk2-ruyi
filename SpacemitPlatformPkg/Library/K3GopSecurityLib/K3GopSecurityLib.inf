@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3GopSecurityLib
+  FILE_GUID = 48d2dd92-008f-49cf-89f5-700b5b9fd9c5
+  MODULE_TYPE = DXE_DRIVER
+  LIBRARY_CLASS = NULL|DXE_DRIVER
+  CONSTRUCTOR = K3GopSecurityConstructor
+[Sources]
+  Security.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  DebugLib
+  DevicePathLib
+  K3GopPolicyLib
+  SecurityManagementLib
+  UefiBootServicesTableLib
+[Guids]
+  gK3GopPolicyReadyGuid  ## CONSUMES ## UNDEFINED
+[Protocols]
+  gEfiPciIoProtocolGuid

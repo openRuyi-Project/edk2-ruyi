@@ -42,7 +42,7 @@ case "$k3_x64emu" in
 esac
 if [[ "$k3_x64emu" == TRUE ]]; then
     make -C "$k3_pkg/../MultiArchUefiPkg" EDK2_DIR="$k3_edk2" \
-        MAU_BUILD_DIR="$k3_pkg/build/multiarch" TARGET="$k3_target" JOBS="$k3_jobs" MAU_DYNAMIC_POLICY=TRUE \
+        MAU_BUILD_DIR="$k3_pkg/build/multiarch" TARGET="$k3_target" JOBS="$k3_jobs" MAU_DYNAMIC_POLICY=TRUE MAU_SUPPORTS_AARCH64_BINS=YES \
         CROSS_COMPILE="${CROSS_COMPILE:-riscv64-linux-gnu-}" PYTHON="${PYTHON:-python3}"
     k3_emu="$k3_pkg/build/multiarch/Build/MultiArchUefiPkg/${k3_target}_GCC/RISCV64"
     k3_args+=(-D X64EMU_ENABLE=TRUE)
@@ -54,6 +54,7 @@ k3_platforms=$(cd -- "$k3_platforms" && pwd)
 mkdir -p "$k3_pkg/build/workspace" "$k3_pkg/build/logs"
 export WORKSPACE="$k3_pkg/build/workspace"
 if [[ "$k3_x64emu" == TRUE ]]; then
+    "${PYTHON:-python3}" "$k3_pkg/tools/fetch-amd-gop.py" "$WORKSPACE/K3AmdGop"
     mkdir -p "$WORKSPACE/X64EmulatorBin"
     cp "$k3_emu/EmulatorDxe.efi" "$WORKSPACE/X64EmulatorBin/"
     cp "$k3_emu/MultiArchUefiPkg/Drivers/Emulator/Emulator/OUTPUT/EmulatorDxe.depex" "$WORKSPACE/X64EmulatorBin/"

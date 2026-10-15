@@ -14,6 +14,7 @@
   SpacemitPlatformPkg/SpacemitPlatformPkg.dec
   MdeModulePkg/MdeModulePkg.dec
 [LibraryClasses]
+  K3GopLoaderLib
   BootProgressLib
   HobLib
   PcdLib
