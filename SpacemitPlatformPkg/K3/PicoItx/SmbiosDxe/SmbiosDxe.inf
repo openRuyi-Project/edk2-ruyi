@@ -30,5 +30,7 @@
   gSpacemitPlatformTokenSpaceGuid.PcdFdSize
   gSpacemitPlatformTokenSpaceGuid.PcdSystemProductName
   gSpacemitPlatformTokenSpaceGuid.PcdDramDeviceCount
+[Guids]
+  gSpacemitMemoryInfoGuid
 [Depex]
   gEfiSmbiosProtocolGuid AND gSpacemitClockProtocolGuid

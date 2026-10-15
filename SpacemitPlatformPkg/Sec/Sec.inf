@@ -47,6 +47,7 @@
 
 [Guids]
   gSpacemitDdrTrainingGuid
+  gSpacemitMemoryInfoGuid
   gEfiMemoryTypeInformationGuid
   gFdtHobGuid
 

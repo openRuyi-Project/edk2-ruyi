@@ -95,6 +95,18 @@ SecEntry (
     }
   }
 
+  // Inventory is valid on quick boots too, when the training magic is clear.
+  CONST K3_MEMORY_INFO  *Memory = &Training->MemoryInfo;
+
+  if ((Memory->Magic == K3_MEMORY_INFO_MAGIC) &&
+      (Memory->Version == K3_MEMORY_INFO_VERSION) &&
+      (Memory->Crc32 == CalculateCrc32 ((VOID *)&Memory->Version, sizeof (*Memory) - 8)))
+  {
+    if (BuildGuidDataHob (&gSpacemitMemoryInfoGuid, (VOID *)Memory, sizeof (*Memory)) == NULL) {
+      CpuDeadLoop ();
+    }
+  }
+
   // Keep runtime allocations together instead of interleaving boot memory.
   BuildGuidDataHob (&gEfiMemoryTypeInformationGuid, MemoryTypes, sizeof (MemoryTypes));
 

@@ -1,6 +1,7 @@
 /** SPDX-License-Identifier: BSD-2-Clause-Patent */
 #include <PiDxe.h>
 #include <Guid/FdtHob.h>
+#include <Guid/K3MemoryInfo.h>
 #include <Guid/RiscVSecHobData.h>
 #include <Protocol/Clock.h>
 #include <Library/FdtLib.h>
@@ -141,6 +142,44 @@ AddProcessor (
   return AddRecord (Smbios, &Cpu.Hdr, Strings, ARRAY_SIZE (Strings), &Handle);
 }
 
+STATIC CONST K3_MEMORY_INFO *
+BootMemoryInfo (
+  UINT64  Total,
+  UINTN   DeviceCount
+  )
+{
+  EFI_HOB_GUID_TYPE     *Hob = GetFirstGuidHob (&gSpacemitMemoryInfoGuid);
+  CONST K3_MEMORY_INFO  *Info;
+  UINTN                 Length;
+
+  if (!Hob || (GET_GUID_HOB_DATA_SIZE (Hob) != sizeof (*Info))) {
+    return NULL;
+  }
+
+  Info = GET_GUID_HOB_DATA (Hob);
+  if ((Info->Magic != K3_MEMORY_INFO_MAGIC) || (Info->Version != K3_MEMORY_INFO_VERSION) ||
+      (Info->Crc32 != CalculateCrc32 ((VOID *)&Info->Version, sizeof (*Info) - 8)) ||
+      (Info->DeviceCount != DeviceCount) || !Info->DeviceCount || !Info->DeviceSizeMiB ||
+      ((UINT64)Info->DeviceCount * Info->DeviceSizeMiB * SIZE_1MB != Total) ||
+      (Info->Type > K3_MEMORY_LPDDR5) || !Info->ChipSelects || (Info->ChipSelects > 15) ||
+      !Info->DataRate || (Info->DataRate >= MAX_UINT16))
+  {
+    return NULL;
+  }
+
+  for (Length = 0; Length < sizeof (Info->PartNumber); Length++) {
+    if (!Info->PartNumber[Length]) {
+      break;
+    }
+
+    if ((Info->PartNumber[Length] < 0x20) || (Info->PartNumber[Length] > 0x7e)) {
+      return NULL;
+    }
+  }
+
+  return Length && Length < sizeof (Info->PartNumber) ? Info : NULL;
+}
+
 EFI_STATUS
 EFIAPI
 PublishBoardInfo (
@@ -163,6 +202,8 @@ PublishBoardInfo (
   EFI_STATUS                   Status;
   UINT64                       Total, SizeMiB;
   UINTN                        Index, DeviceCount;
+  CONST K3_MEMORY_INFO         *Memory;
+  CONST CHAR8                  *MemoryStrings[2];
 
   Status = gBS->LocateProtocol (&gEfiSmbiosProtocolGuid, NULL, (VOID **)&Smbios);
   if (EFI_ERROR (Status)) {
@@ -257,10 +298,10 @@ PublishBoardInfo (
     return Status;
   }
 
-  /* The trained board density model has two equal on-board DDR parts.
-   * Their total comes from the validated memory HOBs, never a fixed size.
-   * Do not guess SPD, speed, bus width, ECC, part number or serial fields.
+  /* Publish the configuration used by coreboot, including quick boots.
+   * Capacity still comes from the validated memory resource HOBs.
    */
+  Memory  = BootMemoryInfo (Total, DeviceCount);
   SizeMiB = Total / DeviceCount / SIZE_1MB;
   if (SizeMiB > 0x7fffffff) {
     return EFI_UNSUPPORTED;
@@ -280,12 +321,21 @@ PublishBoardInfo (
     Device.MemoryOperatingModeCapability.Bits.VolatileMemory = 1;
     Device.VolatileSize                                      = Total / DeviceCount;
     Device.DeviceLocator                                     = 1;
-    Device.Size                                              = SizeMiB < 0x7fff ? (UINT16)SizeMiB : 0x7fff;
+    MemoryStrings[0]                                         = Locator[Index];
+    if (Memory != NULL) {
+      Device.MemoryType                 = Memory->Type == K3_MEMORY_LPDDR5 ? MemoryTypeLpddr5 : MemoryTypeLpddr4;
+      Device.ConfiguredMemoryClockSpeed = (UINT16)Memory->DataRate;
+      Device.Attributes                 = (UINT8)Memory->ChipSelects;
+      Device.PartNumber                 = 2;
+      MemoryStrings[1]                  = Memory->PartNumber;
+    }
+
+    Device.Size = SizeMiB < 0x7fff ? (UINT16)SizeMiB : 0x7fff;
     if (Device.Size == 0x7fff) {
       Device.ExtendedSize = (UINT32)SizeMiB;
     }
 
-    Status = AddRecord (Smbios, &Device.Hdr, &Locator[Index], 1, &Handle);
+    Status = AddRecord (Smbios, &Device.Hdr, MemoryStrings, Memory != NULL ? 2 : 1, &Handle);
     if (EFI_ERROR (Status)) {
       return Status;
     }
