@@ -29,6 +29,8 @@
   UfsStorageLib
 [Protocols]
   gEfiGraphicsOutputProtocolGuid
+  gEfiPciIoProtocolGuid
+  gEfiPciRootBridgeIoProtocolGuid
   gEdkiiPlatformBootManagerProtocolGuid
   gEfiSerialIoProtocolGuid
   gEfiFirmwareVolume2ProtocolGuid

@@ -2,6 +2,9 @@
 #include <Uefi.h>
 #include <Protocol/SerialIo.h>
 #include <Protocol/GraphicsOutput.h>
+#include <Protocol/PciIo.h>
+#include <Protocol/PciRootBridgeIo.h>
+#include <IndustryStandard/Pci.h>
 #include <Uefi/UefiInternalFormRepresentation.h>
 #include <Protocol/FirmwareVolume2.h>
 #include <Guid/TtyTerm.h>
@@ -42,7 +45,6 @@ STATIC CONST struct {
 #endif
 
 STATIC VOID     *mGraphicsRegistration;
-STATIC BOOLEAN  mConsoleReady;
 STATIC BOOLEAN  mGraphicsConfigured;
 
 STATIC VOID
@@ -148,11 +150,65 @@ GraphicsAvailable (
 
     EfiBootManagerUpdateConsoleVariable (ConOut, Path, NULL);
     EfiBootManagerUpdateConsoleVariable (ErrOut, Path, NULL);
-    if (mConsoleReady) {
-      EfiBootManagerConnectAllDefaultConsoles ();
-      UpdateConsoleGeometry ();
+    // This notification can interrupt a GOP Start() or mode update, including
+    // a later ConnectAll() from Setup. Let the caller finish device connection
+    // before any console driver consumes the newly published GOP state.
+  }
+}
+
+STATIC VOID
+ConnectGraphics (
+  VOID
+  )
+{
+  EFI_HANDLE           *Handles;
+  UINTN                Count;
+  EFI_STATUS           Status;
+  EFI_PCI_IO_PROTOCOL  *PciIo;
+  PCI_TYPE00           Pci;
+
+  // Enumerate PCI without starting storage, network or USB drivers.
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiPciRootBridgeIoProtocolGuid,
+                  NULL,
+                  &Count,
+                  &Handles
+                  );
+  if (!EFI_ERROR (Status)) {
+    for (UINTN Index = 0; Index < Count; Index++) {
+      gBS->ConnectController (Handles[Index], NULL, NULL, FALSE);
+    }
+
+    FreePool (Handles);
+  }
+
+  K3GopConnectSelectedDrivers ();
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiPciIoProtocolGuid,
+                  NULL,
+                  &Count,
+                  &Handles
+                  );
+  if (EFI_ERROR (Status)) {
+    return;
+  }
+
+  for (UINTN Index = 0; Index < Count; Index++) {
+    Status = gBS->HandleProtocol (Handles[Index], &gEfiPciIoProtocolGuid, (VOID **)&PciIo);
+    if (EFI_ERROR (Status)) {
+      continue;
+    }
+
+    Status = PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, 0, sizeof (Pci) / sizeof (UINT32), &Pci);
+    if (!EFI_ERROR (Status) && IS_PCI_DISPLAY (&Pci)) {
+      gBS->ConnectController (Handles[Index], NULL, NULL, FALSE);
     }
   }
+
+  FreePool (Handles);
+  // BDS connects the recorded GOP paths after this initialization returns.
 }
 
 #ifdef K3_X64EMU
@@ -240,6 +296,7 @@ PlatformBootManagerBeforeConsole (
   } else {
     DEBUG ((DEBUG_ERROR, "K3 GOP policy initialization failed: %r\n", Status));
   }
+
  #endif
 
  #ifdef K3_USB_HOST_STACK
@@ -253,6 +310,7 @@ PlatformBootManagerBeforeConsole (
     NULL,
     &mGraphicsRegistration
     );
+  ConnectGraphics ();
   Status = gBS->LocateHandleBuffer (
                   ByProtocol,
                   &gEfiSerialIoProtocolGuid,
@@ -417,9 +475,7 @@ PlatformBootManagerAfterConsole (
   EFI_INPUT_KEY                 ContinueKey = { SCAN_NULL, CHAR_CARRIAGE_RETURN };
   EFI_STATUS                    Status;
 
-  // GOP notifications can run inside a display driver's Start().
-  // Complete device connection before attaching the graphics console.
-  mConsoleReady = FALSE;
+  // The early graphics pass has returned and BDS has connected its consoles.
   UpdateConsoleGeometry ();
   if (GetBootModeHob () == BOOT_IN_RECOVERY_MODE) {
     BootProgressStop ();
@@ -432,7 +488,6 @@ PlatformBootManagerAfterConsole (
 
   EfiBootManagerConnectAll ();
   K3GopConnectSelectedDrivers ();
-  mConsoleReady = TRUE;
   EfiBootManagerConnectAllDefaultConsoles ();
   UpdateConsoleGeometry ();
   Status = InstallStorageBootPolicy ();
