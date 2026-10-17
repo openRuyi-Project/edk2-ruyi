@@ -187,6 +187,10 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerMenuFile|{0x21,0xaa,0x2c,0x46,0x14,0x76,0x03,0x45,0x83,0x6e,0x8a,0xb6,0xf4,0x66,0x23,0x31}
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x2f
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|$(DEBUG_PRINT_ERROR_LEVEL)
+  # Report progress and errors independently of DEBUG logging.
+  gEfiMdePkgTokenSpaceGuid.PcdReportStatusCodePropertyMask|0x03
+  gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseSerial|TRUE
+  gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseMemory|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableSize|0x40000
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingSize|0x10000
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareSize|0x40000
@@ -314,6 +318,8 @@
       DevicePathLib|MdePkg/Library/UefiDevicePathLib/UefiDevicePathLib.inf
       PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
   }
+  MdeModulePkg/Universal/ReportStatusCodeRouter/RuntimeDxe/ReportStatusCodeRouterRuntimeDxe.inf
+  MdeModulePkg/Universal/StatusCodeHandler/RuntimeDxe/StatusCodeHandlerRuntimeDxe.inf
   MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf {
     <LibraryClasses>
       NULL|SpacemitPlatformPkg/Library/K3GopSecurityLib/K3GopSecurityLib.inf

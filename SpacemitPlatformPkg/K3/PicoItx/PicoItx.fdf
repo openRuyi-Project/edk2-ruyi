@@ -29,19 +29,22 @@ MEMORY_MAPPED = TRUE
 READ_ENABLED_CAP = TRUE
 READ_STATUS = TRUE
 FvNameGuid = ec66df7d-361b-486b-a54d-a70536c96b0a
-!if $(K3_GOP_ENABLE) == TRUE
-# Initialize the display before dispatching the storage and network stacks.
+# Enable serial status codes before dispatching device drivers.
 APRIORI DXE {
   INF MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
   INF MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
+  INF MdeModulePkg/Universal/ReportStatusCodeRouter/RuntimeDxe/ReportStatusCodeRouterRuntimeDxe.inf
+  INF MdeModulePkg/Universal/StatusCodeHandler/RuntimeDxe/StatusCodeHandlerRuntimeDxe.inf
+!if $(K3_GOP_ENABLE) == TRUE
+  # Initialize the display before dispatching the storage and network stacks.
   INF MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf
   INF UefiCpuPkg/CpuDxeRiscV64/CpuDxeRiscV64.inf
   INF SpacemitPlatformPkg/Drivers/K3ClockDxe/K3ClockDxe.inf
   INF SpacemitPlatformPkg/Drivers/K3DpuGopDxe/K3DpuGopDxe.inf
   INF SpacemitPlatformPkg/Drivers/LogoDxe/LogoDxe.inf
   INF MdeModulePkg/Universal/Acpi/BootGraphicsResourceTableDxe/BootGraphicsResourceTableDxe.inf
-}
 !endif
+}
 !if $(X64EMU_ENABLE) == TRUE
 INF RuleOverride = BINARY SpacemitPlatformPkg/Drivers/X64EmulatorDxe/X64EmulatorDxe.inf
 # Raw files are loaded only for the selected AMD GCN controller class.
@@ -58,6 +61,8 @@ INF SpacemitPlatformPkg/Drivers/Rtl8127SnpDxe/Rtl8127SnpDxe.inf
 INF MdeModulePkg/Core/Dxe/DxeMain.inf
 INF MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
 INF MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
+INF MdeModulePkg/Universal/ReportStatusCodeRouter/RuntimeDxe/ReportStatusCodeRouterRuntimeDxe.inf
+INF MdeModulePkg/Universal/StatusCodeHandler/RuntimeDxe/StatusCodeHandlerRuntimeDxe.inf
 INF MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf
 INF UefiCpuPkg/CpuDxeRiscV64/CpuDxeRiscV64.inf
 INF SpacemitPlatformPkg/Drivers/K3ClockDxe/K3ClockDxe.inf
