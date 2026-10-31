@@ -1,0 +1,28 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = UnmatchedBootManagerLib
+  FILE_GUID = da920763-6ffc-4e44-9d93-96076899aa30
+  MODULE_TYPE = DXE_DRIVER
+  LIBRARY_CLASS = PlatformBootManagerLib|DXE_DRIVER
+[Sources]
+  BootManager.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  PciGopLoaderLib
+  BaseLib
+  DebugLib
+  DevicePathLib
+  MemoryAllocationLib
+  UefiBootManagerLib
+  UefiBootServicesTableLib
+  UefiLib
+[Protocols]
+  gEfiGraphicsOutputProtocolGuid
+  gEfiLoadedImageProtocolGuid
+  gEfiSerialIoProtocolGuid
+[Guids]
+  gEfiEndOfDxeEventGroupGuid
