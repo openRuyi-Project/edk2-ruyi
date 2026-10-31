@@ -1,0 +1,22 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  DEC_SPECIFICATION = 0x0001001B
+  PACKAGE_NAME = SiFivePlatformPkg
+  PACKAGE_GUID = b2c7079a-50fc-4116-aab5-94378e335e6c
+  PACKAGE_VERSION = 0.1
+[Includes]
+  Include
+[Protocols]
+  gUnmatchedSettingsProtocolGuid = { 0x0d6effa2, 0x9626, 0x4dea, { 0xa2, 0xe5, 0x6e, 0x61, 0xba, 0x31, 0xb7, 0x1a } }
+  gFu740PciControllerProtocolGuid = { 0x308bf923, 0xc3eb, 0x488c, { 0xa7, 0x63, 0x6f, 0x71, 0x1c, 0xdd, 0xd0, 0x19 } }
+[LibraryClasses]
+  Fu740SpiNorLib|Include/Library/Fu740SpiNorLib.h
+  Fu740InfoLib|Include/Library/Fu740InfoLib.h
+
+[Guids]
+  gUnmatchedNvFvbReadyGuid = { 0x174c8124, 0x8677, 0x4b14, { 0xa9, 0x13, 0xc6, 0x93, 0xc7, 0x87, 0x6c, 0x22 } }
+  gSiFivePlatformTokenSpaceGuid = { 0xb8698c71, 0x0f21, 0x41f2, { 0x98, 0xba, 0xa9, 0xe6, 0x8a, 0x7c, 0x48, 0xc1 } }
+
+[PcdsFixedAtBuild]
+  gSiFivePlatformTokenSpaceGuid.PcdUnmatchedDefaultEmulation|FALSE|BOOLEAN|0x1
+  gSiFivePlatformTokenSpaceGuid.PcdUnmatchedEmulationAvailable|TRUE|BOOLEAN|0x2
