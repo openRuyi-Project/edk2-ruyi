@@ -1,0 +1,22 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Fu740PciSegmentLib
+  FILE_GUID = be0bcab0-74ab-4ac8-9d77-20628186a8f0
+  MODULE_TYPE = DXE_DRIVER
+  LIBRARY_CLASS = PciSegmentLib|DXE_DRIVER UEFI_APPLICATION
+  CONSTRUCTOR = Fu740PciSegmentConstructor
+  DESTRUCTOR = Fu740PciSegmentDestructor
+[Sources]
+  Segment.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  SiFivePlatformPkg/SiFivePlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  UefiBootServicesTableLib
+[Protocols]
+  gFu740PciControllerProtocolGuid
