@@ -1,0 +1,26 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = UnmatchedSmbiosDxe
+  FILE_GUID = 91a8e182-52d4-49e0-9fb9-5fcb34c457c5
+  MODULE_TYPE = DXE_DRIVER
+  ENTRY_POINT = PublishUnmatchedInfo
+[Sources]
+  Smbios.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  SiFivePlatformPkg/SiFivePlatformPkg.dec
+[LibraryClasses]
+  UefiDriverEntryPoint
+  BaseLib
+  BaseMemoryLib
+  Fu740InfoLib
+  HobLib
+  MemoryAllocationLib
+  UefiBootServicesTableLib
+[Protocols]
+  gEfiSmbiosProtocolGuid
+  gEfiCpuArchProtocolGuid
+[Depex]
+  gEfiSmbiosProtocolGuid AND gEfiCpuArchProtocolGuid

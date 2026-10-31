@@ -1,0 +1,23 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Fu740InfoLib
+  FILE_GUID = 04d28948-62b1-4b0a-9d06-83104d447ffb
+  MODULE_TYPE = DXE_DRIVER
+  LIBRARY_CLASS = Fu740InfoLib|DXE_DRIVER
+[Sources]
+  Info.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+  SiFivePlatformPkg/SiFivePlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DxeServicesTableLib
+  FdtLib
+  HobLib
+  IoLib
+[Guids]
+  gFdtHobGuid

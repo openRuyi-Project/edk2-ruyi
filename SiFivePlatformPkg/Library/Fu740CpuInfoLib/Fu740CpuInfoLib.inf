@@ -1,0 +1,16 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Fu740CpuInfoLib
+  FILE_GUID = 66c5d589-ac3a-4ca0-97f3-fc563731ce26
+  MODULE_TYPE = DXE_DRIVER
+  LIBRARY_CLASS = PlatformCpuInfoLib|DXE_DRIVER
+[Sources]
+  Cpu.c
+[Packages]
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+  SiFivePlatformPkg/SiFivePlatformPkg.dec
+[LibraryClasses]
+  Fu740InfoLib
+  PrintLib
