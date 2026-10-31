@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = UnmatchedNvReadyLib
+  FILE_GUID = 5cfd5da1-4880-42cb-b01e-9f2c70731ee1
+  MODULE_TYPE = DXE_RUNTIME_DRIVER
+  LIBRARY_CLASS = NULL
+  CONSTRUCTOR = UnmatchedNvReadyConstructor
+[Sources]
+  Ready.c
+[LibraryClasses]
+  PcdLib
+[Pcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase64
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  EmbeddedPkg/EmbeddedPkg.dec
+[Guids]
+  gEdkiiNvVarStoreFormattedGuid
+[Depex]
+  gEdkiiNvVarStoreFormattedGuid

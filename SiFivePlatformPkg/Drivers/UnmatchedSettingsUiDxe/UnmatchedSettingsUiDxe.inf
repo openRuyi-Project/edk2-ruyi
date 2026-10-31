@@ -1,0 +1,35 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = UnmatchedSettingsUiDxe
+  FILE_GUID = 2cf274eb-648f-46dc-9ca4-0d94fa6055d8
+  MODULE_TYPE = DXE_DRIVER
+  ENTRY_POINT = UnmatchedSettingsUiEntry
+[Sources]
+  Ui.c
+  Forms.h
+  SettingsForms.vfr
+  Strings.uni
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  SiFivePlatformPkg/SiFivePlatformPkg.dec
+[LibraryClasses]
+  UefiDriverEntryPoint
+  BaseLib
+  HiiLib
+  MemoryAllocationLib
+  PcdLib
+  PrintLib
+  UefiBootServicesTableLib
+[Protocols]
+  gEfiDevicePathProtocolGuid
+  gEfiHiiConfigAccessProtocolGuid
+  gEfiHiiConfigRoutingProtocolGuid
+  gUnmatchedSettingsProtocolGuid
+[Guids]
+  gEfiIfrFrontPageGuid
+[FixedPcd]
+  gSiFivePlatformTokenSpaceGuid.PcdUnmatchedEmulationAvailable
+[Depex]
+  gEfiHiiConfigRoutingProtocolGuid AND gUnmatchedSettingsProtocolGuid

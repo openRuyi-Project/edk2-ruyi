@@ -1,0 +1,11 @@
+/* SPDX-License-Identifier: BSD-2-Clause-Patent */
+
+#ifndef UNMATCHED_FORMS_H_
+#define UNMATCHED_FORMS_H_
+#define UNMATCHED_FORMSET_GUID \
+  { 0x4a01a428, 0xbf2e, 0x44f5, { 0x9f, 0x70, 0xe9, 0x5e, 0xec, 0x8a, 0x03, 0x1b } }
+typedef struct {
+  UINT8    EmulationEnabled;
+  UINT8    Available;
+} UNMATCHED_CONFIGURATION;
+#endif

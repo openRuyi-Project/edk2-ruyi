@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = UnmatchedFtwReadyLib
+  FILE_GUID = 7b34bd33-1668-4b94-a540-680609dd22fb
+  MODULE_TYPE = DXE_DRIVER
+  LIBRARY_CLASS = NULL
+  CONSTRUCTOR = UnmatchedNvReadyConstructor
+[Sources]
+  Ready.c
+[LibraryClasses]
+  PcdLib
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  SiFivePlatformPkg/SiFivePlatformPkg.dec
+[Pcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase64
+[Guids]
+  gUnmatchedNvFvbReadyGuid
+[Depex]
+  gUnmatchedNvFvbReadyGuid

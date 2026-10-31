@@ -1,0 +1,53 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = UnmatchedNvStorageDxe
+  FILE_GUID = 2fc1a503-21e3-4854-9636-c860083e3f35
+  MODULE_TYPE = DXE_RUNTIME_DRIVER
+  ENTRY_POINT = UnmatchedNvStorageEntry
+[Sources]
+  NvStorage.c
+  Flash.c
+  Flash.h
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  EmbeddedPkg/EmbeddedPkg.dec
+  SiFivePlatformPkg/SiFivePlatformPkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+  UefiRuntimeLib
+  UefiLib
+  BaseLib
+  BaseMemoryLib
+  MemoryAllocationLib
+  PcdLib
+  DebugLib
+  NvFvbLib
+  HobLib
+  Fu740SpiNorLib
+  FdtLib
+  DxeServicesTableLib
+  IoLib
+  TimerLib
+[Protocols]
+  gEfiCpuArchProtocolGuid
+  gEfiTimerArchProtocolGuid
+  gFdtClientProtocolGuid
+  gEfiFirmwareVolumeBlockProtocolGuid
+  gEfiFaultTolerantWriteProtocolGuid
+  gEfiDevicePathProtocolGuid
+[Guids]
+  gUnmatchedNvFvbReadyGuid
+  gEdkiiNvVarStoreFormattedGuid
+  gEfiEventVirtualAddressChangeGuid
+  gFdtHobGuid
+[Pcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase64
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingBase64
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase64
+[Depex]
+  gFdtClientProtocolGuid AND gEfiCpuArchProtocolGuid AND gEfiTimerArchProtocolGuid

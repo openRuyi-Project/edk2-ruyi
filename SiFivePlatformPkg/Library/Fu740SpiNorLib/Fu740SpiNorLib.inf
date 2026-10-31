@@ -1,0 +1,24 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Fu740SpiNorLib
+  FILE_GUID = 24296c3a-847e-46ba-9436-dbf4d71d454c
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = Fu740SpiNorLib
+[Sources]
+  Flash.c
+[Packages]
+  MdePkg/MdePkg.dec
+  EmbeddedPkg/EmbeddedPkg.dec
+  SiFivePlatformPkg/SiFivePlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DxeServicesTableLib
+  FdtLib
+  HobLib
+  IoLib
+  TimerLib
+  UefiRuntimeServicesTableLib
+[Guids]
+  gFdtHobGuid

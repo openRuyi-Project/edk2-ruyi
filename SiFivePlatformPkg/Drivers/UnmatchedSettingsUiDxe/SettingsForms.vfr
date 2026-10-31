@@ -1,0 +1,25 @@
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+#include "Forms.h"
+formset
+  guid = UNMATCHED_FORMSET_GUID,
+  title = STRING_TOKEN(STR_TITLE),
+  help = STRING_TOKEN(STR_HELP),
+  classguid = gEfiIfrFrontPageGuid,
+  varstore UNMATCHED_CONFIGURATION,
+    varid = 1,
+    name = UnmatchedConfig,
+    guid = UNMATCHED_FORMSET_GUID;
+  form formid = 1,
+    title = STRING_TOKEN(STR_TITLE);
+    grayoutif ideqval UnmatchedConfig.Available == 0;
+      oneof varid = UnmatchedConfig.EmulationEnabled,
+        questionid = 0x1001,
+        prompt = STRING_TOKEN(STR_EMULATION),
+        help = STRING_TOKEN(STR_EMULATION_HELP),
+        flags = RESET_REQUIRED | INTERACTIVE,
+        option text = STRING_TOKEN(STR_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING;
+        option text = STRING_TOKEN(STR_ENABLED), value = 1, flags = 0;
+      endoneof;
+    endif;
+  endform;
+endformset;

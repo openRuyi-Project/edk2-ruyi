@@ -1,0 +1,41 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = UnmatchedSettingsDxe
+  FILE_GUID = e83f9e5c-6f7d-46a7-94f3-a1e53180c5f0
+  MODULE_TYPE = DXE_DRIVER
+  ENTRY_POINT = UnmatchedSettingsEntry
+[Sources]
+  Settings.c
+  Flash.c
+  Record.h
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  SiFivePlatformPkg/SiFivePlatformPkg.dec
+  MultiArchUefiPkg/MultiArchUefiPkg.dec
+[LibraryClasses]
+  UefiDriverEntryPoint
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  DxeServicesTableLib
+  Fu740SpiNorLib
+  HobLib
+  IoLib
+  PcdLib
+  TimerLib
+  UefiBootServicesTableLib
+[Guids]
+  gFdtHobGuid
+[Protocols]
+  gEfiCpuArchProtocolGuid
+  gEfiTimerArchProtocolGuid
+  gUnmatchedSettingsProtocolGuid
+[Pcd]
+  gMauPkgTokenSpaceGuid.PcdMauEmulationEnabled
+[FixedPcd]
+  gSiFivePlatformTokenSpaceGuid.PcdUnmatchedDefaultEmulation
+  gSiFivePlatformTokenSpaceGuid.PcdUnmatchedEmulationAvailable
+[Depex]
+  gEfiCpuArchProtocolGuid AND gEfiTimerArchProtocolGuid

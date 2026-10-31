@@ -1,0 +1,8 @@
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+#langdef en-US "English"
+#string STR_TITLE #language en-US "Platform Settings"
+#string STR_HELP #language en-US "Save platform settings and restart to apply."
+#string STR_EMULATION #language en-US "UEFI driver emulation"
+#string STR_DISABLED #language en-US "Disabled"
+#string STR_ENABLED #language en-US "Enabled"
+#string STR_EMULATION_HELP #language en-US "Run compatible x64 UEFI drivers and the selected AMD ARM64 GOP. Save changes and restart to apply."
