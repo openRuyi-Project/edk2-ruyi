@@ -1,0 +1,35 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Fu740GemDxe
+  FILE_GUID = 0800581f-2e91-4d5e-a87d-6ae3a4081ab6
+  MODULE_TYPE = DXE_DRIVER
+  ENTRY_POINT = GemEntry
+[Sources]
+  Snp.c
+  Gem.c
+  Gem.h
+  Phy.c
+[Packages]
+  MdePkg/MdePkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  DevicePathLib
+  DxeServicesTableLib
+  FdtLib
+  HobLib
+  IoLib
+  MemoryAllocationLib
+  TimerLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+[Protocols]
+  gEfiSimpleNetworkProtocolGuid
+  gEfiDevicePathProtocolGuid
+[Guids]
+  gEfiEventExitBootServicesGuid
+[Depex]
+  gEfiCpuArchProtocolGuid
