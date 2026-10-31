@@ -1,0 +1,28 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Da9063RtcLib
+  FILE_GUID = 03b2ea3f-984f-43f4-80b2-9ee3df4a6ec4
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = RealTimeClockLib
+[Sources]
+  Rtc.c
+[Packages]
+  MdePkg/MdePkg.dec
+  EmbeddedPkg/EmbeddedPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  DxeServicesTableLib
+  FdtLib
+  HobLib
+  IoLib
+  TimerLib
+  TimeBaseLib
+  UefiBootServicesTableLib
+  UefiRuntimeLib
+  UefiLib
+[Guids]
+  gFdtHobGuid
+  gEfiRtPropertiesTableGuid
