@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: BSD-2-Clause-Patent */
-#include <Library/K3GopPolicyLib.h>
+#include <Library/PciGopPolicyLib.h>
 #include <IndustryStandard/PeImage.h>
 #include <Protocol/PciIo.h>
 #include <Library/DebugLib.h>
@@ -17,7 +17,7 @@ CheckImage (
   )
 {
   UINT16                          Machine;
-  K3_GOP_POLICY                   Policy;
+  PCI_GOP_POLICY                  Policy;
   CONST EFI_DEVICE_PATH_PROTOCOL  *Node;
   EFI_DEVICE_PATH_PROTOCOL        *Remaining;
   EFI_HANDLE                      Controller;
@@ -29,13 +29,13 @@ CheckImage (
     return EFI_SUCCESS;
   }
 
-  Policy = K3GopFilePolicy (File);
-  if (Policy != K3GopX64) {
-    if (EFI_ERROR (gBS->LocateProtocol (&gK3GopPolicyReadyGuid, NULL, &Ready))) {
+  Policy = PciGopFilePolicy (File);
+  if (Policy != PciGopX64) {
+    if (EFI_ERROR (gBS->LocateProtocol (&gPciGopPolicyReadyGuid, NULL, &Ready))) {
       return EFI_ACCESS_DENIED;
     }
 
-    return K3GopVerifyImage (Policy, FileBuffer, FileSize) ?
+    return PciGopVerifyImage (Policy, FileBuffer, FileSize) ?
            EFI_SUCCESS : EFI_ACCESS_DENIED;
   }
 
@@ -60,13 +60,13 @@ CheckImage (
     return EFI_ACCESS_DENIED;
   }
 
-  Machine = K3GopImageMachine (FileBuffer, FileSize);
+  Machine = PciGopImageMachine (FileBuffer, FileSize);
   if (Machine == EFI_IMAGE_MACHINE_RISCV64) {
     return EFI_SUCCESS;
   }
 
   // Foreign images remain blocked until controller binding guards are ready.
-  if (EFI_ERROR (gBS->LocateProtocol (&gK3GopPolicyReadyGuid, NULL, &Ready))) {
+  if (EFI_ERROR (gBS->LocateProtocol (&gPciGopPolicyReadyGuid, NULL, &Ready))) {
     return EFI_ACCESS_DENIED;
   }
 
@@ -77,14 +77,14 @@ CheckImage (
 
   Remaining = (EFI_DEVICE_PATH_PROTOCOL *)File;
   Status    = gBS->LocateDevicePath (&gEfiPciIoProtocolGuid, &Remaining, &Controller);
-  if (EFI_ERROR (Status) || (Remaining != Node) || EFI_ERROR (K3GopReadPciDevice (Controller, &Pci))) {
+  if (EFI_ERROR (Status) || (Remaining != Node) || EFI_ERROR (PciGopReadPciDevice (Controller, &Pci))) {
     return EFI_ACCESS_DENIED;
   }
 
   if ((Pci.Hdr.ClassCode[2] == PCI_CLASS_DISPLAY) &&
-      (K3GopPolicyForDevice (Pci.Hdr.VendorId, Pci.Hdr.DeviceId) != K3GopX64))
+      (PciGopPolicyForDevice (Pci.Hdr.VendorId, Pci.Hdr.DeviceId) != PciGopX64))
   {
-    DEBUG ((DEBUG_INFO, "K3 GOP: skip onboard image for %04x:%04x\n", Pci.Hdr.VendorId, Pci.Hdr.DeviceId));
+    DEBUG ((DEBUG_INFO, "PCI GOP: skip onboard image for %04x:%04x\n", Pci.Hdr.VendorId, Pci.Hdr.DeviceId));
     return EFI_ACCESS_DENIED;
   }
 
@@ -92,7 +92,7 @@ CheckImage (
 }
 
 EFI_STATUS EFIAPI
-K3GopSecurityConstructor (
+PciGopSecurityConstructor (
   EFI_HANDLE        ImageHandle,
   EFI_SYSTEM_TABLE  *SystemTable
   )

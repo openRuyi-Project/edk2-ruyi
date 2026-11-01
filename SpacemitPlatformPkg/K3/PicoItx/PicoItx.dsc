@@ -34,11 +34,11 @@
 !include NetworkPkg/Network.dsc.inc
 
 [LibraryClasses]
-  K3GopPolicyLib|SpacemitPlatformPkg/Library/K3GopPolicyLib/K3GopPolicyLib.inf
+  PciGopPolicyLib|RuyiPlatformPkg/Library/PciGopPolicyLib/PciGopPolicyLib.inf
 !if $(X64EMU_ENABLE) == TRUE
-  K3GopLoaderLib|SpacemitPlatformPkg/Library/K3GopLoaderLib/K3GopLoaderLib.inf
+  PciGopLoaderLib|RuyiPlatformPkg/Library/PciGopLoaderLib/PciGopLoaderLib.inf
 !else
-  K3GopLoaderLib|SpacemitPlatformPkg/Library/K3GopLoaderLibNull/K3GopLoaderLibNull.inf
+  PciGopLoaderLib|RuyiPlatformPkg/Library/PciGopLoaderLibNull/PciGopLoaderLibNull.inf
 !endif
   K3QspiLib|SpacemitPlatformPkg/Library/K3QspiLib/K3QspiLib.inf
   BootProgressLib|SpacemitPlatformPkg/Library/BootProgressLib/BootProgressLib.inf
@@ -252,7 +252,7 @@
 
 [Components]
 !if $(X64EMU_ENABLE) == TRUE
-  SpacemitPlatformPkg/Drivers/X64EmulatorDxe/X64EmulatorDxe.inf
+  RuyiPlatformPkg/Drivers/EmulatorDxe/EmulatorDxe.inf
 !endif
 !if $(NETWORK_ENABLE) == TRUE
   SecurityPkg/Hash2DxeCrypto/Hash2DxeCrypto.inf
@@ -322,7 +322,7 @@
   MdeModulePkg/Universal/StatusCodeHandler/RuntimeDxe/StatusCodeHandlerRuntimeDxe.inf
   MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf {
     <LibraryClasses>
-      NULL|SpacemitPlatformPkg/Library/K3GopSecurityLib/K3GopSecurityLib.inf
+      NULL|RuyiPlatformPkg/Library/PciGopSecurityLib/PciGopSecurityLib.inf
       RngLib|MdePkg/Library/BaseRngLibNull/BaseRngLibNull.inf
   }
   UefiCpuPkg/CpuDxeRiscV64/CpuDxeRiscV64.inf

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-2-Clause-Patent */
-#include <Library/K3GopLoaderLib.h>
-#include <Library/K3GopPolicyLib.h>
+#include <Library/PciGopLoaderLib.h>
+#include <Library/PciGopPolicyLib.h>
 #include <IndustryStandard/PeImage.h>
 #include <Protocol/DriverBinding.h>
 #include <Protocol/LoadedImage.h>
@@ -13,6 +13,68 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
 
+extern EFI_GUID  gMultiArchUefiEmulatorDeviceGuid;
+
+VOID
+PciGopConnectEmulator (
+  VOID
+  )
+{
+  EFI_HANDLE  *Handles;
+  UINTN       Count;
+  EFI_STATUS  Status;
+
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gMultiArchUefiEmulatorDeviceGuid,
+                  NULL,
+                  &Count,
+                  &Handles
+                  );
+  if (Status == EFI_NOT_FOUND) {
+    DEBUG ((DEBUG_INFO, "UEFI driver emulation disabled\n"));
+    return;
+  }
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "UEFI driver emulator unavailable: %r\n", Status));
+    return;
+  }
+
+  for (UINTN Index = 0; Index < Count; Index++) {
+    EFI_OPEN_PROTOCOL_INFORMATION_ENTRY  *Info;
+    UINTN                                OpenCount;
+    BOOLEAN                              Connected = FALSE;
+
+    Status = gBS->OpenProtocolInformation (
+                    Handles[Index],
+                    &gMultiArchUefiEmulatorDeviceGuid,
+                    &Info,
+                    &OpenCount
+                    );
+    if (!EFI_ERROR (Status)) {
+      for (UINTN I = 0; I < OpenCount; I++) {
+        if (Info[I].Attributes & EFI_OPEN_PROTOCOL_BY_DRIVER) {
+          Connected = TRUE;
+        }
+      }
+
+      FreePool (Info);
+    }
+
+    if (Connected) {
+      continue;
+    }
+
+    Status = gBS->ConnectController (Handles[Index], NULL, NULL, FALSE);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "UEFI driver emulator start failed: %r\n", Status));
+    }
+  }
+
+  FreePool (Handles);
+}
+
 typedef struct GOP_BINDING {
   struct GOP_BINDING              *Next;
   EFI_DRIVER_BINDING_PROTOCOL     *Binding;
@@ -20,7 +82,7 @@ typedef struct GOP_BINDING {
   EFI_DRIVER_BINDING_SUPPORTED    Supported;
   EFI_DRIVER_BINDING_START        Start;
   UINT16                          Machine;
-  K3_GOP_POLICY                   Replacement;
+  PCI_GOP_POLICY                  Replacement;
 } GOP_BINDING;
 
 STATIC GOP_BINDING  *mBindings;
@@ -55,7 +117,7 @@ BindingAllowed (
   EFI_PCI_IO_PROTOCOL        *Io;
   EFI_LOADED_IMAGE_PROTOCOL  *Image;
   EFI_STATUS                 Status;
-  K3_GOP_POLICY              Policy;
+  PCI_GOP_POLICY             Policy;
 
   if ((Item == NULL) || !mEnabled ||
       EFI_ERROR (gBS->HandleProtocol (Item->Image, &gEfiLoadedImageProtocolGuid, (VOID **)&Image)))
@@ -65,24 +127,24 @@ BindingAllowed (
 
   Status = gBS->HandleProtocol (Controller, &gEfiPciIoProtocolGuid, (VOID **)&Io);
   if (EFI_ERROR (Status)) {
-    return Item->Replacement == K3GopX64;
+    return Item->Replacement == PciGopX64;
   }
 
-  Status = K3GopReadPciDevice (Controller, &Pci);
+  Status = PciGopReadPciDevice (Controller, &Pci);
   if (EFI_ERROR (Status)) {
     return FALSE;
   }
 
   if (Pci.Hdr.ClassCode[2] != PCI_CLASS_DISPLAY) {
-    return Item->Replacement == K3GopX64;
+    return Item->Replacement == PciGopX64;
   }
 
-  Policy = K3GopPolicyForDevice (Pci.Hdr.VendorId, Pci.Hdr.DeviceId);
+  Policy = PciGopPolicyForDevice (Pci.Hdr.VendorId, Pci.Hdr.DeviceId);
   if (Item->Machine == EFI_IMAGE_MACHINE_X64) {
-    return Policy == K3GopX64;
+    return Policy == PciGopX64;
   }
 
-  return (Policy != K3GopX64) && (Policy == Item->Replacement) &&
+  return (Policy != PciGopX64) && (Policy == Item->Replacement) &&
          (mGopImage == Item->Image);
 }
 
@@ -147,7 +209,7 @@ BindingInstalled (
       continue;
     }
 
-    Machine = K3GopImageMachine (Image->ImageBase, (UINTN)Image->ImageSize);
+    Machine = PciGopImageMachine (Image->ImageBase, (UINTN)Image->ImageSize);
     if ((Machine != EFI_IMAGE_MACHINE_X64) && (Machine != EFI_IMAGE_MACHINE_AARCH64)) {
       continue;
     }
@@ -162,7 +224,7 @@ BindingInstalled (
       if (Item == NULL) {
         Binding->Supported = RejectBinding;
         Binding->Start     = RejectBinding;
-        DEBUG ((DEBUG_ERROR, "K3 GOP: cannot register driver binding policy\n"));
+        DEBUG ((DEBUG_ERROR, "PCI GOP: cannot register driver binding policy\n"));
         continue;
       }
 
@@ -181,9 +243,9 @@ BindingInstalled (
     }
 
     Item->Machine     = Machine;
-    Item->Replacement = K3GopX64;
+    Item->Replacement = PciGopX64;
     if (Item->Image == mGopImage) {
-      Item->Replacement = K3GopAmdPreSoc15;
+      Item->Replacement = PciGopAmdPreSoc15;
     }
 
     // Guard binding as well as loading: a driver may support other PCI devices.
@@ -193,7 +255,7 @@ BindingInstalled (
 }
 
 EFI_STATUS
-K3GopInitialize (
+PciGopInitialize (
   VOID
   )
 {
@@ -218,7 +280,7 @@ K3GopInitialize (
 
   Status = gBS->SignalEvent (mBindingEvent);
   if (!EFI_ERROR (Status)) {
-    Status = gBS->InstallProtocolInterface (&mPolicyHandle, &gK3GopPolicyReadyGuid, EFI_NATIVE_INTERFACE, NULL);
+    Status = gBS->InstallProtocolInterface (&mPolicyHandle, &gPciGopPolicyReadyGuid, EFI_NATIVE_INTERFACE, NULL);
   }
 
   if (EFI_ERROR (Status)) {
@@ -246,17 +308,17 @@ LoadReplacement (
   }
 
   mGopAttempted = TRUE;
-  Status        = GetSectionFromAnyFv (K3GopFileGuid (K3GopAmdPreSoc15), EFI_SECTION_RAW, 0, &Buffer, &Size);
+  Status        = GetSectionFromAnyFv (PciGopFileGuid (PciGopAmdPreSoc15), EFI_SECTION_RAW, 0, &Buffer, &Size);
   if (EFI_ERROR (Status)) {
     return Status;
   }
 
-  if (!K3GopVerifyImage (K3GopAmdPreSoc15, Buffer, Size)) {
+  if (!PciGopVerifyImage (PciGopAmdPreSoc15, Buffer, Size)) {
     FreePool (Buffer);
     return EFI_SECURITY_VIOLATION;
   }
 
-  EfiInitializeFwVolDevicepathNode (&File, K3GopFileGuid (K3GopAmdPreSoc15));
+  EfiInitializeFwVolDevicepathNode (&File, PciGopFileGuid (PciGopAmdPreSoc15));
   Path = AppendDevicePathNode (NULL, &File.Header);
   if (Path == NULL) {
     FreePool (Buffer);
@@ -279,16 +341,16 @@ LoadReplacement (
 }
 
 VOID
-K3GopConnectSelectedDrivers (
+PciGopConnectSelectedDrivers (
   VOID
   )
 {
-  EFI_HANDLE     *Handles;
-  EFI_HANDLE     Drivers[2];
-  UINTN          Count;
-  PCI_TYPE00     Pci;
-  EFI_STATUS     Status;
-  K3_GOP_POLICY  Policy;
+  EFI_HANDLE      *Handles;
+  EFI_HANDLE      Drivers[2];
+  UINTN           Count;
+  PCI_TYPE00      Pci;
+  EFI_STATUS      Status;
+  PCI_GOP_POLICY  Policy;
 
   if (!mEnabled || (mBindingEvent == NULL)) {
     return;
@@ -300,14 +362,14 @@ K3GopConnectSelectedDrivers (
   }
 
   for (UINTN Index = 0; Index < Count; Index++) {
-    if (EFI_ERROR (K3GopReadPciDevice (Handles[Index], &Pci)) ||
+    if (EFI_ERROR (PciGopReadPciDevice (Handles[Index], &Pci)) ||
         (Pci.Hdr.ClassCode[2] != PCI_CLASS_DISPLAY))
     {
       continue;
     }
 
-    Policy = K3GopPolicyForDevice (Pci.Hdr.VendorId, Pci.Hdr.DeviceId);
-    if (Policy == K3GopX64) {
+    Policy = PciGopPolicyForDevice (Pci.Hdr.VendorId, Pci.Hdr.DeviceId);
+    if (Policy == PciGopX64) {
       continue;
     }
 
@@ -320,7 +382,7 @@ K3GopConnectSelectedDrivers (
 
     DEBUG ((
       DEBUG_INFO,
-      "K3 GOP: %04x:%04x AMD ARM64 1.68: %r\n",
+      "PCI GOP: %04x:%04x AMD ARM64 1.68: %r\n",
       Pci.Hdr.VendorId,
       Pci.Hdr.DeviceId,
       Status

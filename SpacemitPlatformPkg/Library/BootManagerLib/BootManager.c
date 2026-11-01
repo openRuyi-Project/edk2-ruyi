@@ -12,7 +12,7 @@
 #include <Library/BaseLib.h>
 #include <Library/BootProgressLib.h>
 #include <Library/HobLib.h>
-#include <Library/K3GopLoaderLib.h>
+#include <Library/PciGopLoaderLib.h>
 #include <Pi/PiBootMode.h>
 #include <Library/PcdLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -183,7 +183,7 @@ ConnectGraphics (
     FreePool (Handles);
   }
 
-  K3GopConnectSelectedDrivers ();
+  PciGopConnectSelectedDrivers ();
   Status = gBS->LocateHandleBuffer (
                   ByProtocol,
                   &gEfiPciIoProtocolGuid,
@@ -211,68 +211,6 @@ ConnectGraphics (
   // BDS connects the recorded GOP paths after this initialization returns.
 }
 
-#ifdef K3_X64EMU
-STATIC VOID
-ConnectX64Emulator (
-  VOID
-  )
-{
-  EFI_HANDLE  *Handles;
-  UINTN       Count;
-  EFI_STATUS  Status;
-
-  Status = gBS->LocateHandleBuffer (
-                  ByProtocol,
-                  &gMultiArchUefiEmulatorDeviceGuid,
-                  NULL,
-                  &Count,
-                  &Handles
-                  );
-  if (Status == EFI_NOT_FOUND) {
-    DEBUG ((DEBUG_INFO, "X64 UEFI emulation disabled\n"));
-    return;
-  }
-
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "X64 UEFI emulator unavailable: %r\n", Status));
-    return;
-  }
-
-  for (UINTN Index = 0; Index < Count; Index++) {
-    EFI_OPEN_PROTOCOL_INFORMATION_ENTRY  *Info;
-    UINTN                                OpenCount;
-    BOOLEAN                              Connected = FALSE;
-
-    Status = gBS->OpenProtocolInformation (
-                    Handles[Index],
-                    &gMultiArchUefiEmulatorDeviceGuid,
-                    &Info,
-                    &OpenCount
-                    );
-    if (!EFI_ERROR (Status)) {
-      for (UINTN I = 0; I < OpenCount; I++) {
-        if (Info[I].Attributes & EFI_OPEN_PROTOCOL_BY_DRIVER) {
-          Connected = TRUE;
-        }
-      }
-
-      FreePool (Info);
-    }
-
-    if (Connected) {
-      continue;
-    }
-
-    Status = gBS->ConnectController (Handles[Index], NULL, NULL, FALSE);
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "X64 UEFI emulator start failed: %r\n", Status));
-    }
-  }
-
-  FreePool (Handles);
-}
-
-#endif
 
 VOID EFIAPI
 PlatformBootManagerBeforeConsole (
@@ -290,9 +228,9 @@ PlatformBootManagerBeforeConsole (
 
  #ifdef K3_X64EMU
   // Install binding guards before foreign drivers become executable.
-  Status = K3GopInitialize ();
+  Status = PciGopInitialize ();
   if (!EFI_ERROR (Status)) {
-    ConnectX64Emulator ();
+    PciGopConnectEmulator ();
   } else {
     DEBUG ((DEBUG_ERROR, "K3 GOP policy initialization failed: %r\n", Status));
   }
@@ -487,7 +425,7 @@ PlatformBootManagerAfterConsole (
   }
 
   EfiBootManagerConnectAll ();
-  K3GopConnectSelectedDrivers ();
+  PciGopConnectSelectedDrivers ();
   EfiBootManagerConnectAllDefaultConsoles ();
   UpdateConsoleGeometry ();
   Status = InstallStorageBootPolicy ();

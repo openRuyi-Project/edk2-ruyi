@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: BSD-2-Clause-Patent */
-#include <Library/K3GopPolicyLib.h>
+#include <Library/PciGopPolicyLib.h>
 #include <IndustryStandard/PeImage.h>
 #include <Protocol/PciIo.h>
 #include <Library/BaseLib.h>
@@ -18,7 +18,7 @@ STATIC CONST UINT8  mImageDigest[SHA256_DIGEST_SIZE] = {
 };
 
 EFI_STATUS
-K3GopReadPciDevice (
+PciGopReadPciDevice (
   EFI_HANDLE  Controller,
   PCI_TYPE00  *Pci
   )
@@ -35,7 +35,7 @@ K3GopReadPciDevice (
 }
 
 UINT16
-K3GopImageMachine (
+PciGopImageMachine (
   CONST VOID  *Image,
   UINTN       Size
   )
@@ -61,20 +61,20 @@ K3GopImageMachine (
 }
 
 CONST EFI_GUID *
-K3GopFileGuid (
-  K3_GOP_POLICY  Policy
+PciGopFileGuid (
+  PCI_GOP_POLICY  Policy
   )
 {
-  return (Policy == K3GopAmdPreSoc15) ? &mFileGuid : NULL;
+  return (Policy == PciGopAmdPreSoc15) ? &mFileGuid : NULL;
 }
 
-K3_GOP_POLICY
-K3GopFilePolicy (
+PCI_GOP_POLICY
+PciGopFilePolicy (
   CONST EFI_DEVICE_PATH_PROTOCOL  *Path
   )
 {
   if ((Path == NULL) || !IsDevicePathValid (Path, 0)) {
-    return K3GopX64;
+    return PciGopX64;
   }
 
   while (!IsDevicePathEnd (Path)) {
@@ -84,27 +84,27 @@ K3GopFilePolicy (
         IsDevicePathEnd (NextDevicePathNode (Path)))
     {
       if (CompareGuid (&((CONST MEDIA_FW_VOL_FILEPATH_DEVICE_PATH *)Path)->FvFileName, &mFileGuid)) {
-        return K3GopAmdPreSoc15;
+        return PciGopAmdPreSoc15;
       }
     }
 
     Path = NextDevicePathNode (Path);
   }
 
-  return K3GopX64;
+  return PciGopX64;
 }
 
 BOOLEAN
-K3GopVerifyImage (
-  K3_GOP_POLICY  Policy,
-  CONST VOID     *Image,
-  UINTN          Size
+PciGopVerifyImage (
+  PCI_GOP_POLICY  Policy,
+  CONST VOID      *Image,
+  UINTN           Size
   )
 {
   UINT8  Digest[SHA256_DIGEST_SIZE];
 
-  return (Policy == K3GopAmdPreSoc15) && (Size == 136896) &&
-         (K3GopImageMachine (Image, Size) == EFI_IMAGE_MACHINE_AARCH64) &&
+  return (Policy == PciGopAmdPreSoc15) && (Size == 136896) &&
+         (PciGopImageMachine (Image, Size) == EFI_IMAGE_MACHINE_AARCH64) &&
          Sha256HashAll (Image, Size, Digest) &&
          (CompareMem (Digest, mImageDigest, sizeof (Digest)) == 0);
 }

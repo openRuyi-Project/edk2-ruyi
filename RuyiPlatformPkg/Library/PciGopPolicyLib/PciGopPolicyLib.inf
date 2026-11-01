@@ -1,17 +1,17 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 [Defines]
   INF_VERSION = 0x0001001B
-  BASE_NAME = K3GopPolicyLib
+  BASE_NAME = PciGopPolicyLib
   FILE_GUID = b7a45aa7-4d4f-4b13-8232-fc42d8e5c74f
   MODULE_TYPE = DXE_DRIVER
-  LIBRARY_CLASS = K3GopPolicyLib|DXE_DRIVER
+  LIBRARY_CLASS = PciGopPolicyLib|DXE_DRIVER
 [Sources]
   Devices.c
   Policy.c
 [Packages]
   MdePkg/MdePkg.dec
   CryptoPkg/CryptoPkg.dec
-  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
 [LibraryClasses]
   BaseLib
   BaseMemoryLib

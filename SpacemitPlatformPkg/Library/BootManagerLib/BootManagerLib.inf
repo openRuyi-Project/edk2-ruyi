@@ -11,10 +11,11 @@
   Storage.c
 [Packages]
   MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
   SpacemitPlatformPkg/SpacemitPlatformPkg.dec
   MdeModulePkg/MdeModulePkg.dec
 [LibraryClasses]
-  K3GopLoaderLib
+  PciGopLoaderLib
   BootProgressLib
   HobLib
   PcdLib
@@ -35,7 +36,6 @@
   gEfiSerialIoProtocolGuid
   gEfiFirmwareVolume2ProtocolGuid
 [Guids]
-  gMultiArchUefiEmulatorDeviceGuid
   gEfiEndOfDxeEventGroupGuid
   gEdkiiXtermR6Guid
 

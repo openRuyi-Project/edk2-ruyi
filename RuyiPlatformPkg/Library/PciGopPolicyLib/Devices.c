@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: BSD-2-Clause-Patent */
-#include <Library/K3GopPolicyLib.h>
+#include <Library/PciGopPolicyLib.h>
 
 // AMD ASIC PCI IDs from Linux amdgpu_drv.c, revision 0d696747ef1a.
 STATIC CONST UINT16  mPreSoc15Ids[] = {
@@ -59,21 +59,21 @@ STATIC CONST UINT16  mPreSoc15Ids[] = {
   0x694c, 0x694e, 0x694f,
 };
 
-K3_GOP_POLICY
-K3GopPolicyForDevice (
+PCI_GOP_POLICY
+PciGopPolicyForDevice (
   UINT16  VendorId,
   UINT16  DeviceId
   )
 {
   if (VendorId != 0x1002) {
-    return K3GopX64;
+    return PciGopX64;
   }
 
   for (UINTN Index = 0; Index < ARRAY_SIZE (mPreSoc15Ids); Index++) {
     if (DeviceId == mPreSoc15Ids[Index]) {
-      return K3GopAmdPreSoc15;
+      return PciGopAmdPreSoc15;
     }
   }
 
-  return K3GopX64;
+  return PciGopX64;
 }
