@@ -4,14 +4,14 @@
 #include <Guid/VariableFormat.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
-#include <Library/K3NvFvbLib.h>
+#include <Library/NvFvbLib.h>
 
 #define SIGNATURE   SIGNATURE_32 ('K', '3', 'N', 'V')
 #define ATTRIBUTES  (EFI_FVB2_READ_ENABLED_CAP | EFI_FVB2_READ_STATUS |\
                     EFI_FVB2_WRITE_ENABLED_CAP | EFI_FVB2_WRITE_DISABLED_CAP | EFI_FVB2_WRITE_STATUS | \
                     EFI_FVB2_MEMORY_MAPPED | EFI_FVB2_STICKY_WRITE | \
                     EFI_FVB2_ERASE_POLARITY)
-#define BLOCKS      (K3_NV_TOTAL_SIZE / K3_NV_BLOCK_SIZE)
+#define BLOCKS      (NV_TOTAL_SIZE / NV_BLOCK_SIZE)
 
 typedef struct {
   EFI_FIRMWARE_VOLUME_HEADER    Header;
@@ -19,7 +19,7 @@ typedef struct {
   VARIABLE_STORE_HEADER         Variables;
 } INITIAL_HEADER;
 
-STATIC K3_NV_FVB *
+STATIC NV_FVB *
 Instance (
   CONST EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL  *Protocol
   )
@@ -28,7 +28,7 @@ Instance (
     return NULL;
   }
 
-  K3_NV_FVB  *F = BASE_CR (Protocol, K3_NV_FVB, Protocol);
+  NV_FVB  *F = BASE_CR (Protocol, NV_FVB, Protocol);
 
   return F->Signature == SIGNATURE ? F : NULL;
 }
@@ -39,7 +39,7 @@ Attributes (
   EFI_FVB_ATTRIBUTES_2                       *Value
   )
 {
-  K3_NV_FVB  *F = Instance (Protocol);
+  NV_FVB  *F = Instance (Protocol);
 
   if (!F || !Value) {
     return EFI_INVALID_PARAMETER;
@@ -55,7 +55,7 @@ SetAttributes (
   EFI_FVB_ATTRIBUTES_2                       *Value
   )
 {
-  K3_NV_FVB  *F = Instance (Protocol);
+  NV_FVB  *F = Instance (Protocol);
 
   if (!F || !Value) {
     return EFI_INVALID_PARAMETER;
@@ -83,7 +83,7 @@ Physical (
   EFI_PHYSICAL_ADDRESS                       *Address
   )
 {
-  K3_NV_FVB  *F = Instance (Protocol);
+  NV_FVB  *F = Instance (Protocol);
 
   if (!F || !Address) {
     return EFI_INVALID_PARAMETER;
@@ -105,22 +105,22 @@ BlockSize (
     return EFI_INVALID_PARAMETER;
   }
 
-  *Size  = K3_NV_BLOCK_SIZE;
+  *Size  = NV_BLOCK_SIZE;
   *Count = BLOCKS - (UINTN)Lba;
   return EFI_SUCCESS;
 }
 
 STATIC EFI_STATUS
 Range (
-  K3_NV_FVB  *F,
-  EFI_LBA    Lba,
-  UINTN      Offset,
-  UINTN      *Bytes,
-  VOID       *Buffer
+  NV_FVB   *F,
+  EFI_LBA  Lba,
+  UINTN    Offset,
+  UINTN    *Bytes,
+  VOID     *Buffer
   )
 {
   if (!F || !Bytes || !Buffer || (Lba >= BLOCKS) ||
-      (Offset >= K3_NV_BLOCK_SIZE))
+      (Offset >= NV_BLOCK_SIZE))
   {
     return EFI_INVALID_PARAMETER;
   }
@@ -133,8 +133,8 @@ Range (
     return EFI_NOT_READY;
   }
 
-  if (*Bytes > K3_NV_BLOCK_SIZE - Offset) {
-    *Bytes = K3_NV_BLOCK_SIZE - Offset;
+  if (*Bytes > NV_BLOCK_SIZE - Offset) {
+    *Bytes = NV_BLOCK_SIZE - Offset;
     return EFI_BAD_BUFFER_SIZE;
   }
 
@@ -150,27 +150,27 @@ Read (
   UINT8                                      *Buffer
   )
 {
-  K3_NV_FVB   *F     = Instance (Protocol);
+  NV_FVB      *F     = Instance (Protocol);
   EFI_STATUS  Status = Range (F, Lba, Offset, Bytes, Buffer);
 
   if (EFI_ERROR (Status) && (Status != EFI_BAD_BUFFER_SIZE)) {
     return Status;
   }
 
-  CopyMem (Buffer, F->Mirror + Lba * K3_NV_BLOCK_SIZE + Offset, *Bytes);
+  CopyMem (Buffer, F->Mirror + Lba * NV_BLOCK_SIZE + Offset, *Bytes);
   return Status;
 }
 
 STATIC EFI_STATUS
 Refresh (
-  K3_NV_FVB  *F,
-  UINT32     Offset,
-  UINTN      Bytes
+  NV_FVB  *F,
+  UINT32  Offset,
+  UINTN   Bytes
   )
 {
   EFI_STATUS  Status = F->Flash.Read (
                                   F->Flash.Context,
-                                  K3_NV_FLASH_OFFSET + Offset,
+                                  F->FlashOffset + Offset,
                                   Bytes,
                                   F->Scratch
                                   );
@@ -193,14 +193,14 @@ Write (
   UINT8                                      *Buffer
   )
 {
-  K3_NV_FVB   *F       = Instance (Protocol);
+  NV_FVB      *F       = Instance (Protocol);
   EFI_STATUS  Boundary = Range (F, Lba, Offset, Bytes, Buffer);
 
   if (EFI_ERROR (Boundary) && (Boundary != EFI_BAD_BUFFER_SIZE)) {
     return Boundary;
   }
 
-  UINT32  Position = (UINT32)(Lba * K3_NV_BLOCK_SIZE + Offset);
+  UINT32  Position = (UINT32)(Lba * NV_BLOCK_SIZE + Offset);
   UINTN   Size     = *Bytes;
 
   *Bytes = 0;
@@ -224,7 +224,7 @@ Write (
   F->Busy = TRUE;
   EFI_STATUS  Status = F->Flash.Program (
                                   F->Flash.Context,
-                                  K3_NV_FLASH_OFFSET + Position,
+                                  F->FlashOffset + Position,
                                   Size,
                                   F->Expected
                                   );
@@ -249,8 +249,8 @@ Erase (
   ...
   )
 {
-  K3_NV_FVB  *F = Instance (Protocol);
-  VA_LIST    Args;
+  NV_FVB   *F = Instance (Protocol);
+  VA_LIST  Args;
 
   if (!F) {
     return EFI_INVALID_PARAMETER;
@@ -296,20 +296,20 @@ Erase (
     UINTN  Count = VA_ARG (Args, UINTN);
 
     for (UINTN I = 0; I < Count; I++) {
-      UINT32  Position = (UINT32)((Lba + I) * K3_NV_BLOCK_SIZE);
+      UINT32  Position = (UINT32)((Lba + I) * NV_BLOCK_SIZE);
 
       Status = F->Flash.Erase (
                           F->Flash.Context,
-                          K3_NV_FLASH_OFFSET + Position
+                          F->FlashOffset + Position
                           );
-      EFI_STATUS  Verify = Refresh (F, Position, K3_NV_BLOCK_SIZE);
+      EFI_STATUS  Verify = Refresh (F, Position, NV_BLOCK_SIZE);
 
       if (EFI_ERROR (Status) || EFI_ERROR (Verify)) {
         Status = EFI_ERROR (Status) ? Status : Verify;
         goto Done;
       }
 
-      for (UINTN Byte = 0; Byte < K3_NV_BLOCK_SIZE; Byte++) {
+      for (UINTN Byte = 0; Byte < NV_BLOCK_SIZE; Byte++) {
         if (F->Scratch[Byte] != 0xff) {
           Status = EFI_DEVICE_ERROR;
           goto Done;
@@ -333,13 +333,13 @@ ValidHeader (
   CONST VARIABLE_STORE_HEADER       *V;
 
   if ((H->Signature != EFI_FVH_SIGNATURE) ||
-      (H->Revision != EFI_FVH_REVISION) || (H->FvLength != K3_NV_TOTAL_SIZE) ||
+      (H->Revision != EFI_FVH_REVISION) || (H->FvLength != NV_TOTAL_SIZE) ||
       (H->HeaderLength != OFFSET_OF (INITIAL_HEADER, Variables)) ||
       !CompareGuid (&H->FileSystemGuid, &gEfiSystemNvDataFvGuid) ||
       ((H->Attributes != ATTRIBUTES) &&
        (H->Attributes != (ATTRIBUTES & ~EFI_FVB2_WRITE_DISABLED_CAP))) ||
       (H->BlockMap[0].NumBlocks != BLOCKS) ||
-      (H->BlockMap[0].Length != K3_NV_BLOCK_SIZE) ||
+      (H->BlockMap[0].Length != NV_BLOCK_SIZE) ||
       H->BlockMap[1].NumBlocks || H->BlockMap[1].Length ||
       CalculateSum16 ((CONST UINT16 *)Mirror, H->HeaderLength))
   {
@@ -348,37 +348,40 @@ ValidHeader (
 
   V = (CONST VOID *)(Mirror + H->HeaderLength);
   return CompareGuid (&V->Signature, &gEfiAuthenticatedVariableGuid) &&
-         V->Size == K3_NV_VARIABLE_SIZE - H->HeaderLength &&
+         V->Size == NV_VARIABLE_SIZE - H->HeaderLength &&
          V->Format == VARIABLE_STORE_FORMATTED &&
          V->State == VARIABLE_STORE_HEALTHY;
 }
 
 EFI_STATUS
-K3NvFvbInitialize (
-  K3_NV_FVB              *F,
-  VOID                   *Mirror,
-  CONST K3_NV_FLASH_OPS  *Flash
+NvFvbInitialize (
+  NV_FVB              *F,
+  VOID                *Mirror,
+  CONST NV_FLASH_OPS  *Flash,
+  UINT32              FlashOffset
   )
 {
   if (!F || !Mirror || !Flash || !Flash->Read || !Flash->Program ||
-      !Flash->Erase || ((UINTN)Mirror & EFI_PAGE_MASK))
+      !Flash->Erase || ((UINTN)Mirror & EFI_PAGE_MASK) ||
+      (FlashOffset % NV_BLOCK_SIZE) || (FlashOffset > MAX_UINT32 - NV_TOTAL_SIZE))
   {
     return EFI_INVALID_PARAMETER;
   }
 
   ZeroMem (F, sizeof (*F));
-  F->Signature  = SIGNATURE;
-  F->Mirror     = Mirror;
-  F->Physical   = (EFI_PHYSICAL_ADDRESS)(UINTN)Mirror;
-  F->Flash      = *Flash;
-  F->Attributes = ATTRIBUTES;
-  F->Protocol   = (EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL) {
+  F->Signature   = SIGNATURE;
+  F->Mirror      = Mirror;
+  F->Physical    = (EFI_PHYSICAL_ADDRESS)(UINTN)Mirror;
+  F->Flash       = *Flash;
+  F->FlashOffset = FlashOffset;
+  F->Attributes  = ATTRIBUTES;
+  F->Protocol    = (EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL) {
     Attributes, SetAttributes, Physical, BlockSize, Read, Write, Erase, NULL
   };
   EFI_STATUS  Status = Flash->Read (
                                 Flash->Context,
-                                K3_NV_FLASH_OFFSET,
-                                K3_NV_TOTAL_SIZE,
+                                FlashOffset,
+                                NV_TOTAL_SIZE,
                                 Mirror
                                 );
 
@@ -390,7 +393,7 @@ K3NvFvbInitialize (
     return EFI_SUCCESS;
   }
 
-  for (UINTN I = 0; I < K3_NV_TOTAL_SIZE; I++) {
+  for (UINTN I = 0; I < NV_TOTAL_SIZE; I++) {
     if (((UINT8 *)Mirror)[I] != 0xff) {
       return EFI_VOLUME_CORRUPTED;
     }
@@ -400,19 +403,19 @@ K3NvFvbInitialize (
 
   ZeroMem (&Initial, sizeof (Initial));
   CopyGuid (&Initial.Header.FileSystemGuid, &gEfiSystemNvDataFvGuid);
-  Initial.Header.FvLength              = K3_NV_TOTAL_SIZE;
+  Initial.Header.FvLength              = NV_TOTAL_SIZE;
   Initial.Header.Signature             = EFI_FVH_SIGNATURE;
   Initial.Header.Attributes            = ATTRIBUTES;
   Initial.Header.HeaderLength          = OFFSET_OF (INITIAL_HEADER, Variables);
   Initial.Header.Revision              = EFI_FVH_REVISION;
   Initial.Header.BlockMap[0].NumBlocks = BLOCKS;
-  Initial.Header.BlockMap[0].Length    = K3_NV_BLOCK_SIZE;
+  Initial.Header.BlockMap[0].Length    = NV_BLOCK_SIZE;
   Initial.Header.Checksum              = CalculateCheckSum16 (
                                            (UINT16 *)&Initial,
                                            Initial.Header.HeaderLength
                                            );
   CopyGuid (&Initial.Variables.Signature, &gEfiAuthenticatedVariableGuid);
-  Initial.Variables.Size   = K3_NV_VARIABLE_SIZE - Initial.Header.HeaderLength;
+  Initial.Variables.Size   = NV_VARIABLE_SIZE - Initial.Header.HeaderLength;
   Initial.Variables.Format = VARIABLE_STORE_FORMATTED;
   Initial.Variables.State  = VARIABLE_STORE_HEALTHY;
   UINTN  Bytes = OFFSET_OF (INITIAL_HEADER, Variables) +

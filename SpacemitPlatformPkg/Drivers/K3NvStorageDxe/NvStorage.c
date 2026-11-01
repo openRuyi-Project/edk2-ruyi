@@ -8,7 +8,7 @@
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
-#include <Library/K3NvFvbLib.h>
+#include <Library/NvFvbLib.h>
 #include <Library/HobLib.h>
 #include <Pi/PiBootMode.h>
 #include <Library/MemoryAllocationLib.h>
@@ -19,7 +19,7 @@
 #include <Library/UefiLib.h>
 #include "Flash.h"
 
-STATIC K3_NV_FVB                   mFvb;
+STATIC NV_FVB                   mFvb;
 STATIC EFI_SPI_NOR_FLASH_PROTOCOL  *mNor;
 STATIC EFI_HANDLE                  mHandle;
 STATIC EFI_EVENT                   mFtwEvent;
@@ -100,8 +100,8 @@ FindFlash (
       continue;
     }
 
-    if (mNor || (Nor->FlashSize < K3_NV_FLASH_OFFSET + K3_NV_TOTAL_SIZE) ||
-        (Nor->EraseBlockBytes != K3_NV_BLOCK_SIZE) ||
+    if (mNor || (Nor->FlashSize < K3_NV_FLASH_OFFSET + NV_TOTAL_SIZE) ||
+        (Nor->EraseBlockBytes != NV_BLOCK_SIZE) ||
         !Nor->ReadData || !Nor->WriteData || !Nor->Erase)
     {
       Status = EFI_UNSUPPORTED;
@@ -138,9 +138,9 @@ FtwReady (
 
   // FTW may have replayed an interrupted reclaim. Reload and validate that
   // result before allowing VariableRuntimeDxe to cache the variable store.
-  K3_NV_FLASH_OPS  Ops     = mFvb.Flash;
+  NV_FLASH_OPS  Ops     = mFvb.Flash;
   VOID             *Mirror = mFvb.Mirror;
-  EFI_STATUS       Status  = K3NvFvbInitialize (&mFvb, Mirror, &Ops);
+  EFI_STATUS       Status  = NvFvbInitialize (&mFvb, Mirror, &Ops, K3_NV_FLASH_OFFSET);
 
   if (!EFI_ERROR (Status)) {
     Status = gBS->InstallProtocolInterface (
@@ -167,8 +167,8 @@ K3NvStorageEntry (
 {
   EFI_STATUS       Status;
   EFI_EVENT        VirtualEvent = NULL;
-  UINTN            Pages        = EFI_SIZE_TO_PAGES (K3_NV_TOTAL_SIZE);
-  K3_NV_FLASH_OPS  Ops;
+  UINTN            Pages        = EFI_SIZE_TO_PAGES (NV_TOTAL_SIZE);
+  NV_FLASH_OPS  Ops;
 
   BOOLEAN  Recovery = GetBootModeHob () == BOOT_IN_RECOVERY_MODE;
 
@@ -199,13 +199,13 @@ K3NvStorageEntry (
     return Status;
   }
 
-  VOID  *Mirror = AllocateAlignedRuntimePages (Pages, K3_NV_WORKING_SIZE);
+  VOID  *Mirror = AllocateAlignedRuntimePages (Pages, NV_WORKING_SIZE);
 
   if (!Mirror) {
     return EFI_OUT_OF_RESOURCES;
   }
 
-  Status = K3NvFvbInitialize (&mFvb, Mirror, &Ops);
+  Status = NvFvbInitialize (&mFvb, Mirror, &Ops, K3_NV_FLASH_OFFSET);
   // An interrupted reclaim can leave the header invalid. Publish the block
   // interface for FTW to repair it, without yet publishing variable readiness.
   if (EFI_ERROR (Status) && (Status != EFI_VOLUME_CORRUPTED)) {
@@ -215,13 +215,13 @@ K3NvStorageEntry (
 
   Status = PcdSet64S (PcdFlashNvStorageVariableBase64, (UINTN)Mirror);
   if (!EFI_ERROR (Status)) {
-    Status = PcdSet64S (PcdFlashNvStorageFtwWorkingBase64, (UINTN)Mirror + K3_NV_VARIABLE_SIZE);
+    Status = PcdSet64S (PcdFlashNvStorageFtwWorkingBase64, (UINTN)Mirror + NV_VARIABLE_SIZE);
   }
 
   if (!EFI_ERROR (Status)) {
     Status = PcdSet64S (
                PcdFlashNvStorageFtwSpareBase64,
-               (UINTN)Mirror + K3_NV_VARIABLE_SIZE + K3_NV_WORKING_SIZE
+               (UINTN)Mirror + NV_VARIABLE_SIZE + NV_WORKING_SIZE
                );
   }
 
@@ -242,7 +242,7 @@ K3NvStorageEntry (
   }
 
   mPath.Memory.StartingAddress = (UINTN)Mirror;
-  mPath.Memory.EndingAddress   = (UINTN)Mirror + K3_NV_TOTAL_SIZE - 1;
+  mPath.Memory.EndingAddress   = (UINTN)Mirror + NV_TOTAL_SIZE - 1;
   mFtwEvent                    = EfiCreateProtocolNotifyEvent (
                                    &gEfiFaultTolerantWriteProtocolGuid,
                                    TPL_CALLBACK,

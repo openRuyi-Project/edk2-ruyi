@@ -56,7 +56,7 @@
   K3SpiConfigLib|SpacemitPlatformPkg/Library/K3SpiConfigLib/K3SpiConfigLib.inf
   K3CpuConfigLib|SpacemitPlatformPkg/Library/K3CpuConfigLib/K3CpuConfigLib.inf
   K3FirmwareUpdateLib|SpacemitPlatformPkg/Library/K3FirmwareUpdateLib/K3FirmwareUpdateLib.inf
-  K3NvFvbLib|SpacemitPlatformPkg/Library/K3NvFvbLib/K3NvFvbLib.inf
+  NvFvbLib|RuyiPlatformPkg/Library/NvFvbLib/NvFvbLib.inf
   UfsStorageLib|SpacemitPlatformPkg/Library/UfsStorageLib/UfsStorageLib.inf
   BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
   OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf

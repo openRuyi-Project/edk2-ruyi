@@ -23,7 +23,6 @@
   K3BoardEepromLib|Include/Library/K3BoardEepromLib.h
   Rtl8127Lib|Include/Library/Rtl8127Lib.h
   Rtl8127PacketsLib|Include/Library/Rtl8127PacketsLib.h
-  K3NvFvbLib|Include/Library/K3NvFvbLib.h
   UfsStorageLib|Include/Library/UfsStorageLib.h
   K3DisplayModeLib|Include/Library/K3DisplayModeLib.h
   K3GopLib|Include/Library/K3GopLib.h

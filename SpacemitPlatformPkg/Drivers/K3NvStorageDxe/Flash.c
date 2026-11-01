@@ -150,8 +150,8 @@ InStore (
   )
 {
   return Offset >= K3_NV_FLASH_OFFSET &&
-         Offset < K3_NV_FLASH_OFFSET + K3_NV_TOTAL_SIZE &&
-         Bytes <= K3_NV_FLASH_OFFSET + K3_NV_TOTAL_SIZE - Offset;
+         Offset < K3_NV_FLASH_OFFSET + NV_TOTAL_SIZE &&
+         Bytes <= K3_NV_FLASH_OFFSET + NV_TOTAL_SIZE - Offset;
 }
 
 STATIC EFI_STATUS
@@ -228,7 +228,7 @@ EraseFlash (
 {
   UINT8  Tx[4];
 
-  if ((Offset % K3_NV_BLOCK_SIZE) || !InStore (Offset, K3_NV_BLOCK_SIZE)) {
+  if ((Offset % NV_BLOCK_SIZE) || !InStore (Offset, NV_BLOCK_SIZE)) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -352,10 +352,10 @@ RuntimeMmio (
 EFI_STATUS
 K3NvFlashInitialize (
   UINT32           FlashSize,
-  K3_NV_FLASH_OPS  *Ops
+  NV_FLASH_OPS  *Ops
   )
 {
-  if ((FlashSize < K3_NV_FLASH_OFFSET + K3_NV_TOTAL_SIZE) || (FlashSize > SIZE_16MB)) {
+  if ((FlashSize < K3_NV_FLASH_OFFSET + NV_TOTAL_SIZE) || (FlashSize > SIZE_16MB)) {
     return EFI_UNSUPPORTED;
   }
 
@@ -379,7 +379,7 @@ K3NvFlashInitialize (
   }
 
   if (!EFI_ERROR (Status)) {
-    *Ops = (K3_NV_FLASH_OPS) {
+    *Ops = (NV_FLASH_OPS) {
       ReadFlash, ProgramFlash, EraseFlash, NULL
     };
   }
