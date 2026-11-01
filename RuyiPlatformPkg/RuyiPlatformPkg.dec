@@ -9,6 +9,7 @@
 [LibraryClasses]
   PciGopPolicyLib|Include/Library/PciGopPolicyLib.h
   PciGopLoaderLib|Include/Library/PciGopLoaderLib.h
+  PlatformCpuInfoLib|Include/Library/PlatformCpuInfoLib.h
 
 [Guids]
   gPciGopPolicyReadyGuid = { 0xe0a6b898, 0x8a5e, 0x48ef, { 0xb4, 0x4b, 0x36, 0xf8, 0x91, 0x4b, 0xa2, 0x03 } }

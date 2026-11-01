@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: BSD-2-Clause-Patent */
 
-#ifndef K3_SYSTEM_INFO_H_
-#define K3_SYSTEM_INFO_H_
+#ifndef RUYI_SYSTEM_INFO_H_
+#define RUYI_SYSTEM_INFO_H_
 
-#define K3_INFO_FORMSET_GUID \
+#define RUYI_INFO_FORMSET_GUID \
   { 0x38dbfb20, 0x3596, 0x46e1, { 0x98, 0xdd, 0x76, 0x4b, 0xdb, 0xd1, 0xbc, 0xf4 } }
 #define INFO_MAIN      1
 #define INFO_CPU       2
@@ -18,11 +18,7 @@
 #ifndef VFRCOMPILE
   #include <Uefi.h>
 
-typedef EFI_STATUS (*INFO_EMIT)(
-  VOID          *Context,
-  CONST CHAR16  *Label,
-  CONST CHAR16  *Value
-  );
+  #include <Library/PlatformCpuInfoLib.h>
 
 EFI_STATUS
 CollectSystemInfo (

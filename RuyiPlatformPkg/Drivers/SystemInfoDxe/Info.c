@@ -1,10 +1,9 @@
 /* SPDX-License-Identifier: BSD-2-Clause-Patent */
 #include "Info.h"
-#include <Guid/RiscVSecHobData.h>
+#include <PiDxe.h>
 #include <IndustryStandard/Pci.h>
 #include <IndustryStandard/SmBios.h>
 #include <Protocol/BlockIo.h>
-#include <Protocol/Clock.h>
 #include <Protocol/ComponentName2.h>
 #include <Protocol/DiskInfo.h>
 #include <Protocol/PciIo.h>
@@ -16,7 +15,6 @@
 #include <Library/FdtLib.h>
 #include <Library/HobLib.h>
 #include <Library/MemoryAllocationLib.h>
-#include <Library/PcdLib.h>
 #include <Library/PrintLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 
@@ -39,103 +37,6 @@ SizeString (
     Bytes / SIZE_1GB,
     ((Bytes % SIZE_1GB) * 100) / SIZE_1GB
     );
-}
-
-STATIC BOOLEAN
-NodeEnabled (
-  CONST VOID  *Fdt,
-  INT32       Node
-  )
-{
-  INT32        Length;
-  CONST CHAR8  *Value = FdtGetProp (Fdt, Node, "status", &Length);
-
-  return !Value || ((Length == 5) && !CompareMem (Value, "okay", 5)) ||
-         ((Length == 3) && !CompareMem (Value, "ok", 3));
-}
-
-STATIC EFI_STATUS
-CpuInfo (
-  INFO_EMIT  Emit,
-  VOID       *Context
-  )
-{
-  CONST EFI_GUID           Guid = RISCV_SEC_HANDOFF_HOB_GUID;
-  EFI_HOB_GUID_TYPE        *Hob = GetFirstGuidHob (&Guid);
-  RISCV_SEC_HANDOFF_DATA   Handoff;
-  SPACEMIT_CLOCK_PROTOCOL  *Clock;
-  CONST CHAR8              *Value;
-  CHAR16                   Text[128], Label[48];
-  UINT32                   X100 = 0, A100 = 0, Other = 0;
-  UINT64                   Rate;
-  INT32                    Cpus, Node, Length;
-  EFI_STATUS               Status;
-
-  UnicodeSPrint (Text, sizeof (Text), L"%a", (CHAR8 *)FixedPcdGetPtr (PcdSystemProductName));
-  EMIT (L"System", Text);
-  EMIT (L"Processor", L"SpacemiT K3");
-  if (!Hob || (GET_GUID_HOB_DATA_SIZE (Hob) < sizeof (Handoff))) {
-    return EFI_NOT_FOUND;
-  }
-
-  CopyMem (&Handoff, GET_GUID_HOB_DATA (Hob), sizeof (Handoff));
-  if (!Handoff.FdtPointer || FdtCheckHeader (Handoff.FdtPointer)) {
-    return EFI_COMPROMISED_DATA;
-  }
-
-  Cpus = FdtPathOffset (Handoff.FdtPointer, "/cpus");
-  if (Cpus < 0) {
-    return EFI_NOT_FOUND;
-  }
-
-  // Report this boot's active CPUs, not the setting saved for the next boot.
-  FdtForEachSubnode (Node, Handoff.FdtPointer, Cpus) {
-    Value = FdtGetProp (Handoff.FdtPointer, Node, "device_type", &Length);
-    if (!Value || (Length != 4) || CompareMem (Value, "cpu", 4) ||
-        !NodeEnabled (Handoff.FdtPointer, Node))
-    {
-      continue;
-    }
-
-    if (FdtStringListSearch (Handoff.FdtPointer, Node, "compatible", "spacemit,x100") >= 0) {
-      X100++;
-    } else if (FdtStringListSearch (Handoff.FdtPointer, Node, "compatible", "spacemit,a100") >= 0) {
-      A100++;
-    } else {
-      Other++;
-    }
-  }
-
-  UnicodeSPrint (Text, sizeof (Text), L"%u X100 + %u A100", X100, A100);
-  EMIT (L"Enabled cores", Text);
-  if (Other) {
-    UnicodeSPrint (Text, sizeof (Text), L"%u", Other);
-    EMIT (L"Other enabled cores", Text);
-  }
-
-  UnicodeSPrint (Text, sizeof (Text), L"%Lu", Handoff.BootHartId);
-  EMIT (L"Boot hart", Text);
-  Clock = NULL;
-  gBS->LocateProtocol (&gSpacemitClockProtocolGuid, NULL, (VOID **)&Clock);
-  if (X100) {
-    for (UINT32 Cluster = 0; Cluster < 2; Cluster++) {
-      UnicodeSPrint (Label, sizeof (Label), L"X100 cluster %u clock", Cluster);
-      if (Clock && (Clock->Revision == 1) && Clock->GetRate &&
-          !EFI_ERROR (Clock->GetRate (2 + Cluster, &Rate)) && Rate)
-      {
-        UnicodeSPrint (Text, sizeof (Text), L"%Lu MHz", Rate / 1000000);
-        EMIT (Label, Text);
-      } else {
-        EMIT (Label, L"Unknown");
-      }
-    }
-  }
-
-  if (A100) {
-    EMIT (L"A100 clock", L"Unknown");
-  }
-
-  return EFI_SUCCESS;
 }
 
 STATIC VOID
@@ -244,7 +145,8 @@ MemoryInfo (
     EMIT (
       L"  Type",
       Device->MemoryType == MemoryTypeLpddr5 ? L"LPDDR5" :
-      Device->MemoryType == MemoryTypeLpddr4 ? L"LPDDR4" : L"Unknown"
+      Device->MemoryType == MemoryTypeLpddr4 ? L"LPDDR4" :
+      Device->MemoryType == MemoryTypeDdr4 ? L"DDR4" : L"Unknown"
       );
     if (Record->Length >= OFFSET_OF (SMBIOS_TABLE_TYPE17, PartNumber) + sizeof (Device->PartNumber)) {
       MemoryPart (Device, Text, sizeof (Text));
@@ -362,6 +264,23 @@ PciAfter (
   return A->Function > B->Function;
 }
 
+STATIC VOID
+NegotiatedLinkString (
+  UINT16  Link,
+  UINT32  Capability,
+  CHAR16  *Text,
+  UINTN   Size
+  )
+{
+  if (Link & BIT11) {
+    UnicodeSPrint (Text, Size, L"Training");
+  } else if (((Capability & BIT20) && !(Link & BIT13)) || !(Link & 0x3f0)) {
+    UnicodeSPrint (Text, Size, L"Down");
+  } else {
+    LinkString (Link, Text, Size);
+  }
+}
+
 STATIC EFI_STATUS
 PciInfo (
   INFO_EMIT  Emit,
@@ -445,7 +364,12 @@ PciInfo (
       Status = Emit (Context, Label, Text);
       Cap    = PcieCapability (Config);
       if (!EFI_ERROR (Status) && Cap) {
-        LinkString (ReadUnaligned16 ((CONST UINT16 *)(Config + Cap + 0x12)), Link, sizeof (Link));
+        NegotiatedLinkString (
+          ReadUnaligned16 ((CONST UINT16 *)(Config + Cap + 0x12)),
+          ReadUnaligned32 ((CONST UINT32 *)(Config + Cap + 0x0c)),
+          Link,
+          sizeof (Link)
+          );
         Status = Emit (Context, L"  Negotiated link", Link);
         if (!EFI_ERROR (Status)) {
           LinkString (ReadUnaligned16 ((CONST UINT16 *)(Config + Cap + 0x0c)), Link, sizeof (Link));
@@ -717,7 +641,7 @@ CollectSystemInfo (
   )
 {
   switch (Form) {
-    case INFO_CPU: return CpuInfo (Emit, Context);
+    case INFO_CPU: return PlatformCpuInfo (Emit, Context);
     case INFO_MEMORY: return MemoryInfo (Emit, Context);
     case INFO_PCI: return PciInfo (Emit, Context);
     case INFO_STORAGE: return StorageInfo (Emit, Context);

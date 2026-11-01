@@ -11,8 +11,8 @@
 #define MAX_INFO_ROWS   (INFO_PAGE_ROWS + 2)
 
 extern UINT8           SystemInfoBin[];
-extern UINT8           K3SystemInfoDxeStrings[];
-STATIC EFI_GUID        mFormGuid = K3_INFO_FORMSET_GUID;
+extern UINT8           SystemInfoDxeStrings[];
+STATIC EFI_GUID        mFormGuid = RUYI_INFO_FORMSET_GUID;
 STATIC EFI_HANDLE      mHandle;
 STATIC EFI_HII_HANDLE  mHiiHandle;
 STATIC EFI_STRING_ID   mStrings[4][MAX_INFO_ROWS][2];
@@ -24,7 +24,7 @@ STATIC struct {
 } mPath = {
   {
     { HARDWARE_DEVICE_PATH, HW_VENDOR_DP,                   { sizeof (VENDOR_DEVICE_PATH),       0 }
-    }, K3_INFO_FORMSET_GUID
+    }, RUYI_INFO_FORMSET_GUID
   },
   { END_DEVICE_PATH_TYPE, END_ENTIRE_DEVICE_PATH_SUBTYPE, { sizeof (EFI_DEVICE_PATH_PROTOCOL), 0 }
   }
@@ -231,7 +231,7 @@ Callback (
 STATIC EFI_HII_CONFIG_ACCESS_PROTOCOL  mAccess = { ExtractConfig, RouteConfig, Callback };
 
 EFI_STATUS EFIAPI
-K3SystemInfoEntry (
+SystemInfoEntry (
   EFI_HANDLE        ImageHandle,
   EFI_SYSTEM_TABLE  *SystemTable
   )
@@ -250,7 +250,7 @@ K3SystemInfoEntry (
     return Status;
   }
 
-  mHiiHandle = HiiAddPackages (&mFormGuid, mHandle, K3SystemInfoDxeStrings, SystemInfoBin, NULL);
+  mHiiHandle = HiiAddPackages (&mFormGuid, mHandle, SystemInfoDxeStrings, SystemInfoBin, NULL);
   if (!mHiiHandle) {
     gBS->UninstallMultipleProtocolInterfaces (
            mHandle,
@@ -268,7 +268,7 @@ K3SystemInfoEntry (
 }
 
 EFI_STATUS EFIAPI
-K3SystemInfoUnload (
+SystemInfoUnload (
   EFI_HANDLE  ImageHandle
   )
 {

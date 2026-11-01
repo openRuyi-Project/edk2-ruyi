@@ -34,6 +34,7 @@
 !include NetworkPkg/Network.dsc.inc
 
 [LibraryClasses]
+  PlatformCpuInfoLib|SpacemitPlatformPkg/Library/K3CpuInfoLib/K3CpuInfoLib.inf
   PciGopPolicyLib|RuyiPlatformPkg/Library/PciGopPolicyLib/PciGopPolicyLib.inf
 !if $(X64EMU_ENABLE) == TRUE
   PciGopLoaderLib|RuyiPlatformPkg/Library/PciGopLoaderLib/PciGopLoaderLib.inf
@@ -368,7 +369,7 @@
   MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf
   MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
   SpacemitPlatformPkg/K3/PicoItx/SmbiosDxe/SmbiosDxe.inf
-  SpacemitPlatformPkg/Drivers/K3SystemInfoDxe/K3SystemInfoDxe.inf
+  RuyiPlatformPkg/Drivers/SystemInfoDxe/SystemInfoDxe.inf
   MdeModulePkg/Application/BootManagerMenuApp/BootManagerMenuApp.inf
   MdeModulePkg/Application/UiApp/UiApp.inf {
     <LibraryClasses>

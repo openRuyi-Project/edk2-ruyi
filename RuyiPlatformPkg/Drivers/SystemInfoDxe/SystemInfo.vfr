@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-2-Clause-Patent
 #include "Info.h"
 formset
-  guid = K3_INFO_FORMSET_GUID,
+  guid = RUYI_INFO_FORMSET_GUID,
   title = STRING_TOKEN(STR_TITLE),
   help = STRING_TOKEN(STR_HELP),
   classguid = gEfiIfrFrontPageGuid,
