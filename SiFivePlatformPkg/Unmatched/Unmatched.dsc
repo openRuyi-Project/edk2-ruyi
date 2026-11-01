@@ -37,6 +37,8 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdPciDegradeResourceForOptionRom|FALSE
 
 [LibraryClasses]
+  FirmwareUpdateLib|RuyiPlatformPkg/Library/FirmwareUpdateLib/FirmwareUpdateLib.inf
+  PlatformFirmwareUpdateLib|SiFivePlatformPkg/Library/UnmatchedFirmwareUpdateLib/UnmatchedFirmwareUpdateLib.inf
   Fu740SpiNorLib|SiFivePlatformPkg/Library/Fu740SpiNorLib/Fu740SpiNorLib.inf
   NvFvbLib|RuyiPlatformPkg/Library/NvFvbLib/NvFvbLib.inf
   BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
@@ -52,6 +54,7 @@
   Fu740InfoLib|SiFivePlatformPkg/Library/Fu740InfoLib/Fu740InfoLib.inf
   PciSegmentLib|SiFivePlatformPkg/Library/Fu740PciSegmentLib/Fu740PciSegmentLib.inf
   PciHostBridgeLib|SiFivePlatformPkg/Library/Fu740PciHostBridgeLib/Fu740PciHostBridgeLib.inf
+  FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
   UefiUsbLib|MdePkg/Library/UefiUsbLib/UefiUsbLib.inf
   SynchronizationLib|MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
   OemHookStatusCodeLib|MdeModulePkg/Library/OemHookStatusCodeLibNull/OemHookStatusCodeLibNull.inf
@@ -174,4 +177,15 @@
   MdeModulePkg/Universal/Variable/RuntimeDxe/VariableRuntimeDxe.inf {
     <LibraryClasses>
       NULL|SiFivePlatformPkg/Library/UnmatchedNvReadyLib/UnmatchedNvReadyLib.inf
+  }
+
+[Components]
+  MdeModulePkg/Application/UiApp/UiApp.inf {
+    <LibraryClasses>
+      NULL|MdeModulePkg/Library/DeviceManagerUiLib/DeviceManagerUiLib.inf
+      NULL|MdeModulePkg/Library/BootManagerUiLib/BootManagerUiLib.inf
+      NULL|MdeModulePkg/Library/BootMaintenanceManagerUiLib/BootMaintenanceManagerUiLib.inf
+      ExtractGuidedSectionLib|MdePkg/Library/DxeExtractGuidedSectionLib/DxeExtractGuidedSectionLib.inf
+      NULL|RuyiPlatformPkg/Library/FirmwareUpdateUiLib/FirmwareUpdateUiLib.inf
+      NULL|MdeModulePkg/Library/LzmaCustomDecompressLib/LzmaCustomDecompressLib.inf
   }

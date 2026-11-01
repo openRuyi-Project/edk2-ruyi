@@ -1,0 +1,27 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = UnmatchedFirmwareUpdateLib
+  FILE_GUID = f6b0cc4d-453b-439b-a34e-5773e8aeb2c1
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = PlatformFirmwareUpdateLib
+[Sources]
+  Image.c
+  Flash.c
+  Internal.h
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+  SiFivePlatformPkg/SiFivePlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  ExtractGuidedSectionLib
+  FdtLib
+  FirmwareUpdateLib
+  Fu740SpiNorLib
+  MemoryAllocationLib
+  UefiBootServicesTableLib
+[Guids]
+  gLzmaCustomDecompressGuid

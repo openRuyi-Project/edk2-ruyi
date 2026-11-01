@@ -233,8 +233,8 @@ Fu740SpiNorRead (
   VOID    *Buffer
   )
 {
-  UINT8  Command[5];
-  EFI_STATUS Status;
+  UINT8       Command[5];
+  EFI_STATUS  Status;
 
   if (!mReady) {
     return EFI_NOT_READY;
@@ -285,8 +285,9 @@ Fu740SpiNorWrite (
 }
 
 EFI_STATUS
-Fu740SpiNorErase (
-  UINT32  Offset
+Fu740SpiNorEraseBlock (
+  UINT32  Offset,
+  UINTN   Size
   )
 {
   UINT8       Command[5];
@@ -296,11 +297,13 @@ Fu740SpiNorErase (
     return EFI_NOT_READY;
   }
 
-  if ((Offset >= FLASH_SIZE) || (Offset % SIZE_4KB)) {
+  if (((Size != SIZE_4KB) && (Size != SIZE_64KB)) ||
+      (Offset >= FLASH_SIZE) || (Size > FLASH_SIZE - Offset) || Offset % Size)
+  {
     return EFI_INVALID_PARAMETER;
   }
 
-  AddressCommand (Command, 0x21, Offset);
+  AddressCommand (Command, Size == SIZE_64KB ? 0xdc : 0x21, Offset);
   Status = WriteEnable ();
   if (!EFI_ERROR (Status)) {
     Status = Transaction (Command, sizeof (Command), NULL, NULL, 0);
@@ -311,6 +314,14 @@ Fu740SpiNorErase (
   }
 
   return Status;
+}
+
+EFI_STATUS
+Fu740SpiNorErase (
+  UINT32  Offset
+  )
+{
+  return Fu740SpiNorEraseBlock (Offset, SIZE_4KB);
 }
 
 VOID

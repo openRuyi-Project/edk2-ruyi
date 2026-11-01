@@ -33,4 +33,11 @@ Fu740SpiNorVirtualAddressChange (
   VOID
   );
 
+// Erase one aligned 4 KiB sector or 64 KiB block.
+EFI_STATUS
+Fu740SpiNorEraseBlock (
+  UINT32  Offset,
+  UINTN   Size
+  );
+
 #endif
