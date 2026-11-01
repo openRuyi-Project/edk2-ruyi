@@ -2,5 +2,5 @@
 #langdef en-US "English"
 #string STR_TITLE    #language en-US "Firmware Update"
 #string STR_HELP     #language en-US "Select a normal SPI firmware image from a USB drive or another filesystem."
-#string STR_PRESERVE #language en-US "UEFI variables and saved boot settings are preserved."
+#string STR_PRESERVE #language en-US "UEFI variables, including boot entries, are preserved."
 #string STR_SELECT   #language en-US "Select firmware file..."

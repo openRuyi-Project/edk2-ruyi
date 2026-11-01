@@ -15,7 +15,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
-  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
 [LibraryClasses]
   UefiBootServicesTableLib
   UefiBootManagerLib
@@ -27,9 +27,12 @@
   FileExplorerLib
   HiiLib
   PrintLib
-  K3FirmwareUpdateLib
-  K3SpiNorLib
+  FirmwareUpdateLib
+  PlatformFirmwareUpdateLib
+  BaseLib
+  DevicePathLib
 [Protocols]
+  gEfiSimpleFileSystemProtocolGuid
   gEfiDevicePathProtocolGuid
   gEfiHiiConfigAccessProtocolGuid
 [Guids]

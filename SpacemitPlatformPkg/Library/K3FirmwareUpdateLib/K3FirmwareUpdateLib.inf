@@ -13,8 +13,10 @@
   MdePkg/MdePkg.dec
   CryptoPkg/CryptoPkg.dec
   EmbeddedPkg/EmbeddedPkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
   SpacemitPlatformPkg/SpacemitPlatformPkg.dec
 [LibraryClasses]
+  FirmwareUpdateLib
   BaseLib
   BaseMemoryLib
   BaseCryptLib

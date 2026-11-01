@@ -34,6 +34,8 @@
 !include NetworkPkg/Network.dsc.inc
 
 [LibraryClasses]
+  FirmwareUpdateLib|RuyiPlatformPkg/Library/FirmwareUpdateLib/FirmwareUpdateLib.inf
+  PlatformFirmwareUpdateLib|SpacemitPlatformPkg/Library/K3PlatformFirmwareUpdateLib/K3PlatformFirmwareUpdateLib.inf
   PlatformCpuInfoLib|SpacemitPlatformPkg/Library/K3CpuInfoLib/K3CpuInfoLib.inf
   PciGopPolicyLib|RuyiPlatformPkg/Library/PciGopPolicyLib/PciGopPolicyLib.inf
 !if $(X64EMU_ENABLE) == TRUE
@@ -376,7 +378,7 @@
       NULL|MdeModulePkg/Library/DeviceManagerUiLib/DeviceManagerUiLib.inf
       NULL|MdeModulePkg/Library/BootManagerUiLib/BootManagerUiLib.inf
       NULL|MdeModulePkg/Library/BootMaintenanceManagerUiLib/BootMaintenanceManagerUiLib.inf
-      NULL|SpacemitPlatformPkg/Library/FirmwareUpdateUiLib/FirmwareUpdateUiLib.inf
+      NULL|RuyiPlatformPkg/Library/FirmwareUpdateUiLib/FirmwareUpdateUiLib.inf
       NULL|SpacemitPlatformPkg/Library/PlatformConfigUiLib/PlatformConfigUiLib.inf
       # Firmware integrity checks only use deterministic SHA-256.
       RngLib|MdePkg/Library/BaseRngLibNull/BaseRngLibNull.inf

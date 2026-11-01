@@ -1,0 +1,16 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3PlatformFirmwareUpdateLib
+  FILE_GUID = 3562bf0a-0677-4e29-bd4f-45397fe74bec
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = PlatformFirmwareUpdateLib
+[Sources]
+  Update.c
+[Packages]
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  K3FirmwareUpdateLib
+  K3SpiNorLib

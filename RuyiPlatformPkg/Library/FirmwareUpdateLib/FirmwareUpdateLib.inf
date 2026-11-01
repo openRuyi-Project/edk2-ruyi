@@ -1,0 +1,25 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = FirmwareUpdateLib
+  FILE_GUID = c1946495-458a-483e-8d5d-a1b19b657985
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = FirmwareUpdateLib
+[Sources]
+  Nv.c
+  Checksum.c
+[Packages]
+  MdePkg/MdePkg.dec
+  CryptoPkg/CryptoPkg.dec
+  EmbeddedPkg/EmbeddedPkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  BaseCryptLib
+  MemoryAllocationLib
+  UefiBootServicesTableLib
+[Guids]
+  gEdkiiNvVarStoreFormattedGuid
+[Protocols]
+  gEfiFirmwareVolumeBlockProtocolGuid

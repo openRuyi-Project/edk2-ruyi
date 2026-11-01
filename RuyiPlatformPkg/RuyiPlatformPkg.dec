@@ -7,6 +7,8 @@
 [Includes]
   Include
 [LibraryClasses]
+  FirmwareUpdateLib|Include/Library/FirmwareUpdateLib.h
+  PlatformFirmwareUpdateLib|Include/Library/PlatformFirmwareUpdateLib.h
   NvFvbLib|Include/Library/NvFvbLib.h
   PciGopPolicyLib|Include/Library/PciGopPolicyLib.h
   PciGopLoaderLib|Include/Library/PciGopLoaderLib.h
