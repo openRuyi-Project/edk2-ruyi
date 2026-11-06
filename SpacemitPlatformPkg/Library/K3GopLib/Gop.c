@@ -146,7 +146,7 @@ Set (
       G->Faulted = TRUE;
     }
 
-    if (!EFI_ERROR (Status)) {
+    if (!EFI_ERROR (Status) || (Status == EFI_NO_MEDIA)) {
       EFI_GRAPHICS_OUTPUT_BLT_PIXEL  Black = { 0 };
       Status = K3SurfaceBlt (
                  G->Surface,
@@ -264,11 +264,10 @@ Blt (
   G->Busy = TRUE;
   EFI_STATUS  Status = G->Ops.Check (G->Priv);
 
-  if (EFI_ERROR (Status)) {
-    if (Status != EFI_NO_MEDIA) {
-      G->Faulted = TRUE;
-    }
+  if (EFI_ERROR (Status) && (Status != EFI_NO_MEDIA)) {
+    G->Faulted = TRUE;
   } else {
+    // Keep the retained framebuffer current while the receiver is absent.
     Status = K3SurfaceBlt (G->Surface, B, O, Sx, Sy, Dx, Dy, W, H, Delta);
   }
 

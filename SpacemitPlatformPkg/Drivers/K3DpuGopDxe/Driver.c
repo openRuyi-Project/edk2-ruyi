@@ -29,8 +29,9 @@ STATIC SOC_DP_DEV        Dp;
 STATIC K3_DPU            Dpu;
 STATIC K3_GOP            *Gop;
 STATIC BOOLEAN           Starting;
-STATIC BOOLEAN           RecoveryAttempted;
-STATIC UINT64            LastRecovery;
+STATIC BOOLEAN           LinkChecked;
+STATIC UINT64            LastLinkCheck;
+STATIC EFI_STATUS        LinkStatus;
 STATIC EFI_HANDLE        DisplayHandle;
 STATIC struct {
   VENDOR_DEVICE_PATH          Vendor;
@@ -127,6 +128,7 @@ Start (
   CONST K3_DISPLAY_MODE  *Mode
   )
 {
+  LinkChecked = FALSE;
   EFI_STATUS  Status = SocDpStatusToEfi (SocDpModeSet (&Dp, &Mode->Timing));
 
   if (!EFI_ERROR (Status)) {
@@ -211,38 +213,35 @@ Check (
     return EFI_DEVICE_ERROR;
   }
 
-  if (Dp.Trained && !SocDpHwCheckLink (&Dp, NULL)) {
-    RecoveryAttempted = FALSE;
-    return EFI_SUCCESS;
-  }
-
   if (SocDpHwDetectHpd (&Dp) != ConnectorStatusConnected) {
+    LinkChecked = FALSE;
     return EFI_NO_MEDIA;
   }
 
-  /* A text refresh may contain hundreds of Blt calls. Bound recovery to
-     one attempt per second while the same receiver remains unavailable. */
+  /* Text rendering calls Blt repeatedly. Poll the receiver at most once
+     per second instead of issuing an AUX transaction for each glyph. */
   UINT64  Now = GetPerformanceCounter ();
 
-  if (RecoveryAttempted &&
-      (GetTimeInNanoSecond (Now - LastRecovery) < 1000000000ULL))
+  if (LinkChecked &&
+      (GetTimeInNanoSecond (Now - LastLinkCheck) < 1000000000ULL))
   {
-    return EFI_NO_MEDIA;
+    return LinkStatus;
   }
 
-  RecoveryAttempted = TRUE;
-  Status            = RecoverOutput ();
-  LastRecovery      = GetPerformanceCounter ();
-  if (EFI_ERROR (Status)) {
+  if (Dp.Trained && !SocDpHwCheckLink (&Dp, NULL)) {
+    LinkStatus = EFI_SUCCESS;
+  } else {
+    Status = RecoverOutput ();
     if ((Status == EFI_COMPROMISED_DATA) || Dp.CleanupError) {
-      return EFI_DEVICE_ERROR;
+      LinkStatus = EFI_DEVICE_ERROR;
+    } else {
+      LinkStatus = EFI_ERROR (Status) ? EFI_NO_MEDIA : EFI_SUCCESS;
     }
-
-    return EFI_NO_MEDIA;
   }
 
-  RecoveryAttempted = FALSE;
-  return EFI_SUCCESS;
+  LastLinkCheck = GetPerformanceCounter ();
+  LinkChecked   = TRUE;
+  return LinkStatus;
 }
 
 EFI_STATUS EFIAPI
