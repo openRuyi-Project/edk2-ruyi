@@ -49,7 +49,7 @@ APRIORI DXE {
 INF RuleOverride = BINARY RuyiPlatformPkg/Drivers/EmulatorDxe/EmulatorDxe.inf
 # Raw files are loaded only for the selected AMD GCN controller class.
 FILE FREEFORM = d4d2e038-f479-44fa-a978-7181b08d532d {
-  SECTION RAW = $(WORKSPACE)/K3AmdGop/Arm64Gop_1_68.efi
+  SECTION RAW = $(WORKSPACE)/AmdGop/Arm64Gop_1_68.efi
 }
 !endif
 !include RuyiPlatformPkg/Network.fdf.inc
