@@ -41,7 +41,7 @@ APRIORI DXE {
   INF UefiCpuPkg/CpuDxeRiscV64/CpuDxeRiscV64.inf
   INF SpacemitPlatformPkg/Drivers/K3ClockDxe/K3ClockDxe.inf
   INF SpacemitPlatformPkg/Drivers/K3DpuGopDxe/K3DpuGopDxe.inf
-  INF SpacemitPlatformPkg/Drivers/LogoDxe/LogoDxe.inf
+  INF RuyiPlatformPkg/Drivers/LogoDxe/LogoDxe.inf
   INF MdeModulePkg/Universal/Acpi/BootGraphicsResourceTableDxe/BootGraphicsResourceTableDxe.inf
 !endif
 }
@@ -86,12 +86,12 @@ INF MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
 INF MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
 !if $(K3_GOP_ENABLE) == TRUE
 INF SpacemitPlatformPkg/Drivers/K3DpuGopDxe/K3DpuGopDxe.inf
-INF SpacemitPlatformPkg/Drivers/LogoDxe/LogoDxe.inf
+!endif
+INF RuyiPlatformPkg/Drivers/LogoDxe/LogoDxe.inf
 INF MdeModulePkg/Universal/Acpi/BootGraphicsResourceTableDxe/BootGraphicsResourceTableDxe.inf
 FILE FREEFORM = b9317e41-2a84-4d83-8e31-a67838815ff2 {
-  SECTION RAW = SpacemitPlatformPkg/Drivers/LogoDxe/openRuyi.bmp
+  SECTION RAW = RuyiPlatformPkg/Drivers/LogoDxe/RuyiFirmware.bmp
 }
-!endif
 INF MdeModulePkg/Universal/Console/ConPlatformDxe/ConPlatformDxe.inf
 INF MdeModulePkg/Universal/Console/ConSplitterDxe/ConSplitterDxe.inf
 INF MdeModulePkg/Universal/BdsDxe/BdsDxe.inf

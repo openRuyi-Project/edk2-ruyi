@@ -44,7 +44,7 @@
   PciGopLoaderLib|RuyiPlatformPkg/Library/PciGopLoaderLibNull/PciGopLoaderLibNull.inf
 !endif
   K3QspiLib|SpacemitPlatformPkg/Library/K3QspiLib/K3QspiLib.inf
-  BootProgressLib|SpacemitPlatformPkg/Library/BootProgressLib/BootProgressLib.inf
+  BootProgressLib|RuyiPlatformPkg/Library/BootProgressLib/BootProgressLib.inf
   BootLogoLib|MdeModulePkg/Library/BootLogoLib/BootLogoLib.inf
   BmpSupportLib|MdeModulePkg/Library/BaseBmpSupportLib/BaseBmpSupportLib.inf
   SnpAdapterInfoLib|SpacemitPlatformPkg/Library/SnpAdapterInfoLib/SnpAdapterInfoLib.inf
@@ -177,6 +177,7 @@
   VariablePolicyLib|MdeModulePkg/Library/VariablePolicyLib/VariablePolicyLibRuntimeDxe.inf
 
 [PcdsFixedAtBuild]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFrontPageLogoEnable|TRUE
   # K3 DRAM starts above 4 GiB; SMBIOS 2.x cannot address its tables.
   gEfiMdeModulePkgTokenSpaceGuid.PcdSmbiosEntryPointProvideMethod|0x2
   # Runtime code/data measured at 236/1512 KiB, excluding the bounded GOP buffer.
@@ -357,9 +358,9 @@
   MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
 !if $(K3_GOP_ENABLE) == TRUE
   SpacemitPlatformPkg/Drivers/K3DpuGopDxe/K3DpuGopDxe.inf
-  SpacemitPlatformPkg/Drivers/LogoDxe/LogoDxe.inf
-  MdeModulePkg/Universal/Acpi/BootGraphicsResourceTableDxe/BootGraphicsResourceTableDxe.inf
 !endif
+  RuyiPlatformPkg/Drivers/LogoDxe/LogoDxe.inf
+  MdeModulePkg/Universal/Acpi/BootGraphicsResourceTableDxe/BootGraphicsResourceTableDxe.inf
   MdeModulePkg/Universal/Console/ConPlatformDxe/ConPlatformDxe.inf
   MdeModulePkg/Universal/Console/ConSplitterDxe/ConSplitterDxe.inf
   MdeModulePkg/Universal/BdsDxe/BdsDxe.inf {

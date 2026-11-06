@@ -421,7 +421,7 @@ PlatformBootManagerAfterConsole (
     gST->ConOut->ClearScreen (gST->ConOut);
     Print (L"RAM Recovery\r\nInitializing devices for USB Fastboot...\r\n");
   } else {
-    BootProgressStart ();
+    BootProgressStart (TRUE);
   }
 
   EfiBootManagerConnectAll ();
@@ -477,6 +477,11 @@ PlatformBootManagerAfterConsole (
   }
 
   EfiBootManagerRegisterContinueKeyOption (0, &ContinueKey, NULL);
+  if (GetBootModeHob () == BOOT_IN_RECOVERY_MODE) {
+    gST->ConOut->SetAttribute (gST->ConOut, EFI_WHITE | EFI_BACKGROUND_BLACK);
+    gST->ConOut->ClearScreen (gST->ConOut);
+    BootProgressStart (TRUE);
+  }
 }
 
 VOID EFIAPI
