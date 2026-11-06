@@ -3,7 +3,6 @@
 #include <Library/FirmwareUpdateLib.h>
 #include <Guid/K3DdrTraining.h>
 #include <Library/K3CpuConfigLib.h>
-#include <Library/K3SpiConfigLib.h>
 #include <Protocol/SpiNorFlash.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -26,10 +25,10 @@ EraseOnly (
   UINT32  Offset
   )
 {
-  // Firmware updates reset platform settings and discard saved DDR training.
+  // Firmware updates reset CPU selection and discard saved DDR training.
   return ((Offset >= K3_DDR_TRAINING_OFFSET) &&
           (Offset < K3_DDR_TRAINING_OFFSET + SIZE_64KB)) ||
-         (Offset == K3_CPU_CONFIG_OFFSET) || (Offset == K3_EMULATION_CONFIG_OFFSET);
+         (Offset == K3_CPU_CONFIG_OFFSET);
 }
 
 STATIC BOOLEAN
@@ -145,7 +144,7 @@ K3FirmwareUpdate (
       if (Phase == K3FirmwareErase) {
         Status = Nor->Erase (Nor, Offset, Step / SIZE_4KB);
       } else if (Phase == K3FirmwareWrite) {
-        // Keep per-boot policy and training defaults even for saved SPI images.
+        // Discard CPU selection and training data even for saved SPI images.
         if (EraseOnly (Offset)) {
           Status = EFI_SUCCESS;
         } else {

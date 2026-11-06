@@ -10,4 +10,4 @@
 #string STR_EMULATION_MODE #language en-US "UEFI driver emulation"
 #string STR_DISABLED #language en-US "Disabled"
 #string STR_ENABLED #language en-US "Enabled"
-#string STR_EMULATION_HELP #language en-US "Run compatible non-native UEFI drivers. Onboard option ROMs use x64 by default; listed AMD GCN graphics devices use the platform ARM64 GOP. Disabled by default. Save and restart to apply."
+#string STR_EMULATION_HELP #language en-US "Run compatible non-native UEFI drivers. Onboard option ROMs use x64 by default. Listed AMD GCN graphics devices use the platform ARM64 GOP. Firmware updates apply the setting from the image. Save and restart to apply."
