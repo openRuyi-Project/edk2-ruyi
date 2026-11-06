@@ -200,6 +200,7 @@ PlatformBootManagerBeforeConsole (
 {
   EfiEventGroupSignal (&gEfiEndOfDxeEventGroupGuid);
   EfiBootManagerDispatchDeferredImages ();
+  BootManagerConfigureNetworkBoot ();
 
  #ifdef K3_X64EMU
   // Install binding guards before foreign drivers become executable.

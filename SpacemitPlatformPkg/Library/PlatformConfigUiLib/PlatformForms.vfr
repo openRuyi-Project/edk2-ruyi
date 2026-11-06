@@ -30,5 +30,19 @@ formset
       option text = STRING_TOKEN(STR_ENABLED), value = 1, flags = 0;
     endoneof;
 #endif
+    oneof varid = PlatformConfig.PxeBoot,
+      prompt = STRING_TOKEN(STR_PXE_BOOT),
+      help = STRING_TOKEN(STR_PXE_HELP),
+      flags = RESET_REQUIRED,
+      option text = STRING_TOKEN(STR_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING;
+      option text = STRING_TOKEN(STR_ENABLED), value = 1, flags = 0;
+    endoneof;
+    oneof varid = PlatformConfig.HttpBoot,
+      prompt = STRING_TOKEN(STR_HTTP_BOOT),
+      help = STRING_TOKEN(STR_HTTP_HELP),
+      flags = RESET_REQUIRED,
+      option text = STRING_TOKEN(STR_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING;
+      option text = STRING_TOKEN(STR_ENABLED), value = 1, flags = 0;
+    endoneof;
   endform;
 endformset;

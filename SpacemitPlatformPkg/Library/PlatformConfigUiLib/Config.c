@@ -8,6 +8,7 @@
 #include <Library/K3CpuConfigLib.h>
 #include <Library/K3SpiConfigLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/NetworkBootConfigLib.h>
 #include <Library/PrintLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include "Forms.h"
@@ -37,6 +38,7 @@ ReadSettings (
 {
   UINT32      Value;
   EFI_STATUS  Status;
+  NETWORK_BOOT_CONFIG Network;
 
   Config->CpuMode          = 0;
   Config->EmulationEnabled = 0;
@@ -54,7 +56,10 @@ ReadSettings (
 
   Config->EmulationEnabled = (UINT8)Value;
  #endif
-  return EFI_SUCCESS;
+  Status = NetworkBootConfigGet (&Network);
+  Config->PxeBoot = Network.Pxe;
+  Config->HttpBoot = Network.Http;
+  return Status;
 }
 
 STATIC EFI_STATUS EFIAPI
@@ -150,8 +155,9 @@ RouteConfig (
     return Status;
   }
 
-  // Validate both fields before changing either independent SPI record.
-  if ((Config.CpuMode > K3CpuA100Only) || (Config.EmulationEnabled > 1)) {
+  // Validate the complete form before saving any setting.
+  if ((Config.CpuMode > K3CpuA100Only) || (Config.EmulationEnabled > 1) ||
+      (Config.PxeBoot > 1) || (Config.HttpBoot > 1)) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -167,6 +173,12 @@ RouteConfig (
   }
 
  #endif
+  NETWORK_BOOT_CONFIG Network = { Config.PxeBoot, Config.HttpBoot };
+  Status = NetworkBootConfigSet (&Network);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
   return K3SpiConfigSet (K3SettingCpuMode, Config.CpuMode);
 }
 

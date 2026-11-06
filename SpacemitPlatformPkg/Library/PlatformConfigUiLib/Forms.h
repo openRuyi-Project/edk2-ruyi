@@ -8,5 +8,7 @@
 typedef struct {
   UINT8    CpuMode;
   UINT8    EmulationEnabled;
+  UINT8    PxeBoot;
+  UINT8    HttpBoot;
 } K3_PLATFORM_CONFIGURATION;
 #endif
