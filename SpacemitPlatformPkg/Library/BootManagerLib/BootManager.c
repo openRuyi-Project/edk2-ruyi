@@ -300,6 +300,7 @@ RegisterFvApplication (
   EFI_BOOT_MANAGER_LOAD_OPTION       *Existing;
   MEDIA_FW_VOL_FILEPATH_DEVICE_PATH  File;
   EFI_STATUS                         Status;
+  EFI_STATUS                         KeyStatus;
   EFI_HANDLE                         *Handles;
   UINTN                              Count, Index, FileSize;
   UINTN                              ExistingCount;
@@ -372,13 +373,16 @@ RegisterFvApplication (
     }
 
     if (!EFI_ERROR (Status) && (Key != NULL)) {
-      Status = EfiBootManagerAddKeyOptionVariable (
-                 NULL,
-                 (UINT16)Option.OptionNumber,
-                 0,
-                 Key,
-                 NULL
-                 );
+      KeyStatus = EfiBootManagerAddKeyOptionVariable (
+                    NULL,
+                    (UINT16)Option.OptionNumber,
+                    0,
+                    Key,
+                    NULL
+                    );
+      if (EFI_ERROR (KeyStatus) && (KeyStatus != EFI_ALREADY_STARTED)) {
+        DEBUG ((DEBUG_WARN, "%s hotkey: %r\n", Title, KeyStatus));
+      }
     }
 
     if (Existing != NULL) {
@@ -386,6 +390,7 @@ RegisterFvApplication (
     }
 
     DEBUG ((DEBUG_INFO, "%s boot option: %r\n", Title, Status));
+    // Recovery must start even when its hotkey already exists.
     if (!EFI_ERROR (Status) && Launch) {
       BootProgressStop ();
       EfiBootManagerBoot (&Option);
