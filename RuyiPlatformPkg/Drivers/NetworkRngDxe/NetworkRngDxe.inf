@@ -1,0 +1,24 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = NetworkRngDxe
+  FILE_GUID = aac73316-43c1-4535-b351-72efea3d77bd
+  MODULE_TYPE = DXE_DRIVER
+  ENTRY_POINT = NetworkRngEntry
+[Sources]
+  Rng.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  RngLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+[Protocols]
+  gEfiRngProtocolGuid
+[Guids]
+  gEdkiiRngAlgorithmUnSafe
+[Depex]
+  TRUE
