@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3NetworkBootConfigLib
+  FILE_GUID = f0c7ef6c-b897-45d0-81ec-ad4b34ab1476
+  MODULE_TYPE = DXE_DRIVER
+  LIBRARY_CLASS = NetworkBootConfigLib
+[Sources]
+  Config.c
+[Packages]
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  K3SpiConfigLib

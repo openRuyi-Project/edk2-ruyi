@@ -4,12 +4,14 @@
 #define K3_SPI_CONFIG_LIB_H_
 #include <Uefi.h>
 
-// Separate 4 KiB sector immediately before CPU configuration in EARLY_RESERVED.
+// Separate 4 KiB settings sectors near the end of EARLY_RESERVED.
 #define K3_EMULATION_CONFIG_OFFSET  0x20e000
+#define K3_NETWORK_CONFIG_OFFSET    0x20d000
 
 typedef enum {
   K3SettingCpuMode,
   K3SettingDriverEmulation,
+  K3SettingNetworkBoot,
   K3SettingMax
 } K3_SPI_SETTING;
 

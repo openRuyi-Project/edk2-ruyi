@@ -52,9 +52,9 @@ FILE FREEFORM = d4d2e038-f479-44fa-a978-7181b08d532d {
   SECTION RAW = $(WORKSPACE)/K3AmdGop/Arm64Gop_1_68.efi
 }
 !endif
-INF SecurityPkg/Hash2DxeCrypto/Hash2DxeCrypto.inf
-!include NetworkPkg/Network.fdf.inc
+!include RuyiPlatformPkg/Network.fdf.inc
 !if $(NETWORK_ENABLE) == TRUE
+INF SecurityPkg/Hash2DxeCrypto/Hash2DxeCrypto.inf
 INF SpacemitPlatformPkg/Drivers/K3EqosSnpDxe/K3EqosSnpDxe.inf
 INF SpacemitPlatformPkg/Drivers/Rtl8127SnpDxe/Rtl8127SnpDxe.inf
 !endif

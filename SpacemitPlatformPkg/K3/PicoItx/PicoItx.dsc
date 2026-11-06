@@ -19,21 +19,13 @@
 !else
   DEFINE DEBUG_PRINT_ERROR_LEVEL = 0x80000002
 !endif
-  DEFINE NETWORK_ENABLE = TRUE
-  # Native MAC drivers publish SNP directly; the generic UNDI adapter is not RISCV64.
-  DEFINE NETWORK_SNP_ENABLE = FALSE
-  DEFINE NETWORK_IP4_ENABLE = TRUE
-  DEFINE NETWORK_IP6_ENABLE = TRUE
-  DEFINE NETWORK_PXE_BOOT_ENABLE = TRUE
-  DEFINE NETWORK_TLS_ENABLE = TRUE
-  DEFINE NETWORK_HTTP_BOOT_ENABLE = TRUE
-  DEFINE NETWORK_ALLOW_HTTP_CONNECTIONS = TRUE
-  DEFINE NETWORK_ISCSI_ENABLE = FALSE
 
+!include RuyiPlatformPkg/NetworkDefines.dsc.inc
 !include MdePkg/MdeLibs.dsc.inc
-!include NetworkPkg/Network.dsc.inc
+!include RuyiPlatformPkg/Network.dsc.inc
 
 [LibraryClasses]
+  NetworkBootConfigLib|SpacemitPlatformPkg/Library/K3NetworkBootConfigLib/K3NetworkBootConfigLib.inf
   FirmwareUpdateLib|RuyiPlatformPkg/Library/FirmwareUpdateLib/FirmwareUpdateLib.inf
   PlatformFirmwareUpdateLib|SpacemitPlatformPkg/Library/K3PlatformFirmwareUpdateLib/K3PlatformFirmwareUpdateLib.inf
   PlatformCpuInfoLib|SpacemitPlatformPkg/Library/K3CpuInfoLib/K3CpuInfoLib.inf
@@ -136,8 +128,8 @@
   VariablePolicyHelperLib|MdeModulePkg/Library/VariablePolicyHelperLib/VariablePolicyHelperLib.inf
   VariableFlashInfoLib|MdeModulePkg/Library/BaseVariableFlashInfoLib/BaseVariableFlashInfoLib.inf
   CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
-  # P1 timekeeping belongs to the OS; do not expose a build-time clock.
-  RealTimeClockLib|EmbeddedPkg/Library/TemplateRealTimeClockLib/TemplateRealTimeClockLib.inf
+  # UEFI time uses the RISC-V timer. The OS owns the P1 RTC.
+  RealTimeClockLib|EmbeddedPkg/Library/VirtualRealTimeClockLib/VirtualRealTimeClockLib.inf
   TimeBaseLib|EmbeddedPkg/Library/TimeBaseLib/TimeBaseLib.inf
   HiiLib|MdeModulePkg/Library/UefiHiiLib/UefiHiiLib.inf
   FileExplorerLib|MdeModulePkg/Library/FileExplorerLib/FileExplorerLib.inf
@@ -184,7 +176,6 @@
   # Runtime code/data measured at 236/1512 KiB, excluding the bounded GOP buffer.
   gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiRuntimeServicesCode|0x40
   gEmbeddedTokenSpaceGuid.PcdMemoryTypeEfiRuntimeServicesData|0x200
-  gEfiMdePkgTokenSpaceGuid.PcdEnforceSecureRngAlgorithms|TRUE
   gEfiMdeModulePkgTokenSpaceGuid.PcdVariableStoreSize|0x80000
   gEfiMdeModulePkgTokenSpaceGuid.PcdMaxVolatileVariableSize|0x40000
   gEfiMdeModulePkgTokenSpaceGuid.PcdMaxAuthVariableSize|0x8400
