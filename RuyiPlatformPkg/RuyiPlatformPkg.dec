@@ -7,6 +7,7 @@
 [Includes]
   Include
 [LibraryClasses]
+  BootManagerLib|Include/Library/BootManagerLib.h
   BootProgressLib|Include/Library/BootProgressLib.h
   FirmwareUpdateLib|Include/Library/FirmwareUpdateLib.h
   PlatformFirmwareUpdateLib|Include/Library/PlatformFirmwareUpdateLib.h
@@ -16,6 +17,7 @@
   PlatformCpuInfoLib|Include/Library/PlatformCpuInfoLib.h
 
 [Guids]
+  gRuyiBootMenuFileGuid = {0xeec25bdc, 0x67f2, 0x4d95, {0xb1, 0xd5, 0xf8, 0x1b, 0x20, 0x39, 0xd1, 0x1d}}
   gRuyiLogoGuid = {0xb9317e41, 0x2a84, 0x4d83, {0x8e, 0x31, 0xa6, 0x78, 0x38, 0x81, 0x5f, 0xf2}}
   gPciGopPolicyReadyGuid = { 0xe0a6b898, 0x8a5e, 0x48ef, { 0xb4, 0x4b, 0x36, 0xf8, 0x91, 0x4b, 0xa2, 0x03 } }
   # MultiArchUefiPkg uses its FILE_GUID as the emulator device marker.
