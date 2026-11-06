@@ -11,10 +11,12 @@
   Storage.c
 [Packages]
   MdePkg/MdePkg.dec
+  ShellPkg/ShellPkg.dec
   RuyiPlatformPkg/RuyiPlatformPkg.dec
   SpacemitPlatformPkg/SpacemitPlatformPkg.dec
   MdeModulePkg/MdeModulePkg.dec
 [LibraryClasses]
+  BootManagerLib
   PciGopLoaderLib
   BootProgressLib
   HobLib
@@ -33,11 +35,11 @@
   gEfiPciIoProtocolGuid
   gEfiPciRootBridgeIoProtocolGuid
   gEdkiiPlatformBootManagerProtocolGuid
-  gEfiSerialIoProtocolGuid
-  gEfiFirmwareVolume2ProtocolGuid
 [Guids]
   gEfiEndOfDxeEventGroupGuid
-  gEdkiiXtermR6Guid
+  gUefiShellFileGuid
+  gRuyiBootMenuFileGuid
+  gSpacemitFastbootFileGuid
 
 [Pcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdConOutGlyphScale

@@ -45,6 +45,7 @@
 !endif
   K3QspiLib|SpacemitPlatformPkg/Library/K3QspiLib/K3QspiLib.inf
   BootProgressLib|RuyiPlatformPkg/Library/BootProgressLib/BootProgressLib.inf
+  BootManagerLib|RuyiPlatformPkg/Library/BootManagerLib/BootManagerLib.inf
   BootLogoLib|MdeModulePkg/Library/BootLogoLib/BootLogoLib.inf
   BmpSupportLib|MdeModulePkg/Library/BaseBmpSupportLib/BaseBmpSupportLib.inf
   SnpAdapterInfoLib|SpacemitPlatformPkg/Library/SnpAdapterInfoLib/SnpAdapterInfoLib.inf
@@ -200,6 +201,7 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareSize|0x40000
   gEfiMdeModulePkgTokenSpaceGuid.PcdResetOnMemoryTypeInformationChange|FALSE
   gEfiMdePkgTokenSpaceGuid.PcdUartDefaultBaudRate|115200
+  gEfiMdePkgTokenSpaceGuid.PcdDefaultTerminalType|4
   # K3 provides Zicbo and Svpbmt; clean OpenSBI enables the S-mode controls.
   gEfiMdePkgTokenSpaceGuid.PcdRiscVFeatureOverride|5
   gUefiCpuPkgTokenSpaceGuid.PcdCpuCoreCrystalClockFrequency|24000000
