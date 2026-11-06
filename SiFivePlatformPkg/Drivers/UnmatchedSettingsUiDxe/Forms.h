@@ -7,5 +7,7 @@
 typedef struct {
   UINT8    EmulationEnabled;
   UINT8    Available;
+  UINT8    PxeBoot;
+  UINT8    HttpBoot;
 } UNMATCHED_CONFIGURATION;
 #endif

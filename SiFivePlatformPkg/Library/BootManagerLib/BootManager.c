@@ -61,6 +61,7 @@ PlatformBootManagerBeforeConsole (
 
   EfiEventGroupSignal (&gEfiEndOfDxeEventGroupGuid);
   EfiBootManagerDispatchDeferredImages ();
+  BootManagerConfigureNetworkBoot ();
   // Install binding policy before enabling foreign image execution.
   if (!EFI_ERROR (PciGopInitialize ())) {
     PciGopConnectEmulator ();

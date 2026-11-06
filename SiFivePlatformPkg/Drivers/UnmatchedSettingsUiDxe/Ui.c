@@ -8,6 +8,7 @@
 #include <Library/PcdLib.h>
 #include <Protocol/UnmatchedSettings.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/NetworkBootConfigLib.h>
 #include <Library/PrintLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include "Forms.h"
@@ -37,6 +38,7 @@ ReadSettings (
   )
 {
   BOOLEAN     Enabled, DefaultEnabled;
+  NETWORK_BOOT_CONFIG Network;
   EFI_STATUS  Status = mSettings->Get (&Enabled, &DefaultEnabled);
 
   if (EFI_ERROR (Status)) {
@@ -45,7 +47,10 @@ ReadSettings (
 
   Config->Available        = FixedPcdGetBool (PcdUnmatchedEmulationAvailable);
   Config->EmulationEnabled = Config->Available && Enabled;
-  return EFI_SUCCESS;
+  Status = NetworkBootConfigGet (&Network);
+  Config->PxeBoot = Network.Pxe;
+  Config->HttpBoot = Network.Http;
+  return Status;
 }
 
 STATIC EFI_STATUS EFIAPI
@@ -142,12 +147,19 @@ RouteConfig (
   }
 
   if ((Config.EmulationEnabled > 1) ||
+      (Config.PxeBoot > 1) || (Config.HttpBoot > 1) ||
       (Config.Available != FixedPcdGetBool (PcdUnmatchedEmulationAvailable)))
   {
     return EFI_INVALID_PARAMETER;
   }
 
-  return mSettings->Set (Config.EmulationEnabled);
+  Status = mSettings->Set (Config.EmulationEnabled);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  NETWORK_BOOT_CONFIG Network = { Config.PxeBoot, Config.HttpBoot };
+  return NetworkBootConfigSet (&Network);
 }
 
 STATIC EFI_STATUS EFIAPI

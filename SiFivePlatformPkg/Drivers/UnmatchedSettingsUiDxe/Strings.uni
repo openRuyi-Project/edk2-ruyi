@@ -6,3 +6,7 @@
 #string STR_DISABLED #language en-US "Disabled"
 #string STR_ENABLED #language en-US "Enabled"
 #string STR_EMULATION_HELP #language en-US "Run compatible x64 UEFI drivers and the selected AMD ARM64 GOP. Save changes and restart to apply."
+#string STR_PXE_BOOT #language en-US "PXE boot"
+#string STR_HTTP_BOOT #language en-US "HTTP boot"
+#string STR_PXE_HELP #language en-US "Allow PXE network boot. Save and restart to apply."
+#string STR_HTTP_HELP #language en-US "Allow HTTP network boot. Save and restart to apply."
