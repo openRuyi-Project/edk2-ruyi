@@ -37,6 +37,9 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdPciDegradeResourceForOptionRom|FALSE
 
 [LibraryClasses]
+  BootProgressLib|RuyiPlatformPkg/Library/BootProgressLib/BootProgressLib.inf
+  BootLogoLib|MdeModulePkg/Library/BootLogoLib/BootLogoLib.inf
+  BmpSupportLib|MdeModulePkg/Library/BaseBmpSupportLib/BaseBmpSupportLib.inf
   FirmwareUpdateLib|RuyiPlatformPkg/Library/FirmwareUpdateLib/FirmwareUpdateLib.inf
   PlatformFirmwareUpdateLib|SiFivePlatformPkg/Library/UnmatchedFirmwareUpdateLib/UnmatchedFirmwareUpdateLib.inf
   Fu740SpiNorLib|SiFivePlatformPkg/Library/Fu740SpiNorLib/Fu740SpiNorLib.inf
@@ -63,6 +66,7 @@
   RngLib|MdePkg/Library/BaseRngLibNull/BaseRngLibNull.inf
 
 [PcdsFixedAtBuild]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFrontPageLogoEnable|TRUE
   # Match RiscVVirt: avoid walking entire lists on every network/pool operation.
   gEfiMdePkgTokenSpaceGuid.PcdMaximumLinkedListLength|0
   gSiFivePlatformTokenSpaceGuid.PcdUnmatchedDefaultEmulation|$(MAU_DEFAULT_ENABLE)
@@ -170,6 +174,8 @@
 
 [Components]
   SiFivePlatformPkg/Drivers/UnmatchedNvStorageDxe/UnmatchedNvStorageDxe.inf
+  RuyiPlatformPkg/Drivers/LogoDxe/LogoDxe.inf
+  MdeModulePkg/Universal/Acpi/BootGraphicsResourceTableDxe/BootGraphicsResourceTableDxe.inf
   MdeModulePkg/Universal/FaultTolerantWriteDxe/FaultTolerantWriteDxe.inf {
     <LibraryClasses>
       NULL|SiFivePlatformPkg/Library/UnmatchedNvReadyLib/UnmatchedFtwReadyLib.inf

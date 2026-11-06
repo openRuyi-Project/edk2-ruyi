@@ -1,5 +1,6 @@
 /** SPDX-License-Identifier: BSD-2-Clause-Patent */
 #include <Uefi.h>
+#include <Library/BootProgressLib.h>
 #include <Guid/EventGroup.h>
 #include <Guid/TtyTerm.h>
 #include <Protocol/GraphicsOutput.h>
@@ -197,7 +198,7 @@ PlatformBootManagerAfterConsole (
   EfiBootManagerRefreshAllBootOption ();
   Application (&Shell, L"UEFI Shell", LOAD_OPTION_ACTIVE | LOAD_OPTION_CATEGORY_APP, NULL);
   Application (&Menu, L"Boot Menu", LOAD_OPTION_ACTIVE | LOAD_OPTION_CATEGORY_APP | LOAD_OPTION_HIDDEN, &F12);
-  Print (L"Enter: Boot    F2: Setup    F12: Boot Menu\r\n");
+  BootProgressStart (FALSE);
 }
 
 VOID EFIAPI
@@ -205,7 +206,7 @@ PlatformBootManagerWaitCallback (
   UINT16  TimeoutRemain
   )
 {
-  Print (L"\rBooting in %u seconds... ", TimeoutRemain);
+  BootProgressUpdate (TimeoutRemain);
 }
 
 VOID EFIAPI
@@ -214,6 +215,8 @@ PlatformBootManagerUnableToBoot (
   )
 {
   EFI_BOOT_MANAGER_LOAD_OPTION  Setup;
+
+  BootProgressStop ();
 
   if (EFI_ERROR (EfiBootManagerGetBootManagerMenu (&Setup))) {
     return;

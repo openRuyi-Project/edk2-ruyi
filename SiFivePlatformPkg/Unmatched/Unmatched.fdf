@@ -68,7 +68,11 @@ INF  MdeModulePkg/Universal/Console/ConSplitterDxe/ConSplitterDxe.inf
 INF  MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
 INF  MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
 INF RuleOverride = SETUP MdeModulePkg/Application/UiApp/UiApp.inf
-INF  MdeModulePkg/Logo/LogoDxe.inf
+INF  RuyiPlatformPkg/Drivers/LogoDxe/LogoDxe.inf
+INF  MdeModulePkg/Universal/Acpi/BootGraphicsResourceTableDxe/BootGraphicsResourceTableDxe.inf
+FILE FREEFORM = b9317e41-2a84-4d83-8e31-a67838815ff2 {
+  SECTION RAW = RuyiPlatformPkg/Drivers/LogoDxe/RuyiFirmware.bmp
+}
 INF  MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
 INF  MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf
 INF  MdeModulePkg/Universal/DriverHealthManagerDxe/DriverHealthManagerDxe.inf
