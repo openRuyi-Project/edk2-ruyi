@@ -9,21 +9,20 @@
   BootManager.c
 [Packages]
   MdePkg/MdePkg.dec
+  ShellPkg/ShellPkg.dec
   MdeModulePkg/MdeModulePkg.dec
   RuyiPlatformPkg/RuyiPlatformPkg.dec
 [LibraryClasses]
+  BootManagerLib
   BootProgressLib
   PciGopLoaderLib
-  BaseLib
-  DebugLib
   DevicePathLib
-  MemoryAllocationLib
   UefiBootManagerLib
   UefiBootServicesTableLib
   UefiLib
 [Protocols]
   gEfiGraphicsOutputProtocolGuid
-  gEfiLoadedImageProtocolGuid
-  gEfiSerialIoProtocolGuid
 [Guids]
   gEfiEndOfDxeEventGroupGuid
+  gUefiShellFileGuid
+  gRuyiBootMenuFileGuid
