@@ -16,20 +16,8 @@
   DEFINE DEBUG_ON_SERIAL_PORT = TRUE
   # RiscV.dsc.inc has a legacy HTTP library path; use NetworkPkg below.
   DEFINE HTTP_BOOT_ENABLE = FALSE
-  DEFINE NETWORK_PXE_BOOT_ENABLE = FALSE
-  DEFINE NETWORK_HTTP_BOOT_ENABLE = FALSE
-!if ($(NETWORK_PXE_BOOT_ENABLE) == TRUE) OR ($(NETWORK_HTTP_BOOT_ENABLE) == TRUE)
-  DEFINE NETWORK_ENABLE = TRUE
-!else
-  DEFINE NETWORK_ENABLE = FALSE
-!endif
-  DEFINE NETWORK_SNP_ENABLE = FALSE
-  DEFINE NETWORK_IP4_ENABLE = TRUE
-  DEFINE NETWORK_IP6_ENABLE = TRUE
-  DEFINE NETWORK_TLS_ENABLE = FALSE
-  DEFINE NETWORK_ALLOW_HTTP_CONNECTIONS = TRUE
-  DEFINE NETWORK_ISCSI_ENABLE = FALSE
 
+!include RuyiPlatformPkg/NetworkDefines.dsc.inc
 !include Silicon/RISC-V/RiscV.dsc.inc
 
 [PcdsFeatureFlag]
@@ -37,6 +25,7 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdPciDegradeResourceForOptionRom|FALSE
 
 [LibraryClasses]
+  NetworkBootConfigLib|RuyiPlatformPkg/Library/VariableNetworkBootConfigLib/VariableNetworkBootConfigLib.inf
   BootProgressLib|RuyiPlatformPkg/Library/BootProgressLib/BootProgressLib.inf
   BootManagerLib|RuyiPlatformPkg/Library/BootManagerLib/BootManagerLib.inf
   BootLogoLib|MdeModulePkg/Library/BootLogoLib/BootLogoLib.inf
@@ -134,7 +123,6 @@
   MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
   MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
   MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
-  MdeModulePkg/Universal/Disk/RamDiskDxe/RamDiskDxe.inf
 
 [Components]
   SiFivePlatformPkg/Drivers/UnmatchedSmbiosDxe/UnmatchedSmbiosDxe.inf
@@ -161,18 +149,10 @@
   SecurityPkg/Hash2DxeCrypto/Hash2DxeCrypto.inf
 
 !if $(NETWORK_ENABLE) == TRUE
-# FU740 has no hardware entropy source. The timer RNG supplies network IDs;
-# HTTPS is disabled until a cryptographic entropy source is available.
-[PcdsFixedAtBuild]
-  gEfiMdePkgTokenSpaceGuid.PcdEnforceSecureRngAlgorithms|FALSE
 [Components]
   SiFivePlatformPkg/Drivers/Fu740GemDxe/Fu740GemDxe.inf
-  SiFivePlatformPkg/Drivers/NetworkRngDxe/NetworkRngDxe.inf {
-    <LibraryClasses>
-      RngLib|MdeModulePkg/Library/BaseRngLibTimerLib/BaseRngLibTimerLib.inf
-  }
 !endif
-!include NetworkPkg/Network.dsc.inc
+!include RuyiPlatformPkg/Network.dsc.inc
 
 [Components]
   SiFivePlatformPkg/Drivers/UnmatchedNvStorageDxe/UnmatchedNvStorageDxe.inf

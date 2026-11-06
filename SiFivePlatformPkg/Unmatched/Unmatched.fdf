@@ -94,7 +94,6 @@ INF MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
 INF MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
 INF MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
 INF MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
-INF MdeModulePkg/Universal/Disk/RamDiskDxe/RamDiskDxe.inf
 
 INF SiFivePlatformPkg/Drivers/UnmatchedSmbiosDxe/UnmatchedSmbiosDxe.inf
 INF SiFivePlatformPkg/Drivers/UnmatchedSettingsDxe/UnmatchedSettingsDxe.inf
@@ -118,9 +117,8 @@ FILE DRIVER = e6727a5e-cbcd-44c8-b37f-78bc3a0c16c8 {
 INF SecurityPkg/Hash2DxeCrypto/Hash2DxeCrypto.inf
 !if $(NETWORK_ENABLE) == TRUE
 INF SiFivePlatformPkg/Drivers/Fu740GemDxe/Fu740GemDxe.inf
-INF SiFivePlatformPkg/Drivers/NetworkRngDxe/NetworkRngDxe.inf
 !endif
-!include NetworkPkg/Network.fdf.inc
+!include RuyiPlatformPkg/Network.fdf.inc
 
 [Rule.Common.SEC]
   FILE SEC = $(NAMED_GUID) RELOCS_STRIPPED {
