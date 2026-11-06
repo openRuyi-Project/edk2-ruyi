@@ -1,0 +1,27 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+# The driver license does not cover the RuyiFirmware artwork.
+[Defines]
+  INF_VERSION = 0x0001001b
+  BASE_NAME = RuyiLogoDxe
+  FILE_GUID = 9a163d8c-77f3-4eae-a8b2-a4a798c62871
+  MODULE_TYPE = DXE_DRIVER
+  VERSION_STRING = 1.0
+  ENTRY_POINT = LogoInitialize
+[Sources]
+  Logo.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  BmpSupportLib
+  DxeServicesLib
+  MemoryAllocationLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+[Protocols]
+  gEdkiiPlatformLogoProtocolGuid
+[Guids]
+  gRuyiLogoGuid
+[Depex]
+  TRUE
