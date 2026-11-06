@@ -178,7 +178,7 @@ UnmatchedNvStorageEntry (
   }
 
   // Runtime variable services own this controller after ExitBootServices.
-  Status = FdtClient->SetNodeProperty (FdtClient, Node, "status", "disabled", sizeof ("disabled"));
+  Status = FdtClient->SetNodeProperty (FdtClient, Node, "status", "reserved", sizeof ("reserved"));
   if (EFI_ERROR (Status)) {
     goto Error;
   }
