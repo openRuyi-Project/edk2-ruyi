@@ -2,6 +2,10 @@
 #pragma once
 #include <Uefi.h>
 
+// Apply saved settings before connecting any network controllers.
+VOID EFIAPI
+BootManagerConfigureNetworkBoot (VOID);
+
 // Add a class path so USB keyboards can join the input console on discovery.
 VOID EFIAPI
 BootManagerRegisterUsbKeyboard (

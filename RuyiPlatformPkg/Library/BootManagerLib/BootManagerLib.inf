@@ -8,12 +8,16 @@
 [Sources]
   Console.c
   Application.c
+  Network.c
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   RuyiPlatformPkg/RuyiPlatformPkg.dec
+  NetworkPkg/NetworkPkg.dec
 [LibraryClasses]
   BaseMemoryLib
+  NetworkBootConfigLib
+  PcdLib
   BootProgressLib
   DebugLib
   DevicePathLib
@@ -26,3 +30,8 @@
   gEfiFirmwareVolume2ProtocolGuid
 [Guids]
   gEfiTtyTermGuid
+[Pcd]
+  gEfiNetworkPkgTokenSpaceGuid.PcdIPv4PXESupport
+  gEfiNetworkPkgTokenSpaceGuid.PcdIPv6PXESupport
+  gEfiNetworkPkgTokenSpaceGuid.PcdIPv4HttpSupport
+  gEfiNetworkPkgTokenSpaceGuid.PcdIPv6HttpSupport
