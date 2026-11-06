@@ -10,8 +10,21 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PlatformMacAddressLib.h>
 #include <Library/PrintLib.h>
-#include <Library/PcdLib.h>
 #include <Library/UefiBootServicesTableLib.h>
+
+STATIC EFI_STATUS
+ReserveFirmwareSpi (
+  VOID  *Fdt
+  )
+{
+  INT32  Node = FdtNodeOffsetByCompatible (Fdt, -1, "spacemit,k3-qspi");
+
+  if ((Node < 0) || (FdtSetProp (Fdt, Node, "status", "reserved", sizeof ("reserved")) < 0)) {
+    return EFI_DEVICE_ERROR;
+  }
+
+  return EFI_SUCCESS;
+}
 
 STATIC EFI_STATUS
 PublishBoardMacs (
@@ -186,14 +199,12 @@ PublishFdt (
     return EFI_OUT_OF_RESOURCES;
   }
 
-  // The real variable store owns QSPI through UEFI runtime services.
+  // Firmware owns the SPI device in normal and RAM recovery boots.
   // Firmware drivers keep using the original HOB, not this OS handoff copy.
-  if (!PcdGetBool (PcdEmuVariableNvModeEnable)) {
-    INT32  Qspi = FdtNodeOffsetByCompatible (Copy, -1, "spacemit,k3-qspi");
-    if ((Qspi < 0) || (FdtSetProp (Copy, Qspi, "status", "disabled", sizeof ("disabled")) < 0)) {
-      FreePool (Copy);
-      return EFI_DEVICE_ERROR;
-    }
+  Status = ReserveFirmwareSpi (Copy);
+  if (EFI_ERROR (Status)) {
+    FreePool (Copy);
+    return Status;
   }
 
   Status = PublishCpuCompatibility (Copy);

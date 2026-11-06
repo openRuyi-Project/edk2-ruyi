@@ -22,7 +22,6 @@
   MemoryAllocationLib
   PlatformMacAddressLib
   PrintLib
-  PcdLib
   UefiBootServicesTableLib
   UefiDriverEntryPoint
 [Guids]
@@ -33,6 +32,3 @@
   gEfiCpuArchProtocolGuid
 [Depex]
   gEfiCpuArchProtocolGuid AND gEfiVariableArchProtocolGuid
-
-[Pcd]
-  gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable
