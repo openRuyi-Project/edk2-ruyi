@@ -9,6 +9,7 @@
 #include <Library/IoLib.h>
 #include <Library/K3BoardEepromLib.h>
 #include <Library/K3HardwareLib.h>
+#include <Library/K3I2cLib.h>
 #include <Library/TimerLib.h>
 #include <Library/UefiLib.h>
 #define APBC_TWSI2       0xd4015038
@@ -23,12 +24,10 @@
 #define CLOCK_MASK       (7U << 4 | BIT2 | BIT1 | BIT0)
 #define ICR              0x00
 #define ISR              0x04
-#define IDBR             0x0c
 #define IRCR             0x18
 #define IBMR             0x1c
 #define START            BIT0
 #define STOP             BIT1
-#define NAK              BIT2
 #define TRANSFER         BIT3
 #define UNIT_RESET       BIT10
 #define MASTER_ABORT     BIT12
@@ -36,82 +35,13 @@
 #define UNIT_ENABLE      BIT14
 #define GENERAL_DISABLE  BIT21
 #define INTERRUPTS       (BIT18 | BIT19 | BIT20 | BIT22 | BIT23 | BIT24)
-#define BUS_BUSY         (BIT15 | BIT16)
 #define TX_EMPTY         BIT19
 #define RX_FULL          BIT20
 #define ARB_LOST         BIT18
 #define BUS_ERROR        BIT22
-#define ACK_MISSING      BIT14
 #define EVENTS           (TX_EMPTY | RX_FULL | ARB_LOST | BUS_ERROR)
-#define BYTE_TIMEOUT_US  2000
 
 STATIC UINTN  mBase;
-
-STATIC EFI_STATUS
-WaitIdle (
-  VOID
-  )
-{
-  for (UINTN Us = 0; Us < BYTE_TIMEOUT_US; Us += 5) {
-    if (!(MmioRead32 (mBase + ISR) & BUS_BUSY) &&
-        !(MmioRead32 (mBase + ICR) & TRANSFER))
-    {
-      return EFI_SUCCESS;
-    }
-
-    MicroSecondDelay (5);
-  }
-
-  return EFI_TIMEOUT;
-}
-
-STATIC EFI_STATUS
-Byte (
-  UINT8    *Data,
-  UINT32   Flags,
-  BOOLEAN  Read
-  )
-{
-  UINT32  Event = Read ? RX_FULL : TX_EMPTY;
-
-  MmioWrite32 (mBase + ISR, EVENTS);
-  if (!Read) {
-    MmioWrite32 (mBase + IDBR, *Data);
-  }
-
-  MmioWrite32 (
-    mBase + ICR,
-    SCL_ENABLE | UNIT_ENABLE | GENERAL_DISABLE | TRANSFER | Flags
-    );
-  for (UINTN Us = 0; Us < BYTE_TIMEOUT_US; Us += 5) {
-    UINT32  State = MmioRead32 (mBase + ISR);
-
-    if (State & ARB_LOST) {
-      return EFI_ABORTED;
-    }
-
-    if (State & BUS_ERROR) {
-      return EFI_DEVICE_ERROR;
-    }
-
-    if ((State & Event) && !(MmioRead32 (mBase + ICR) & TRANSFER)) {
-      if (!Read && (State & ACK_MISSING)) {
-        return EFI_DEVICE_ERROR;
-      }
-
-      if (Read) {
-        *Data = (UINT8)MmioRead32 (mBase + IDBR);
-      }
-
-      MmioWrite32 (mBase + ISR, Event);
-      return EFI_SUCCESS;
-    }
-
-    MicroSecondDelay (5);
-  }
-
-  return EFI_TIMEOUT;
-}
 
 STATIC EFI_STATUS
 ReadRegisters (
@@ -120,34 +50,9 @@ ReadRegisters (
   UINTN  Count
   )
 {
-  EFI_STATUS  Status  = WaitIdle ();
-  UINT8       Address = EEPROM_ADDRESS << 1;
-
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  Status = Byte (&Address, START, FALSE);
-  if (!EFI_ERROR (Status)) {
-    Status = Byte (&Register, 0, FALSE);
-  }
-
-  Address |= 1;
-  if (!EFI_ERROR (Status)) {
-    Status = Byte (&Address, START, FALSE);
-  }
-
-  for (UINTN Index = 0; !EFI_ERROR (Status) && (Index < Count); Index++) {
-    Status = Byte (
-               &Data[Index],
-               (Index + 1 == Count) ? STOP | NAK : 0,
-               TRUE
-               );
-  }
-
-  if (!EFI_ERROR (Status)) {
-    Status = WaitIdle ();
-  }
+  EFI_STATUS  Status = K3I2cReadRegisters (
+                         mBase, EEPROM_ADDRESS, Register, Data, Count
+                         );
 
   if (EFI_ERROR (Status)) {
     DEBUG ((
@@ -169,25 +74,9 @@ WritePage (
   CONST UINT8  *Data
   )
 {
-  EFI_STATUS  Status  = WaitIdle ();
-  UINT8       Address = EEPROM_ADDRESS << 1;
-
-  if (!EFI_ERROR (Status)) {
-    Status = Byte (&Address, START, FALSE);
-  }
-
-  if (!EFI_ERROR (Status)) {
-    Status = Byte (&Register, 0, FALSE);
-  }
-
-  for (UINTN I = 0; !EFI_ERROR (Status) && I < 8; I++) {
-    UINT8  Value = Data[I];
-    Status = Byte (&Value, I == 7 ? STOP : 0, FALSE);
-  }
-
-  if (!EFI_ERROR (Status)) {
-    Status = WaitIdle ();
-  }
+  EFI_STATUS  Status = K3I2cWriteRegisters (
+                         mBase, EEPROM_ADDRESS, Register, Data, 8
+                         );
 
   /* Match the vendor 24C02 driver write-cycle bound (10 ms). */
   MicroSecondDelay (10000);
@@ -313,7 +202,7 @@ K3BoardEepromAccess (
   SavedIlcr   = MmioRead32 (mBase + 0x10);
   SavedIwcr   = MmioRead32 (mBase + 0x14);
   if ((SavedIcr & (INTERRUPTS | TRANSFER | START | STOP | MASTER_ABORT)) ||
-      EFI_ERROR (WaitIdle ()) ||
+      EFI_ERROR (K3I2cWaitIdle (mBase)) ||
       ((MmioRead32 (mBase + IBMR) & 3) != 3))
   {
     Status = EFI_ACCESS_DENIED;
@@ -365,7 +254,7 @@ RestoreClock:
     MmioWrite32 (mBase + ICR, UNIT_RESET);
     MicroSecondDelay (10);
     MmioWrite32 (mBase + ICR, 0);
-    if (EFI_ERROR (WaitIdle ())) {
+    if (EFI_ERROR (K3I2cWaitIdle (mBase))) {
       DEBUG ((DEBUG_ERROR, "EEPROM cleanup: bus not idle; temporary clocks retained.\r\n"));
       return EFI_DEVICE_ERROR;
     }

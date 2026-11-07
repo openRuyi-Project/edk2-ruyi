@@ -66,6 +66,7 @@
   K3DisplaySurfaceLib|SpacemitPlatformPkg/Library/K3DisplaySurfaceLib/K3DisplaySurfaceLib.inf
   K3DpuLib|SpacemitPlatformPkg/Library/K3DpuLib/K3DpuLib.inf
   FrameBufferBltLib|MdeModulePkg/Library/FrameBufferBltLib/FrameBufferBltLib.inf
+  K3I2cLib|SpacemitPlatformPkg/Library/K3I2cLib/K3I2cLib.inf
   K3InnoDpLib|SpacemitPlatformPkg/Library/K3InnoDpLib/K3InnoDpLib.inf
   UefiUsbLib|MdePkg/Library/UefiUsbLib/UefiUsbLib.inf
   GptLib|MdeModulePkg/Library/GptLib/GptLib.inf

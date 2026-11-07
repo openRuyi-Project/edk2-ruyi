@@ -18,6 +18,7 @@
   HobLib
   IoLib
   K3HardwareLib
+  K3I2cLib
   TimerLib
   UefiLib
 [Guids]

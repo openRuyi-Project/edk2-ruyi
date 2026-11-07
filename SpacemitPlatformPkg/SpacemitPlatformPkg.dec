@@ -28,6 +28,7 @@
   K3DisplayClockLib|Include/Library/K3DisplayClockLib.h
   K3DisplaySurfaceLib|Include/Library/K3DisplaySurfaceLib.h
   K3DpuLib|Include/Library/K3DpuLib.h
+  K3I2cLib|Include/Library/K3I2cLib.h
   K3InnoDpLib|Include/Library/K3InnoDpLib.h
   K3HardwareLib|Include/Library/K3HardwareLib.h
   K3EcLib|Include/Library/K3EcLib.h

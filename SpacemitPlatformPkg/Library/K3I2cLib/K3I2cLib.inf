@@ -1,0 +1,15 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3I2cLib
+  FILE_GUID = b4e4871b-f8da-4516-8900-393fef941024
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = K3I2cLib
+[Sources]
+  I2c.c
+[Packages]
+  MdePkg/MdePkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  IoLib
+  TimerLib
