@@ -25,8 +25,9 @@ This does not require changes to Linux source or bindings.
 
 ## Clock
 
-UEFI uses a virtual clock based on the RISC-V timer. It does not track
-time while the board is powered off. The OS manages the P1 hardware RTC.
+UEFI reads the P1 hardware RTC during boot. Time setting and alarms are
+not supported in UEFI. After ExitBootServices, UEFI time services return
+unsupported and Linux uses its native P1 RTC driver.
 
 ## Firmware updates
 

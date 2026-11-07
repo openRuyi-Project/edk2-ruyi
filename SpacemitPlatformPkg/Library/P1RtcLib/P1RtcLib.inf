@@ -1,0 +1,30 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = P1RtcLib
+  FILE_GUID = 40b789d8-7f3f-49e5-8e30-7f293cedd410
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = RealTimeClockLib
+[Sources]
+  Rtc.c
+[Packages]
+  MdePkg/MdePkg.dec
+  EmbeddedPkg/EmbeddedPkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  FdtLib
+  HobLib
+  IoLib
+  K3HardwareLib
+  K3I2cLib
+  TimeBaseLib
+  TimerLib
+  UefiBootServicesTableLib
+  UefiLib
+  UefiRuntimeLib
+[Guids]
+  gEfiRtPropertiesTableGuid
+  gFdtHobGuid
