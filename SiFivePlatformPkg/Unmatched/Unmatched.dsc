@@ -129,7 +129,7 @@
   RuyiPlatformPkg/Drivers/SystemInfoDxe/SystemInfoDxe.inf
 
 [LibraryClasses.common.DXE_DRIVER]
-  PlatformBootManagerLib|SiFivePlatformPkg/Library/BootManagerLib/BootManagerLib.inf
+  PlatformBootManagerLib|RuyiPlatformPkg/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf
 
 [LibraryClasses.common.DXE_RUNTIME_DRIVER]
   # SBI DBCN buffer writes require physical addresses, not OS runtime pointers.
