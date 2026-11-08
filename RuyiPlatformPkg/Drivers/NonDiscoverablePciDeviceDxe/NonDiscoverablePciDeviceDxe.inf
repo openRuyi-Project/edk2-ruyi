@@ -9,7 +9,7 @@
 
 [Defines]
   INF_VERSION                    = 0x00010019
-  BASE_NAME                      = SpacemitNonDiscoverablePciDeviceDxe
+  BASE_NAME                      = NonDiscoverablePciDeviceDxe
   FILE_GUID = df777b27-5f47-45c4-8087-6d7b84b4db90
   MODULE_TYPE                    = UEFI_DRIVER
   VERSION_STRING                 = 1.0

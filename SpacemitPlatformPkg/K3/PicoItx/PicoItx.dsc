@@ -272,7 +272,7 @@
 !endif
 !if $(K3_USB_HOST_ENABLE) == TRUE
   SpacemitPlatformPkg/Drivers/K3UsbHostDxe/K3UsbHostDxe.inf
-  SpacemitPlatformPkg/Drivers/NonDiscoverablePciDeviceDxe/NonDiscoverablePciDeviceDxe.inf
+  RuyiPlatformPkg/Drivers/NonDiscoverablePciDeviceDxe/NonDiscoverablePciDeviceDxe.inf
   MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
   MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
   MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf

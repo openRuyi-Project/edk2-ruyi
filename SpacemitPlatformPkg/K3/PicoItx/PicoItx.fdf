@@ -117,7 +117,7 @@ INF SpacemitPlatformPkg/Drivers/K3ComboPhyDxe/K3ComboPhyDxe.inf
 !endif
 !if $(K3_USB_HOST_ENABLE) == TRUE
 INF SpacemitPlatformPkg/Drivers/K3UsbHostDxe/K3UsbHostDxe.inf
-INF SpacemitPlatformPkg/Drivers/NonDiscoverablePciDeviceDxe/NonDiscoverablePciDeviceDxe.inf
+INF RuyiPlatformPkg/Drivers/NonDiscoverablePciDeviceDxe/NonDiscoverablePciDeviceDxe.inf
 INF MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
 INF MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
 INF MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
