@@ -11,6 +11,7 @@
   BootManagerLib|Include/Library/BootManagerLib.h
   BootProgressLib|Include/Library/BootProgressLib.h
   FdtBoardInfoLib|Include/Library/FdtBoardInfoLib.h
+  FdtHardwareLib|Include/Library/FdtHardwareLib.h
   FirmwareUpdateLib|Include/Library/FirmwareUpdateLib.h
   PlatformFirmwareUpdateLib|Include/Library/PlatformFirmwareUpdateLib.h
   NvFvbLib|Include/Library/NvFvbLib.h

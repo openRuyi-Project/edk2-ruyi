@@ -1,0 +1,16 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = FdtHardwareLib
+  FILE_GUID = bf02ff04-2bec-4b42-a240-49fc11d4dad7
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = FdtHardwareLib
+[Sources]
+  Hardware.c
+[Packages]
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  DxeServicesTableLib
+  FdtLib

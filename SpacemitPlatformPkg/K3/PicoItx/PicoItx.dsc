@@ -25,6 +25,7 @@
 !include RuyiPlatformPkg/Network.dsc.inc
 
 [LibraryClasses]
+  FdtHardwareLib|RuyiPlatformPkg/Library/FdtHardwareLib/FdtHardwareLib.inf
   NetworkBootConfigLib|SpacemitPlatformPkg/Library/K3NetworkBootConfigLib/K3NetworkBootConfigLib.inf
   FirmwareUpdateLib|RuyiPlatformPkg/Library/FirmwareUpdateLib/FirmwareUpdateLib.inf
   PlatformFirmwareUpdateLib|SpacemitPlatformPkg/Library/K3PlatformFirmwareUpdateLib/K3PlatformFirmwareUpdateLib.inf
