@@ -1,0 +1,21 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Eic7700InfoLib
+  FILE_GUID = 837952f1-883c-4db6-bf93-4fec04750e47
+  MODULE_TYPE = DXE_DRIVER
+  LIBRARY_CLASS = Eic7700InfoLib|DXE_DRIVER
+[Sources]
+  Info.c
+[Packages]
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+  EswinPlatformPkg/EswinPlatformPkg.dec
+[LibraryClasses]
+  FdtBoardInfoLib
+  BaseLib
+  DxeServicesTableLib
+  FdtLib
+  IoLib

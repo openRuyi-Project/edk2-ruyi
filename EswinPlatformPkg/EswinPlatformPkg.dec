@@ -1,0 +1,10 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  DEC_SPECIFICATION = 0x0001001B
+  PACKAGE_NAME = EswinPlatformPkg
+  PACKAGE_GUID = 100720dd-c431-4372-bd52-01cd8a3ef315
+  PACKAGE_VERSION = 0.1
+[Includes]
+  Include
+[LibraryClasses]
+  Eic7700InfoLib|Include/Library/Eic7700InfoLib.h

@@ -1,0 +1,138 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[FD.PREMIERP550]
+BaseAddress = 0x82200000|gUefiRiscVPlatformPkgTokenSpaceGuid.PcdRiscVFdBaseAddress64
+Size = 0x400000|gUefiRiscVPlatformPkgTokenSpaceGuid.PcdRiscVFirmwareFdSize
+ErasePolarity = 1
+BlockSize = 0x1000
+NumBlocks = 0x400
+0x00000000|0x00400000
+gUefiRiscVPlatformPkgTokenSpaceGuid.PcdRiscVDxeMemFvBase64|gUefiRiscVPlatformPkgTokenSpaceGuid.PcdRiscVDxeMemFvSize
+FV = COMPACT
+
+[FV.COMPACT]
+FvAlignment = 16
+ERASE_POLARITY = 1
+MEMORY_MAPPED = TRUE
+WRITE_ENABLED_CAP = TRUE
+WRITE_STATUS = TRUE
+READ_ENABLED_CAP = TRUE
+READ_STATUS = TRUE
+FvNameGuid = 505681e2-ce33-4d79-b019-e889bbeb603d
+INF UefiCpuPkg/SecCore/SecCoreNative.inf
+FILE FV_IMAGE = a2180190-e29d-485e-8435-09e7bc784cfb {
+  SECTION GUIDED EE4E5898-3914-4259-9D6E-DC7BD79403CF PROCESSING_REQUIRED = TRUE {
+    SECTION FV_IMAGE = DXEFV
+  }
+}
+
+[FV.DXEFV]
+FvAlignment = 16
+ERASE_POLARITY = 1
+MEMORY_MAPPED = TRUE
+WRITE_ENABLED_CAP = TRUE
+WRITE_STATUS = TRUE
+READ_ENABLED_CAP = TRUE
+READ_STATUS = TRUE
+FvNameGuid = 65266f49-50b1-4dbd-9240-b1d2f231001c
+APRIORI DXE {
+  INF MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
+  INF MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
+  INF MdeModulePkg/Universal/ReportStatusCodeRouter/RuntimeDxe/ReportStatusCodeRouterRuntimeDxe.inf
+  INF MdeModulePkg/Universal/StatusCodeHandler/RuntimeDxe/StatusCodeHandlerRuntimeDxe.inf
+}
+INF  MdeModulePkg/Core/Dxe/DxeMain.inf
+INF  UefiCpuPkg/CpuTimerDxeRiscV64/CpuTimerDxeRiscV64.inf
+INF  UefiCpuPkg/CpuDxeRiscV64/CpuDxeRiscV64.inf
+INF  Platform/RISC-V/PlatformPkg/Drivers/PlatformHasAcpiDtDxe/PlatformHasAcpiDtDxe.inf
+INF  EmbeddedPkg/Drivers/FdtClientDxe/FdtClientDxe.inf
+INF  EmbeddedPkg/RealTimeClockRuntimeDxe/RealTimeClockRuntimeDxe.inf
+INF  MdeModulePkg/Universal/ReportStatusCodeRouter/RuntimeDxe/ReportStatusCodeRouterRuntimeDxe.inf
+INF  MdeModulePkg/Universal/StatusCodeHandler/RuntimeDxe/StatusCodeHandlerRuntimeDxe.inf
+INF  MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
+INF  MdeModulePkg/Bus/I2c/I2cDxe/I2cDxe.inf
+INF  MdeModulePkg/Core/RuntimeDxe/RuntimeDxe.inf
+INF  MdeModulePkg/Universal/CapsuleRuntimeDxe/CapsuleRuntimeDxe.inf
+INF  MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
+INF  MdeModulePkg/Universal/Metronome/Metronome.inf
+INF  MdeModulePkg/Universal/MonotonicCounterRuntimeDxe/MonotonicCounterRuntimeDxe.inf
+INF  MdeModulePkg/Universal/PrintDxe/PrintDxe.inf
+INF  MdeModulePkg/Universal/ResetSystemRuntimeDxe/ResetSystemRuntimeDxe.inf
+INF  MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf
+INF  MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
+INF  EswinPlatformPkg/Drivers/PremierP550SmbiosDxe/PremierP550SmbiosDxe.inf
+INF  RuyiPlatformPkg/Drivers/SystemInfoDxe/SystemInfoDxe.inf
+INF  MdeModulePkg/Universal/WatchdogTimerDxe/WatchdogTimer.inf
+INF  MdeModulePkg/Universal/Variable/RuntimeDxe/VariableRuntimeDxe.inf
+INF  MdeModulePkg/Universal/Console/ConPlatformDxe/ConPlatformDxe.inf
+INF  MdeModulePkg/Universal/Console/ConSplitterDxe/ConSplitterDxe.inf
+INF  MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
+INF  MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
+INF RuleOverride = SETUP MdeModulePkg/Application/UiApp/UiApp.inf
+INF  RuyiPlatformPkg/Drivers/LogoDxe/LogoDxe.inf
+INF  MdeModulePkg/Universal/Acpi/BootGraphicsResourceTableDxe/BootGraphicsResourceTableDxe.inf
+FILE FREEFORM = b9317e41-2a84-4d83-8e31-a67838815ff2 {
+  SECTION RAW = RuyiPlatformPkg/Drivers/LogoDxe/RuyiFirmware.bmp
+}
+INF  MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
+INF  MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf
+INF  MdeModulePkg/Universal/DriverHealthManagerDxe/DriverHealthManagerDxe.inf
+INF  MdeModulePkg/Universal/HiiDatabaseDxe/HiiDatabaseDxe.inf
+INF  MdeModulePkg/Universal/MemoryTest/NullMemoryTestDxe/NullMemoryTestDxe.inf
+INF  MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
+INF  FatPkg/EnhancedFatDxe/Fat.inf
+INF  MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
+INF  MdeModulePkg/Universal/Disk/PartitionDxe/PartitionDxe.inf
+INF  MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
+INF  MdeModulePkg/Universal/SerialDxe/SerialDxe.inf
+INF  ShellPkg/Application/Shell/Shell.inf
+
+
+INF MdeModulePkg/Application/BootManagerMenuApp/BootManagerMenuApp.inf
+
+
+
+INF SecurityPkg/Hash2DxeCrypto/Hash2DxeCrypto.inf
+!if $(NETWORK_ENABLE) == TRUE
+!endif
+!include RuyiPlatformPkg/Network.fdf.inc
+
+[Rule.Common.SEC]
+  FILE SEC = $(NAMED_GUID) RELOCS_STRIPPED {
+    PE32 PE32 Align=4K $(INF_OUTPUT)/$(MODULE_NAME).efi
+  }
+[Rule.Common.DXE_CORE]
+  FILE DXE_CORE = $(NAMED_GUID) {
+    PE32 PE32 $(INF_OUTPUT)/$(MODULE_NAME).efi
+  }
+[Rule.Common.DXE_DRIVER]
+  FILE DRIVER = $(NAMED_GUID) {
+    DXE_DEPEX DXE_DEPEX Optional $(INF_OUTPUT)/$(MODULE_NAME).depex
+    PE32 PE32 $(INF_OUTPUT)/$(MODULE_NAME).efi
+  }
+[Rule.Common.DXE_RUNTIME_DRIVER]
+  FILE DRIVER = $(NAMED_GUID) {
+    DXE_DEPEX DXE_DEPEX Optional $(INF_OUTPUT)/$(MODULE_NAME).depex
+    PE32 PE32 $(INF_OUTPUT)/$(MODULE_NAME).efi
+  }
+[Rule.Common.UEFI_DRIVER]
+  FILE DRIVER = $(NAMED_GUID) {
+    DXE_DEPEX DXE_DEPEX Optional $(INF_OUTPUT)/$(MODULE_NAME).depex
+    PE32 PE32 $(INF_OUTPUT)/$(MODULE_NAME).efi
+  }
+[Rule.Common.UEFI_APPLICATION]
+  FILE APPLICATION = $(NAMED_GUID) {
+    UI STRING = "$(MODULE_NAME)"
+    PE32 PE32 $(INF_OUTPUT)/$(MODULE_NAME).efi
+  }
+
+[Rule.Common.UEFI_APPLICATION.SETUP]
+  FILE APPLICATION = $(NAMED_GUID) {
+    UI STRING = "Firmware Setup"
+    PE32 PE32 $(INF_OUTPUT)/$(MODULE_NAME).efi
+  }
+
+[Rule.Common.DXE_DRIVER.BINARY]
+  FILE DRIVER = $(NAMED_GUID) {
+    DXE_DEPEX DXE_DEPEX |.depex
+    PE32 PE32 |.efi
+  }

@@ -1,0 +1,27 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = PremierP550SmbiosDxe
+  FILE_GUID = 589dc71a-3389-468c-bc84-44fdabd1a7b9
+  MODULE_TYPE = DXE_DRIVER
+  ENTRY_POINT = PublishPremierP550Info
+[Sources]
+  Smbios.c
+[Packages]
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  EswinPlatformPkg/EswinPlatformPkg.dec
+[LibraryClasses]
+  UefiDriverEntryPoint
+  BaseLib
+  BaseMemoryLib
+  Eic7700InfoLib
+  HobLib
+  MemoryAllocationLib
+  UefiBootServicesTableLib
+[Protocols]
+  gEfiSmbiosProtocolGuid
+  gEfiCpuArchProtocolGuid
+[Depex]
+  gEfiSmbiosProtocolGuid AND gEfiCpuArchProtocolGuid
