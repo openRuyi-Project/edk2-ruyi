@@ -1,0 +1,28 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Eic7700UsbHostDxe
+  FILE_GUID = a4ba2133-5417-46f7-b791-ae116e6dea7a
+  MODULE_TYPE = DXE_DRIVER
+  ENTRY_POINT = Eic7700UsbHostEntry
+[Sources]
+  Usb.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  FdtBoardInfoLib
+  FdtHardwareLib
+  FdtLib
+  IoLib
+  NonDiscoverableDeviceRegistrationLib
+  TimerLib
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+[Protocols]
+  gEfiCpuArchProtocolGuid
+[Depex]
+  gEfiCpuArchProtocolGuid

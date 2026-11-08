@@ -19,6 +19,8 @@
 
 [LibraryClasses]
   DmaLib|EswinPlatformPkg/Library/Eic7700DmaLib/Eic7700DmaLib.inf
+  NonDiscoverableDeviceRegistrationLib|MdeModulePkg/Library/NonDiscoverableDeviceRegistrationLib/NonDiscoverableDeviceRegistrationLib.inf
+  UefiUsbLib|MdePkg/Library/UefiUsbLib/UefiUsbLib.inf
   FdtHardwareLib|RuyiPlatformPkg/Library/FdtHardwareLib/FdtHardwareLib.inf
   Eic7700InfoLib|EswinPlatformPkg/Library/Eic7700InfoLib/Eic7700InfoLib.inf
   PlatformCpuInfoLib|EswinPlatformPkg/Library/Eic7700CpuInfoLib/Eic7700CpuInfoLib.inf
@@ -92,6 +94,13 @@
   GCC:*_*_*_DLINK_FLAGS = -z common-page-size=0x1000
 
 [Components]
+  EswinPlatformPkg/Drivers/Eic7700UsbHostDxe/Eic7700UsbHostDxe.inf
+  RuyiPlatformPkg/Drivers/NonDiscoverablePciDeviceDxe/NonDiscoverablePciDeviceDxe.inf
+  MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
+  MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
+  MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
+  MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
+  MdeModulePkg/Universal/Disk/UdfDxe/UdfDxe.inf
   EswinPlatformPkg/Drivers/PremierP550SmbiosDxe/PremierP550SmbiosDxe.inf
   RuyiPlatformPkg/Drivers/SystemInfoDxe/SystemInfoDxe.inf
   SecurityPkg/Hash2DxeCrypto/Hash2DxeCrypto.inf

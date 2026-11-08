@@ -96,6 +96,14 @@ INF SecurityPkg/Hash2DxeCrypto/Hash2DxeCrypto.inf
 !endif
 !include RuyiPlatformPkg/Network.fdf.inc
 
+INF EswinPlatformPkg/Drivers/Eic7700UsbHostDxe/Eic7700UsbHostDxe.inf
+INF RuyiPlatformPkg/Drivers/NonDiscoverablePciDeviceDxe/NonDiscoverablePciDeviceDxe.inf
+INF MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
+INF MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
+INF MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
+INF MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
+INF MdeModulePkg/Universal/Disk/UdfDxe/UdfDxe.inf
+
 [Rule.Common.SEC]
   FILE SEC = $(NAMED_GUID) RELOCS_STRIPPED {
     PE32 PE32 Align=4K $(INF_OUTPUT)/$(MODULE_NAME).efi
