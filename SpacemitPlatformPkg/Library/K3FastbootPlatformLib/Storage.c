@@ -131,7 +131,7 @@ FastbootGetVar (
   }
 
   if (!AsciiStrCmp (Name, "version-bootloader")) {
-    return AsciiStrCpyS (Value, Size, "edk2-ruyi");
+    return UnicodeStrToAsciiStrS ((CONST CHAR16 *)PcdGetPtr (PcdFirmwareVersionString), Value, Size);
   }
 
   if (!AsciiStrCmp (Name, "version-ec")) {

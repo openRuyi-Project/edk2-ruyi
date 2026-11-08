@@ -11,6 +11,7 @@
   Spi.h
 [Packages]
   MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
   SpacemitPlatformPkg/SpacemitPlatformPkg.dec
 [LibraryClasses]
   K3EcLib
@@ -28,4 +29,5 @@
 [Protocols]
   gEfiSpiNorFlashProtocolGuid
 [Pcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVersionString
   gSpacemitPlatformTokenSpaceGuid.PcdSystemProductName
