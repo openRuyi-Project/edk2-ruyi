@@ -8,16 +8,13 @@
 [Sources]
   Info.c
 [Packages]
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
-  UefiCpuPkg/UefiCpuPkg.dec
   SiFivePlatformPkg/SiFivePlatformPkg.dec
 [LibraryClasses]
+  FdtBoardInfoLib
   BaseLib
-  BaseMemoryLib
   DxeServicesTableLib
   FdtLib
-  HobLib
   IoLib
-[Guids]
-  gFdtHobGuid

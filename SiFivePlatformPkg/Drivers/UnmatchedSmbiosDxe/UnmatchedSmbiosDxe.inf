@@ -8,6 +8,7 @@
 [Sources]
   Smbios.c
 [Packages]
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   SiFivePlatformPkg/SiFivePlatformPkg.dec

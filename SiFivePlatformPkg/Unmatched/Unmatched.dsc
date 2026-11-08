@@ -25,6 +25,7 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdPciDegradeResourceForOptionRom|FALSE
 
 [LibraryClasses]
+  FdtBoardInfoLib|RuyiPlatformPkg/Library/FdtBoardInfoLib/FdtBoardInfoLib.inf
   NetworkBootConfigLib|RuyiPlatformPkg/Library/VariableNetworkBootConfigLib/VariableNetworkBootConfigLib.inf
   BootProgressLib|RuyiPlatformPkg/Library/BootProgressLib/BootProgressLib.inf
   BootManagerLib|RuyiPlatformPkg/Library/BootManagerLib/BootManagerLib.inf

@@ -1,0 +1,21 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = FdtBoardInfoLib
+  FILE_GUID = b29f097a-9401-4181-b994-f37d4de6d212
+  MODULE_TYPE = DXE_DRIVER
+  LIBRARY_CLASS = FdtBoardInfoLib|DXE_DRIVER
+[Sources]
+  Info.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  FdtLib
+  HobLib
+[Guids]
+  gFdtHobGuid
