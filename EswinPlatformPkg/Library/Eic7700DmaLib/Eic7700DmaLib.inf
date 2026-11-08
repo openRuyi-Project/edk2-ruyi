@@ -1,0 +1,29 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Eic7700DmaLib
+  FILE_GUID = 4b32fbab-d7f6-4e34-bced-1a2058b39d82
+  MODULE_TYPE = DXE_DRIVER
+  LIBRARY_CLASS = DmaLib
+  CONSTRUCTOR = Eic7700DmaInitialize
+[Sources]
+  Dma.c
+[Packages]
+  EmbeddedPkg/EmbeddedPkg.dec
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  DxeServicesTableLib
+  FdtBoardInfoLib
+  FdtHardwareLib
+  FdtLib
+  IoLib
+  MemoryAllocationLib
+  UefiBootServicesTableLib
+[Protocols]
+  gEfiCpuArchProtocolGuid
+[Depex]
+  gEfiCpuArchProtocolGuid

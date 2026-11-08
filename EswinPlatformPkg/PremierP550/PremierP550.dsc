@@ -18,6 +18,8 @@
 !include Silicon/RISC-V/RiscV.dsc.inc
 
 [LibraryClasses]
+  DmaLib|EswinPlatformPkg/Library/Eic7700DmaLib/Eic7700DmaLib.inf
+  FdtHardwareLib|RuyiPlatformPkg/Library/FdtHardwareLib/FdtHardwareLib.inf
   Eic7700InfoLib|EswinPlatformPkg/Library/Eic7700InfoLib/Eic7700InfoLib.inf
   PlatformCpuInfoLib|EswinPlatformPkg/Library/Eic7700CpuInfoLib/Eic7700CpuInfoLib.inf
   FdtBoardInfoLib|RuyiPlatformPkg/Library/FdtBoardInfoLib/FdtBoardInfoLib.inf
