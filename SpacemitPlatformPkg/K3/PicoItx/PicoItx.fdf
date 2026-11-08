@@ -106,7 +106,12 @@ INF MdeModulePkg/Application/BootManagerMenuApp/BootManagerMenuApp.inf
 INF MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
 INF ShellPkg/Application/Shell/Shell.inf
 INF SpacemitPlatformPkg/Drivers/TlvEepromCommandDxe/TlvEepromCommandDxe.inf
-INF SpacemitPlatformPkg/Application/Fastboot/Fastboot.inf
+INF SpacemitPlatformPkg/Drivers/K3FastbootDxe/K3FastbootDxe.inf
+# Keep the existing F9 and recovery boot-option device path.
+FILE APPLICATION = gSpacemitFastbootFileGuid {
+  SECTION PE32 = $(OUTPUT_DIRECTORY)/$(TARGET)_$(TOOL_CHAIN_TAG)/RISCV64/AndroidFastbootApp.efi
+  SECTION UI = "USB Fastboot"
+}
 !if $(K3_PCIE_ENABLE) == TRUE || $(K3_USB_HOST_ENABLE) == TRUE
 INF SpacemitPlatformPkg/Drivers/K3ComboPhyDxe/K3ComboPhyDxe.inf
 !endif

@@ -3,7 +3,6 @@
 #include <Uefi.h>
 #include <Library/FastbootStorageLib.h>
 
-#define FASTBOOT_DOWNLOAD_MAX  SIZE_128MB
 EFI_STATUS
 FastbootPlatformInit (
   VOID

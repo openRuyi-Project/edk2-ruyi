@@ -296,7 +296,8 @@
   MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf
   MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
 !endif
-  SpacemitPlatformPkg/Application/Fastboot/Fastboot.inf {
+  EmbeddedPkg/Application/AndroidFastboot/AndroidFastbootApp.inf
+  SpacemitPlatformPkg/Drivers/K3FastbootDxe/K3FastbootDxe.inf {
     <LibraryClasses>
       # Firmware integrity checks only use deterministic SHA-256.
       RngLib|MdePkg/Library/BaseRngLibNull/BaseRngLibNull.inf
