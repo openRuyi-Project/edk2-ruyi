@@ -28,3 +28,8 @@ FastbootUsbSend (
   CONST VOID  *Buffer,
   UINTN       Length
   );
+
+UINTN
+FastbootUsbPacketSize (
+  VOID
+  );

@@ -734,3 +734,11 @@ FastbootUsbSend (
 
   return EFI_SUCCESS;
 }
+
+UINTN
+FastbootUsbPacketSize (
+  VOID
+  )
+{
+  return mBulkPacket;
+}
