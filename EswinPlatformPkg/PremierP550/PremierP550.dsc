@@ -112,7 +112,10 @@
 
 [Components]
   EmbeddedPkg/Application/AndroidFastboot/AndroidFastbootApp.inf
-  RuyiPlatformPkg/Drivers/FastbootDxe/FastbootDxe.inf
+  RuyiPlatformPkg/Drivers/FastbootDxe/FastbootDxe.inf {
+    <LibraryClasses>
+      NULL|MdeModulePkg/Library/LzmaCustomDecompressLib/LzmaCustomDecompressLib.inf
+  }
   EswinPlatformPkg/Drivers/PremierP550FdtDxe/PremierP550FdtDxe.inf
   RuyiPlatformPkg/Drivers/EqosSnpDxe/EqosSnpDxe.inf
   EswinPlatformPkg/Drivers/Eic7700SdhciDxe/Eic7700SdhciDxe.inf

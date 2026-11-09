@@ -8,12 +8,15 @@
 [Sources]
   Storage.c
 [Packages]
+  EswinPlatformPkg/EswinPlatformPkg.dec
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   RuyiPlatformPkg/RuyiPlatformPkg.dec
 [LibraryClasses]
   BaseLib
   DevicePathLib
+  Eic7700SpiNorLib
+  PlatformFirmwareUpdateLib
   FastbootStorageLib
   FdtBoardInfoLib
   FdtHardwareLib

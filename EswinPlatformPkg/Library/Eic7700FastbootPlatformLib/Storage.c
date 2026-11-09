@@ -4,6 +4,8 @@
 #include <Protocol/NonDiscoverableDevice.h>
 #include <Library/BaseLib.h>
 #include <Library/DevicePathLib.h>
+#include <Library/Eic7700SpiNorLib.h>
+#include <Library/PlatformFirmwareUpdateLib.h>
 #include <Library/FastbootPlatformLib.h>
 #include <Library/FdtBoardInfoLib.h>
 #include <Library/FdtHardwareLib.h>
@@ -23,6 +25,23 @@ STATIC struct {
 } mCards[MMC_HOST_COUNT * MMC_PARTITION_COUNT];
 STATIC FASTBOOT_NVME_TARGET  *mNvme;
 STATIC UINTN                 mNvmeCount;
+STATIC BOOLEAN               mSpiAvailable;
+
+STATIC BOOLEAN
+IsSpi (CONST CHAR8 *Name)
+{
+  return !AsciiStrCmp (Name, "spi") || !AsciiStrCmp (Name, "firmware");
+}
+
+STATIC EFI_STATUS
+SpiProgress (FIRMWARE_UPDATE_PHASE Phase, UINT64 Done, UINT64 Total, VOID *Context)
+{
+  STATIC CONST FASTBOOT_STORAGE_PHASE Phases[] = {
+    FastbootStorageRead, FastbootStorageErase, FastbootStorageWrite, FastbootStorageVerify
+  };
+  FASTBOOT_STORAGE_PROGRESS Notify = *(FASTBOOT_STORAGE_PROGRESS *)Context;
+  return Notify ? Notify (Done, Total, Phases[Phase]) : EFI_SUCCESS;
+}
 
 STATIC EFI_BLOCK_IO_PROTOCOL *
 Target (CONST CHAR8 *Name)
@@ -128,6 +147,8 @@ FastbootPlatformInit (VOID)
   if (EFI_ERROR (Status)) {
     return Status;
   }
+  mSpiAvailable = !EFI_ERROR (Eic7700SpiNorInit (FALSE));
+  if (mSpiAvailable) { Print (L"Fastboot spi: %u bytes\r\n", Eic7700SpiNorSize ()); }
   for (Index = 0; Index < ARRAY_SIZE (mCards); Index++) {
     if (Index % MMC_PARTITION_COUNT == 0) {
       AsciiSPrint (mCards[Index].Name, sizeof (mCards[Index].Name),
@@ -227,7 +248,10 @@ FastbootGetVar (CONST CHAR8 *Name, CHAR8 *Value, UINTN Size)
   } else {
     return EFI_NOT_FOUND;
   }
-  if (EFI_ERROR (FastbootMediaCapacity (Target (Partition), &Bytes))) {
+  if (IsSpi (Partition)) {
+    if (!mSpiAvailable) { return EFI_NOT_FOUND; }
+    Bytes = Eic7700SpiNorSize ();
+  } else if (EFI_ERROR (FastbootMediaCapacity (Target (Partition), &Bytes))) {
     return EFI_NOT_FOUND;
   }
   if (!AsciiStrnCmp (Name, "partition-size:", 15)) {
@@ -246,6 +270,10 @@ FastbootFlash (CONST CHAR8 *Name, CONST VOID *Data, UINTN Size,
   if (Name == NULL) {
     return EFI_INVALID_PARAMETER;
   }
+  if (IsSpi (Name)) {
+    if (!mSpiAvailable) { return EFI_NOT_FOUND; }
+    return PlatformFirmwareUpdate (Data, Size, SpiProgress, &Progress);
+  }
   Io = Target (Name);
   return Io ? FastbootWriteImage (Io, Data, Size, TRUE, Progress) : EFI_NOT_FOUND;
 }
@@ -259,6 +287,24 @@ FastbootRead (CONST CHAR8 *Name, UINT64 Offset, UINTN Size, VOID *Data,
   if (Name == NULL) {
     return EFI_INVALID_PARAMETER;
   }
+  if (IsSpi (Name)) {
+    UINTN Chunk, Done = 0;
+    EFI_STATUS Status;
+    if (!mSpiAvailable) { return EFI_NOT_FOUND; }
+    if ((Size && !Data) || Offset > Eic7700SpiNorSize () ||
+        Size > Eic7700SpiNorSize () - Offset) { return EFI_INVALID_PARAMETER; }
+    while (Done < Size) {
+      if (Progress) {
+        Status = Progress (Done, Size, FastbootStorageRead);
+        if (EFI_ERROR (Status)) { return Status; }
+      }
+      Chunk = MIN (Size - Done, SIZE_64KB);
+      Status = Eic7700SpiNorRead ((UINT32)Offset + Done, Chunk, (UINT8 *)Data + Done);
+      if (EFI_ERROR (Status)) { return Status; }
+      Done += Chunk;
+    }
+    return Progress ? Progress (Size, Size, FastbootStorageRead) : EFI_SUCCESS;
+  }
   Io = Target (Name);
   return Io ? FastbootReadImage (Io, Offset, Size, Data, Progress) : EFI_NOT_FOUND;
 }
@@ -266,7 +312,7 @@ FastbootRead (CONST CHAR8 *Name, UINT64 Offset, UINTN Size, VOID *Data,
 CONST CHAR8 *
 FastbootFlashInfo (CONST CHAR8 *Name)
 {
-  return NULL;
+  return IsSpi (Name) ? "SPI firmware verified; restart to use it" : NULL;
 }
 
 EFI_STATUS
