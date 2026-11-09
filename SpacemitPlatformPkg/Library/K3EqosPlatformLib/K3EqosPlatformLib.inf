@@ -1,15 +1,14 @@
 ## SPDX-License-Identifier: BSD-2-Clause-Patent
 [Defines]
   INF_VERSION = 0x0001001B
-  BASE_NAME = K3EqosLib
+  BASE_NAME = K3EqosPlatformLib
   FILE_GUID = 64e0c2cc-5aa0-4738-8500-a939f23466a8
   MODULE_TYPE = BASE
-  LIBRARY_CLASS = K3EqosLib
+  LIBRARY_CLASS = EqosPlatformLib
 [Sources]
   Platform.c
-  Phy.c
-  Dma.c
 [Packages]
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
   MdePkg/MdePkg.dec
   SpacemitPlatformPkg/SpacemitPlatformPkg.dec
   EmbeddedPkg/EmbeddedPkg.dec
@@ -20,4 +19,4 @@
   IoLib
   K3HardwareLib
   TimerLib
-  DmaLib
+  MemoryAllocationLib

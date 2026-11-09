@@ -1,0 +1,21 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = EqosLib
+  FILE_GUID = 8438e612-843e-4679-876a-7f12ff397e67
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = EqosLib
+[Sources]
+  Phy.c
+  Dma.c
+[Packages]
+  MdePkg/MdePkg.dec
+  EmbeddedPkg/EmbeddedPkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  DmaLib
+  IoLib
+  TimerLib

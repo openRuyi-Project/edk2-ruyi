@@ -7,6 +7,10 @@
 [Includes]
   Include
 [LibraryClasses]
+  EqosLib|Include/Library/EqosLib.h
+  EqosPlatformLib|Include/Library/EqosLib.h
+  PlatformMacAddressLib|Include/Library/PlatformMacAddressLib.h
+  SnpAdapterInfoLib|Include/Library/SnpAdapterInfoLib.h
   NetworkBootConfigLib|Include/Library/NetworkBootConfigLib.h
   BootManagerLib|Include/Library/BootManagerLib.h
   BootProgressLib|Include/Library/BootProgressLib.h

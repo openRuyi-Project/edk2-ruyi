@@ -1,16 +1,16 @@
 ## SPDX-License-Identifier: BSD-2-Clause-Patent
 [Defines]
   INF_VERSION = 0x0001001B
-  BASE_NAME = K3EqosSnpDxe
+  BASE_NAME = EqosSnpDxe
   FILE_GUID = d61a008a-35e9-43e3-9542-284c759631da
   MODULE_TYPE = DXE_DRIVER
-  ENTRY_POINT = K3EqosEntry
+  ENTRY_POINT = EqosEntry
 [Sources]
   Snp.c
 [Packages]
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
   MdePkg/MdePkg.dec
   UefiCpuPkg/UefiCpuPkg.dec
-  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
 [LibraryClasses]
   BaseLib
   BaseMemoryLib
@@ -19,7 +19,9 @@
   FdtLib
   HobLib
   IoLib
-  K3EqosLib
+  EqosLib
+  EqosPlatformLib
+  FdtHardwareLib
   MemoryAllocationLib
   PlatformMacAddressLib
   PrintLib

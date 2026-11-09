@@ -8,8 +8,18 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/FdtLib.h>
 #include <Library/IoLib.h>
-#include <Library/K3EqosLib.h>
+#include <Library/EqosLib.h>
+#include <Library/K3HardwareLib.h>
+#include <Library/MemoryAllocationLib.h>
 #include <Library/TimerLib.h>
+
+typedef struct {
+  EQOS_PORT Common;
+  UINTN Apmu, Control, Dline, Pll, Mpmu;
+  K3_GPIO Reset;
+  UINT32 TxDelay, RxDelay;
+  BOOLEAN ParentAdded;
+} K3_EQOS_PORT;
 
 STATIC BOOLEAN
 Cell (
@@ -50,13 +60,14 @@ Delay (
   return EFI_SUCCESS;
 }
 
-EFI_STATUS
-K3EqosParse (
+STATIC EFI_STATUS
+Parse (
   CONST VOID    *Fdt,
   INT32         Node,
-  K3_EQOS_PORT  *Port
+  K3_EQOS_PORT  *Hw
   )
 {
+  EQOS_PORT *Port = &Hw->Common;
   INT32                Length, Provider, Pll, Mpmu, Phy, Id;
   UINTN                Base, Bytes, Apmu;
   static CONST UINTN   Bases[] = { 0xcac80000, 0xcac82000, 0xcac8e000 };
@@ -70,6 +81,7 @@ K3EqosParse (
   }
 
   ZeroMem (Port, sizeof (*Port));
+  Port->DmaBusMode = (0xfU << 24) | (0xfU << 16) | BIT11 | BIT3 | BIT2 | BIT1;
   Port->Fdt  = Fdt;
   Port->Node = Node;
   EFI_STATUS  Status = K3FdtRegister (Fdt, Node, 0, 0x2000, &Base, &Bytes);
@@ -185,13 +197,13 @@ K3EqosParse (
   Port->DeassertUs    = Fdt32ToCpu (*P);
   Port->Aldps         = FdtGetProp (Fdt, Phy, "realtek,aldps-enable", &Length) != NULL;
   Port->DisableClkout = FdtGetProp (Fdt, Phy, "realtek,clkout-disable", &Length) != NULL;
-  Status              = Delay (Fdt, Node, "tx-internal-delay-ps", &Port->TxDelay);
+  Status              = Delay (Fdt, Node, "tx-internal-delay-ps", &Hw->TxDelay);
   if (!EFI_ERROR (Status)) {
-    Status = Delay (Fdt, Node, "rx-internal-delay-ps", &Port->RxDelay);
+    Status = Delay (Fdt, Node, "rx-internal-delay-ps", &Hw->RxDelay);
   }
 
   if (!EFI_ERROR (Status)) {
-    Status = K3ParseGpio (Fdt, Phy, "reset-gpios", &Port->Reset);
+    Status = K3ParseGpio (Fdt, Phy, "reset-gpios", &Hw->Reset);
   }
 
   if (EFI_ERROR (Status)) {
@@ -203,7 +215,7 @@ K3EqosParse (
     return EFI_NOT_FOUND;
   }
 
-  Status = K3FdtRegister (Fdt, Pll, 0, 0x124, &Port->Pll, NULL);
+  Status = K3FdtRegister (Fdt, Pll, 0, 0x124, &Hw->Pll, NULL);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -220,41 +232,42 @@ K3EqosParse (
     return EFI_COMPROMISED_DATA;
   }
 
-  Status = K3FdtRegister (Fdt, Mpmu, 0, 0x14, &Port->Mpmu, NULL);
+  Status = K3FdtRegister (Fdt, Mpmu, 0, 0x14, &Hw->Mpmu, NULL);
   if (EFI_ERROR (Status)) {
     return Status;
   }
 
   Port->Base    = Base;
-  Port->Apmu    = Apmu;
-  Port->Control = Apmu + Offsets[Id];
-  Port->Dline   = Port->Control + 4;
+  Hw->Apmu    = Apmu;
+  Hw->Control = Apmu + Offsets[Id];
+  Hw->Dline   = Hw->Control + 4;
   Status        = K3MapMmio (Base, Bytes);
   if (!EFI_ERROR (Status)) {
     Status = K3MapMmio (Apmu, 0x3f4);
   }
 
   if (!EFI_ERROR (Status)) {
-    Status = K3MapMmio (Port->Pll, 0x124);
+    Status = K3MapMmio (Hw->Pll, 0x124);
   }
 
   if (!EFI_ERROR (Status)) {
-    Status = K3MapMmio (Port->Mpmu, 0x14);
+    Status = K3MapMmio (Hw->Mpmu, 0x14);
   }
 
   return Status;
 }
 
 EFI_STATUS
-K3EqosPrepare (
-  K3_EQOS_PORT  *P
+EqosPrepare (
+  EQOS_PORT  *P
   )
 {
+  K3_EQOS_PORT *Hw = (K3_EQOS_PORT *)P;
   if (!P || P->Owned || P->Faulted) {
     return EFI_INVALID_PARAMETER;
   }
 
-  UINT32  Control = MmioRead32 (P->Control);
+  UINT32  Control = MmioRead32 (Hw->Control);
 
   if (((Control & 3) == 3) && ((MmioRead32 (P->Base) & 3) ||
                                (MmioRead32 (P->Base + 0x1104) & BIT0) || (MmioRead32 (P->Base + 0x1108) & BIT0)))
@@ -263,12 +276,12 @@ K3EqosPrepare (
   }
 
   // AXI and TX reference sources must be real enabled fixed-rate parents.
-  UINT32  Axi = MmioRead32 (P->Apmu + 0x388), Pll1 = MmioRead32 (P->Pll + 0x104);
+  UINT32  Axi = MmioRead32 (Hw->Apmu + 0x388), Pll1 = MmioRead32 (Hw->Pll + 0x104);
 
-  if ((Axi & BIT4) || (MmioRead32 (P->Pll + 0x100) != 0x0b330ccc) ||
-      (MmioRead32 (P->Pll + 0x108) != 0xa0558989) || ((Pll1 & 0xff00) != 0xcd00) ||
+  if ((Axi & BIT4) || (MmioRead32 (Hw->Pll + 0x100) != 0x0b330ccc) ||
+      (MmioRead32 (Hw->Pll + 0x108) != 0xa0558989) || ((Pll1 & 0xff00) != 0xcd00) ||
       !(Pll1 & BIT16) || !(Pll1 & ((Axi & BIT0) ? BIT5 : BIT7)) ||
-      !(MmioRead32 (P->Mpmu + 0x10) & BIT24))
+      !(MmioRead32 (Hw->Mpmu + 0x10) & BIT24))
   {
     return EFI_NOT_READY;
   }
@@ -276,10 +289,10 @@ K3EqosPrepare (
   P->CsrRate   = ((Axi & BIT0) ? 409600000U : 307200000U) / (((Axi >> 1) & 3) + 1);
   P->MdioRange = P->CsrRate < 100000000 ? 0 : P->CsrRate < 150000000 ? 1 :
                  P->CsrRate < 250000000 ? 4 : P->CsrRate <= 300000000 ? 5 : 6;
-  UINT32  Pll2 = MmioRead32 (P->Pll + 0x11c);
+  UINT32  Pll2 = MmioRead32 (Hw->Pll + 0x11c);
 
-  if ((MmioRead32 (P->Pll + 0x118) != 0x0b3e2000) || (MmioRead32 (P->Pll + 0x120) != 0xa0558c8c) ||
-      (Pll2 & 0xff00) || !(Pll2 & BIT16) || !(MmioRead32 (P->Mpmu + 0x10) & BIT25))
+  if ((MmioRead32 (Hw->Pll + 0x118) != 0x0b3e2000) || (MmioRead32 (Hw->Pll + 0x120) != 0xa0558c8c) ||
+      (Pll2 & 0xff00) || !(Pll2 & BIT16) || !(MmioRead32 (Hw->Mpmu + 0x10) & BIT25))
   {
     return EFI_NOT_READY;
   }
@@ -290,13 +303,13 @@ K3EqosPrepare (
     return Status;
   }
 
-  P->ParentAdded = !(Pll2 & BIT2);
-  MmioOr32 (P->Pll + 0x11c, BIT2);
+  Hw->ParentAdded = !(Pll2 & BIT2);
+  MmioOr32 (Hw->Pll + 0x11c, BIT2);
   P->Owned = TRUE;
-  MmioAndThenOr32 (P->Control, ~(BIT1 | BIT3 | BIT4 | BIT9 | BIT12), BIT0 | BIT8 | BIT3);
-  MmioAndThenOr32 (P->Dline, ~0xff31ff31U, BIT0 | BIT16 | (P->TxDelay << 24) | (P->RxDelay << 8));
-  MmioOr32 (P->Control, BIT1);
-  if ((MmioRead32 (P->Control) & (BIT0 | BIT1 | BIT8 | BIT3 | BIT4)) != (BIT0 | BIT1 | BIT8 | BIT3)) {
+  MmioAndThenOr32 (Hw->Control, ~(BIT1 | BIT3 | BIT4 | BIT9 | BIT12), BIT0 | BIT8 | BIT3);
+  MmioAndThenOr32 (Hw->Dline, ~0xff31ff31U, BIT0 | BIT16 | (Hw->TxDelay << 24) | (Hw->RxDelay << 8));
+  MmioOr32 (Hw->Control, BIT1);
+  if ((MmioRead32 (Hw->Control) & (BIT0 | BIT1 | BIT8 | BIT3 | BIT4)) != (BIT0 | BIT1 | BIT8 | BIT3)) {
     return EFI_DEVICE_ERROR;
   }
 
@@ -311,13 +324,13 @@ K3EqosPrepare (
   }
 
   P->AddressBits = Width == 1 ? 40 : 48;
-  Status         = K3GpioOutput (&P->Reset, TRUE);
+  Status         = K3GpioOutput (&Hw->Reset, TRUE);
   if (EFI_ERROR (Status)) {
     return Status;
   }
 
   MicroSecondDelay (P->AssertUs);
-  Status = K3GpioOutput (&P->Reset, FALSE);
+  Status = K3GpioOutput (&Hw->Reset, FALSE);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -328,26 +341,54 @@ K3EqosPrepare (
 }
 
 EFI_STATUS
-K3EqosPark (
-  K3_EQOS_PORT  *P
+EqosPark (
+  EQOS_PORT  *P
   )
 {
+  K3_EQOS_PORT *Hw = (K3_EQOS_PORT *)P;
   if (!P || !P->Owned) {
     return EFI_INVALID_PARAMETER;
   }
 
   // Caller must first stop/confirm its DMA engine before parking resources.
-  MmioAnd32 (P->Control, ~BIT1);
-  if (MmioRead32 (P->Control) & BIT1) {
+  MmioAnd32 (Hw->Control, ~BIT1);
+  if (MmioRead32 (Hw->Control) & BIT1) {
     P->Faulted = TRUE;
     return EFI_DEVICE_ERROR;
   }
 
-  MmioAnd32 (P->Control, ~(BIT0 | BIT8));
-  if (P->ParentAdded) {
-    MmioAnd32 (P->Pll + 0x11c, ~BIT2);
+  MmioAnd32 (Hw->Control, ~(BIT0 | BIT8));
+  if (Hw->ParentAdded) {
+    MmioAnd32 (Hw->Pll + 0x11c, ~BIT2);
   }
 
   P->Owned = P->Ready = P->PhyConfigured = FALSE;
+  return EFI_SUCCESS;
+}
+
+INT32
+EqosNextNode (CONST VOID *Fdt, INT32 Previous)
+{
+  return FdtNodeOffsetByCompatible (Fdt, Previous, "spacemit,k3-dwmac");
+}
+
+EFI_STATUS
+EqosParse (CONST VOID *Fdt, INT32 Node, EQOS_PORT **Port)
+{
+  K3_EQOS_PORT *Hw;
+  EFI_STATUS Status;
+  if (!Port) { return EFI_INVALID_PARAMETER; }
+  *Port = NULL;
+  Hw = AllocateZeroPool (sizeof (*Hw));
+  if (!Hw) { return EFI_OUT_OF_RESOURCES; }
+  Status = Parse (Fdt, Node, Hw);
+  if (EFI_ERROR (Status)) { FreePool (Hw); return Status; }
+  *Port = &Hw->Common;
+  return EFI_SUCCESS;
+}
+
+EFI_STATUS
+EqosSetLink (EQOS_PORT *Port, UINT32 Speed, BOOLEAN FullDuplex)
+{
   return EFI_SUCCESS;
 }

@@ -9,21 +9,22 @@
 #include <Library/DebugLib.h>
 #include <Library/DevicePathLib.h>
 #include <Library/FdtLib.h>
+#include <Library/FdtHardwareLib.h>
 #include <Library/HobLib.h>
 #include <Library/IoLib.h>
-#include <Library/K3EqosDmaLib.h>
+#include <Library/EqosDmaLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PlatformMacAddressLib.h>
 #include <Library/PrintLib.h>
 #include <Library/SnpAdapterInfoLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 
-#define SIGNATURE  SIGNATURE_32 ('K','3','S','N')
+#define SIGNATURE  SIGNATURE_32 ('E','Q','S','N')
 typedef struct NIC {
   struct NIC                     *Next;
   UINT32                         Signature;
-  K3_EQOS_PORT                   Port;
-  K3_EQOS_DMA                    Dma;
+  EQOS_PORT                   *Port;
+  EQOS_DMA                    Dma;
   UINT64                         FilteredFrames;
   EFI_SIMPLE_NETWORK_PROTOCOL    Snp;
   EFI_SIMPLE_NETWORK_MODE        Mode;
@@ -82,11 +83,13 @@ Link (
 {
   BOOLEAN     Up, Full;
   UINT32      Speed;
-  EFI_STATUS  Status = K3EqosLink (&N->Port, &Up, &Full, &Speed);
+  EFI_STATUS  Status = EqosLink (N->Port, &Up, &Full, &Speed);
 
   N->Mode.MediaPresent = !EFI_ERROR (Status) && Up;
   if (!EFI_ERROR (Status) && Up) {
-    K3EqosSpeed (&N->Port, Speed, Full);
+    Status = EqosSetLink (N->Port, Speed, Full);
+    if (EFI_ERROR (Status)) { N->Mode.MediaPresent = FALSE; return Status; }
+    EqosSpeed (N->Port, Speed, Full);
   }
 
   return Status;
@@ -112,7 +115,7 @@ ProgramFilters (
   }
 
   // Multicast is checked exactly in software, avoiding hardware-hash collisions.
-  MmioAndThenOr32 (N->Port.Base + 8, ~(BIT0 | BIT1 | BIT2 | BIT4 | BIT5 | BIT10), Bits);
+  MmioAndThenOr32 (N->Port->Base + 8, ~(BIT0 | BIT1 | BIT2 | BIT4 | BIT5 | BIT10), Bits);
 }
 
 STATIC BOOLEAN
@@ -228,7 +231,7 @@ Initialize (
   }
 
   EFI_TPL     Old    = gBS->RaiseTPL (TPL_NOTIFY);
-  EFI_STATUS  Status = K3EqosDmaStart (&N->Dma, &N->Port, (UINT8 *)&N->Mode.CurrentAddress);
+  EFI_STATUS  Status = EqosDmaStart (&N->Dma, N->Port, (UINT8 *)&N->Mode.CurrentAddress);
 
   if (!EFI_ERROR (Status)) {
     N->FilteredFrames = 0;
@@ -237,9 +240,9 @@ Initialize (
     // A disconnected cable is a usable initialized interface, with MediaPresent false.
     Status = Link (N);
     if (EFI_ERROR (Status)) {
-      EFI_STATUS  Cleanup = K3EqosDmaStop (&N->Dma);
+      EFI_STATUS  Cleanup = EqosDmaStop (&N->Dma);
       if (!EFI_ERROR (Cleanup)) {
-        Cleanup = K3EqosDmaFree (&N->Dma);
+        Cleanup = EqosDmaFree (&N->Dma);
       }
 
       if (!EFI_ERROR (Cleanup)) {
@@ -277,9 +280,9 @@ Shutdown (
 
   EFI_TPL  Old = gBS->RaiseTPL (TPL_NOTIFY);
 
-  Status = K3EqosDmaStop (&N->Dma);
+  Status = EqosDmaStop (&N->Dma);
   if (!EFI_ERROR (Status)) {
-    Status = K3EqosDmaFree (&N->Dma);
+    Status = EqosDmaFree (&N->Dma);
   }
 
   if (!EFI_ERROR (Status)) {
@@ -375,7 +378,7 @@ StationAddress (
   EFI_TPL  Old = gBS->RaiseTPL (TPL_NOTIFY);
 
   N->Mode.CurrentAddress = Default ? N->Mode.PermanentAddress : *Mac;
-  K3EqosMacAddress (&N->Port, N->Mode.CurrentAddress.Addr);
+  EqosMacAddress (N->Port, N->Mode.CurrentAddress.Addr);
   gBS->RestoreTPL (Old);
   return EFI_SUCCESS;
 }
@@ -511,7 +514,7 @@ GetStatus (
   }
 
   EFI_TPL  Old       = gBS->RaiseTPL (TPL_NOTIFY);
-  UINT32   DmaStatus = MmioRead32 (N->Port.Base + 0x1160);
+  UINT32   DmaStatus = MmioRead32 (N->Port->Base + 0x1160);
 
   if (Buffer != NULL) {
     *Buffer = NULL;
@@ -531,7 +534,7 @@ GetStatus (
   }
 
   if (Buffer != NULL) {
-    Status = K3EqosReclaim (&N->Dma, Buffer);
+    Status = EqosReclaim (&N->Dma, Buffer);
     if ((Status == EFI_DEVICE_ERROR) && (*Buffer != NULL)) {
       // A completed descriptor can be recycled even if its frame was dropped.
       // The DMA layer has already recorded the error in TxError.
@@ -545,10 +548,10 @@ GetStatus (
 
   if (Interrupt != NULL) {
     *Interrupt = ((DmaStatus & BIT0) ? EFI_SIMPLE_NETWORK_TRANSMIT_INTERRUPT : 0) |
-                 (K3EqosPacketReady (&N->Dma) ? EFI_SIMPLE_NETWORK_RECEIVE_INTERRUPT : 0);
+                 (EqosPacketReady (&N->Dma) ? EFI_SIMPLE_NETWORK_RECEIVE_INTERRUPT : 0);
   }
 
-  MmioWrite32 (N->Port.Base + 0x1160, DmaStatus & (BIT0 | BIT6 | BIT12 | BIT14 | BIT15));
+  MmioWrite32 (N->Port->Base + 0x1160, DmaStatus & (BIT0 | BIT6 | BIT12 | BIT14 | BIT15));
 
 Done:
   gBS->RestoreTPL (Old);
@@ -593,7 +596,7 @@ Transmit (
       P[13] = (UINT8)*Protocol;
     }
 
-    Status = K3EqosTransmit (&N->Dma, Buffer, Bytes);
+    Status = EqosTransmit (&N->Dma, Buffer, Bytes);
   }
 
   gBS->RestoreTPL (Old);
@@ -624,18 +627,18 @@ Receive (
 
   EFI_TPL  Old = gBS->RaiseTPL (TPL_NOTIFY);
 
-  for (UINTN I = 0; I < K3_EQOS_RX; I++) {
-    if (!K3EqosPacketReady (&N->Dma)) {
+  for (UINTN I = 0; I < EQOS_RX; I++) {
+    if (!EqosPacketReady (&N->Dma)) {
       Status = EFI_NOT_READY;
       break;
     }
 
     MemoryFence ();
-    UINT8  *Packet = N->Dma.RxBytes + N->Dma.RxHead * K3_EQOS_FRAME_BYTES;
+    UINT8  *Packet = N->Dma.RxBytes + N->Dma.RxHead * EQOS_FRAME_BYTES;
     if (!Accept (N, Packet)) {
-      UINT8  Discard[K3_EQOS_FRAME_BYTES];
+      UINT8  Discard[EQOS_FRAME_BYTES];
       UINTN  Size = sizeof (Discard);
-      if (!EFI_ERROR (K3EqosReceive (&N->Dma, Discard, &Size))) {
+      if (!EFI_ERROR (EqosReceive (&N->Dma, Discard, &Size))) {
         N->FilteredFrames++;
       }
 
@@ -643,7 +646,7 @@ Receive (
       continue;
     }
 
-    Status = K3EqosReceive (&N->Dma, Buffer, Bytes);
+    Status = EqosReceive (&N->Dma, Buffer, Bytes);
     if (!EFI_ERROR (Status)) {
       UINT8  *P = Buffer;
       if (Header) {
@@ -680,7 +683,7 @@ WaitPacket (
 {
   NIC  *N = Context;
 
-  if ((N->Mode.State == EfiSimpleNetworkInitialized) && K3EqosPacketReady (&N->Dma)) {
+  if ((N->Mode.State == EfiSimpleNetworkInitialized) && EqosPacketReady (&N->Dma)) {
     gBS->SignalEvent (Event);
   }
 }
@@ -695,9 +698,9 @@ Exit (
   NIC  *N = Context;
 
   if (N->Dma.Running || N->Dma.Faulted) {
-    EFI_STATUS  Status = K3EqosDmaStop (&N->Dma);
+    EFI_STATUS  Status = EqosDmaStop (&N->Dma);
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "K3 EQoS DMA stop failed at OS handoff: %r\n", Status));
+      DEBUG ((DEBUG_ERROR, "EQoS DMA stop failed at OS handoff: %r\n", Status));
       CpuDeadLoop ();
     }
   }
@@ -708,13 +711,14 @@ Discard (
   NIC  *N
   )
 {
-  if (N->Port.Owned && EFI_ERROR (K3EqosPark (&N->Port))) {
+  if (N->Port && N->Port->Owned && EFI_ERROR (EqosPark (N->Port))) {
     N->Next      = mQuarantined;
     mQuarantined = N;
-    DEBUG ((DEBUG_ERROR, "K3 EQoS resource park failed; owner retained\n"));
+    DEBUG ((DEBUG_ERROR, "EQoS resource park failed; owner retained\n"));
     return;
   }
 
+  if (N->Port) { FreePool (N->Port); }
   FreePool (N);
 }
 
@@ -749,7 +753,7 @@ BoardMac (
 }
 
 EFI_STATUS EFIAPI
-K3EqosEntry (
+EqosEntry (
   EFI_HANDLE        Image,
   EFI_SYSTEM_TABLE  *SystemTable
   )
@@ -775,8 +779,8 @@ K3EqosEntry (
   UINTN       Count = 0;
   EFI_STATUS  Last  = EFI_NOT_FOUND;
 
-  while ((Node = FdtNodeOffsetByCompatible (Fdt, Node, "spacemit,k3-dwmac")) >= 0) {
-    if (!K3FdtEnabled (Fdt, Node)) {
+  while ((Node = EqosNextNode (Fdt, Node)) >= 0) {
+    if (!FdtNodeEnabled (Fdt, Node)) {
       continue;
     }
 
@@ -790,7 +794,7 @@ K3EqosEntry (
     CONST CHAR8  *Phase = "resource description";
 
     N->Signature = SIGNATURE;
-    Last         = K3EqosParse (Fdt, Node, &N->Port);
+    Last         = EqosParse (Fdt, Node, &N->Port);
     UINT8  Mac[6];
     if (!EFI_ERROR (Last)) {
       Phase = "board MAC";
@@ -800,16 +804,16 @@ K3EqosEntry (
     if (!EFI_ERROR (Last)) {
       CopyMem (N->Mode.CurrentAddress.Addr, Mac, 6);
       Phase = "controller setup";
-      Last  = K3EqosPrepare (&N->Port);
+      Last  = EqosPrepare (N->Port);
     }
 
     if (!EFI_ERROR (Last)) {
       Phase = "PHY setup";
-      Last  = K3EqosPhyConfigure (&N->Port);
+      Last  = EqosPhyConfigure (N->Port);
     }
 
     if (EFI_ERROR (Last)) {
-      DEBUG ((DEBUG_ERROR, "K3 EQoS %lx %a failed: %r\n", N->Port.Base, Phase, Last));
+      DEBUG ((DEBUG_ERROR, "EQoS %lx %a failed: %r\n", N->Port ? N->Port->Base : 0, Phase, Last));
       Discard (N);
       continue;
     }
@@ -874,10 +878,10 @@ K3EqosEntry (
     Count++;
     DEBUG ((
       DEBUG_INFO,
-      "K3 EQoS %lx SNP published, PHY %08x, DMA width %u\n",
-      N->Port.Base,
-      N->Port.PhyId,
-      N->Port.AddressBits
+      "EQoS %lx SNP published, PHY %08x, DMA width %u\n",
+      N->Port->Base,
+      N->Port->PhyId,
+      N->Port->AddressBits
       ));
   }
 

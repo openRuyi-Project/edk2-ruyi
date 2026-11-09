@@ -10,7 +10,7 @@
 #include <Library/DmaLib.h>
 #include <Library/DebugLib.h>
 #include <Library/IoLib.h>
-#include <Library/K3EqosDmaLib.h>
+#include <Library/EqosDmaLib.h>
 #include <Library/TimerLib.h>
 
 #define OWN                  BIT31
@@ -18,10 +18,10 @@
 #define LAST                 BIT28
 #define ERROR                BIT15
 #define TX_OFFSET            0U
-#define RX_OFFSET            (K3_EQOS_TX * sizeof (K3_EQOS_DESC))
-#define TX_BYTES             ALIGN_VALUE ((K3_EQOS_TX + K3_EQOS_RX) * sizeof (K3_EQOS_DESC), 64)
-#define RX_BYTES             (TX_BYTES + K3_EQOS_TX * K3_EQOS_FRAME_BYTES)
-#define TOTAL_BYTES          (RX_BYTES + K3_EQOS_RX * K3_EQOS_FRAME_BYTES)
+#define RX_OFFSET            (EQOS_TX * sizeof (EQOS_DESC))
+#define TX_BYTES             ALIGN_VALUE ((EQOS_TX + EQOS_RX) * sizeof (EQOS_DESC), 64)
+#define RX_BYTES             (TX_BYTES + EQOS_TX * EQOS_FRAME_BYTES)
+#define TOTAL_BYTES          (RX_BYTES + EQOS_RX * EQOS_FRAME_BYTES)
 #define RESET_TIMEOUT_US     500000
 #define DRAIN_TIMEOUT_US     50000
 #define MTL_TXQ_DEBUG        0xd08
@@ -33,7 +33,7 @@
 
 STATIC EFI_PHYSICAL_ADDRESS
 Address (
-  K3_EQOS_DMA  *D,
+  EQOS_DMA  *D,
   CONST VOID   *P
   )
 {
@@ -62,8 +62,8 @@ Wait (
 }
 
 VOID
-K3EqosMacAddress (
-  K3_EQOS_PORT  *P,
+EqosMacAddress (
+  EQOS_PORT  *P,
   CONST UINT8   *Mac
   )
 {
@@ -72,8 +72,8 @@ K3EqosMacAddress (
 }
 
 VOID
-K3EqosSpeed (
-  K3_EQOS_PORT  *P,
+EqosSpeed (
+  EQOS_PORT  *P,
   UINT32        Speed,
   BOOLEAN       Full
   )
@@ -93,11 +93,11 @@ K3EqosSpeed (
 
 STATIC VOID
 RxReturn (
-  K3_EQOS_DMA  *D,
+  EQOS_DMA  *D,
   UINTN        Index
   )
 {
-  EFI_PHYSICAL_ADDRESS  Buffer = Address (D, D->RxBytes + Index * K3_EQOS_FRAME_BYTES);
+  EFI_PHYSICAL_ADDRESS  Buffer = Address (D, D->RxBytes + Index * EQOS_FRAME_BYTES);
 
   D->Rx[Index].Word[0] = (UINT32)Buffer;
   D->Rx[Index].Word[1] = (UINT32)(Buffer >> 32);
@@ -109,9 +109,9 @@ RxReturn (
 }
 
 EFI_STATUS
-K3EqosDmaStart (
-  K3_EQOS_DMA   *D,
-  K3_EQOS_PORT  *P,
+EqosDmaStart (
+  EQOS_DMA   *D,
+  EQOS_PORT  *P,
   CONST UINT8   *Mac
   )
 {
@@ -136,14 +136,14 @@ K3EqosDmaStart (
 
   Status = DmaMap (MapOperationBusMasterCommonBuffer, D->Allocation, &Bytes, &D->Bus, &D->Mapping);
   if (EFI_ERROR (Status)) {
-    K3EqosDmaFree (D);
+    EqosDmaFree (D);
     return Status;
   }
 
   if ((Bytes != EFI_PAGES_TO_SIZE (D->Pages)) || (D->Bus > (1ULL << P->AddressBits) - Bytes) ||
       (D->Bus & 63) || ((D->Bus >> 32) != ((D->Bus + TX_BYTES - 1) >> 32)))
   {
-    K3EqosDmaFree (D);
+    EqosDmaFree (D);
     return EFI_UNSUPPORTED;
   }
 
@@ -165,7 +165,7 @@ K3EqosDmaStart (
   UINT32  TxFifo = 128U << ((Features >> 6) & 0x1f), RxFifo = 128U << (Features & 0x1f);
 
   if ((TxFifo < 256) || (TxFifo > 32768) || (RxFifo < 256) || (RxFifo > 32768)) {
-    K3EqosDmaFree (D);
+    EqosDmaFree (D);
     return EFI_UNSUPPORTED;
   }
 
@@ -181,21 +181,21 @@ K3EqosDmaStart (
   MmioAndThenOr32 (
     P->Base + 0x1108,
     ~((0x3fU << 16) | (0x3fffU << 1)),
-    (8U << 16) | (K3_EQOS_FRAME_BYTES << 1)
+    (8U << 16) | (EQOS_FRAME_BYTES << 1)
     );
-  MmioWrite32 (P->Base + 0x1004, (0xfU << 24) | (0xfU << 16) | BIT11 | BIT3 | BIT2 | BIT1);
+  MmioWrite32 (P->Base + 0x1004, P->DmaBusMode);
   MmioWrite32 (P->Base + 0x1134, 0); // Firmware polls; do not enable an unowned IRQ route.
   MmioOr32 (P->Base, BIT21 | BIT20);
-  K3EqosMacAddress (P, Mac);
+  EqosMacAddress (P, Mac);
   EFI_PHYSICAL_ADDRESS  Tx = Address (D, D->Tx), Rx = Address (D, D->Rx);
 
   MmioWrite32 (P->Base + 0x1110, (UINT32)(Tx >> 32));
   MmioWrite32 (P->Base + 0x1114, (UINT32)Tx);
   MmioWrite32 (P->Base + 0x1118, (UINT32)(Rx >> 32));
   MmioWrite32 (P->Base + 0x111c, (UINT32)Rx);
-  MmioWrite32 (P->Base + 0x112c, K3_EQOS_TX - 1);
-  MmioWrite32 (P->Base + 0x1130, K3_EQOS_RX - 1);
-  for (UINTN I = 0; I < K3_EQOS_RX; I++) {
+  MmioWrite32 (P->Base + 0x112c, EQOS_TX - 1);
+  MmioWrite32 (P->Base + 0x1130, EQOS_RX - 1);
+  for (UINTN I = 0; I < EQOS_RX; I++) {
     RxReturn (D, I);
   }
 
@@ -208,15 +208,15 @@ K3EqosDmaStart (
 }
 
 EFI_STATUS
-K3EqosDmaStop (
-  K3_EQOS_DMA  *D
+EqosDmaStop (
+  EQOS_DMA  *D
   )
 {
   if (!D || !D->Port) {
     return EFI_INVALID_PARAMETER;
   }
 
-  K3_EQOS_PORT  *P = D->Port;
+  EQOS_PORT  *P = D->Port;
 
   if (!D->Running && !D->Faulted) {
     return EFI_SUCCESS;
@@ -253,7 +253,7 @@ K3EqosDmaStop (
 
       // With MAC receive off, recycle completed descriptors to drain
       // queued packets even when the SNP consumer has stopped.
-      for (UINTN Index = 0; Index < K3_EQOS_RX; Index++) {
+      for (UINTN Index = 0; Index < EQOS_RX; Index++) {
         if (!(D->Rx[Index].Word[3] & OWN)) {
           RxReturn (D, Index);
         }
@@ -267,7 +267,7 @@ K3EqosDmaStop (
 
   MmioAnd32 (P->Base + 0x1108, ~BIT0);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_WARN, "K3 EQoS: queues did not drain; resetting DMA\n"));
+    DEBUG ((DEBUG_WARN, "EQoS: queues did not drain; resetting DMA\n"));
   }
 
   // Reset also flushes queued packets if graceful draining timed out.
@@ -285,8 +285,8 @@ K3EqosDmaStop (
 }
 
 EFI_STATUS
-K3EqosDmaFree (
-  K3_EQOS_DMA  *D
+EqosDmaFree (
+  EQOS_DMA  *D
   )
 {
   if (!D || D->Running || D->Faulted) {
@@ -317,13 +317,13 @@ K3EqosDmaFree (
 }
 
 EFI_STATUS
-K3EqosTransmit (
-  K3_EQOS_DMA  *D,
+EqosTransmit (
+  EQOS_DMA  *D,
   VOID         *Buffer,
   UINTN        Bytes
   )
 {
-  if (!D || !Buffer || (Bytes < 14) || (Bytes > K3_EQOS_FRAME_BYTES)) {
+  if (!D || !Buffer || (Bytes < 14) || (Bytes > EQOS_FRAME_BYTES)) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -333,11 +333,11 @@ K3EqosTransmit (
 
   UINTN  Index = D->TxNext;
 
-  if ((D->TxCount == K3_EQOS_TX) || (D->Tx[Index].Word[3] & OWN)) {
+  if ((D->TxCount == EQOS_TX) || (D->Tx[Index].Word[3] & OWN)) {
     return EFI_NOT_READY;
   }
 
-  UINT8  *Copy = D->TxBytes + Index * K3_EQOS_FRAME_BYTES;
+  UINT8  *Copy = D->TxBytes + Index * EQOS_FRAME_BYTES;
 
   CopyMem (Copy, Buffer, Bytes);
   EFI_PHYSICAL_ADDRESS  Bus = Address (D, Copy);
@@ -349,15 +349,15 @@ K3EqosTransmit (
   MemoryFence ();
   D->Tx[Index].Word[3] = OWN | FIRST | LAST | (UINT32)Bytes;
   D->TxCount++;
-  D->TxNext = (Index + 1) % K3_EQOS_TX;
+  D->TxNext = (Index + 1) % EQOS_TX;
   MemoryFence ();
   MmioWrite32 (D->Port->Base + 0x1120, (UINT32)Address (D, &D->Tx[D->TxNext]));
   return EFI_SUCCESS;
 }
 
 EFI_STATUS
-K3EqosReclaim (
-  K3_EQOS_DMA  *D,
+EqosReclaim (
+  EQOS_DMA  *D,
   VOID         **Buffer
   )
 {
@@ -380,7 +380,7 @@ K3EqosReclaim (
   *Buffer                = D->Original[D->TxHead];
   D->Original[D->TxHead] = NULL;
   D->TxCount--;
-  D->TxHead = (D->TxHead + 1) % K3_EQOS_TX;
+  D->TxHead = (D->TxHead + 1) % EQOS_TX;
   if (Status & ERROR) {
     D->TxError++;
     return EFI_DEVICE_ERROR;
@@ -391,16 +391,16 @@ K3EqosReclaim (
 }
 
 BOOLEAN
-K3EqosPacketReady (
-  K3_EQOS_DMA  *D
+EqosPacketReady (
+  EQOS_DMA  *D
   )
 {
   return D && D->Running && !D->Faulted && !(D->Rx[D->RxHead].Word[3] & OWN);
 }
 
 EFI_STATUS
-K3EqosReceive (
-  K3_EQOS_DMA  *D,
+EqosReceive (
+  EQOS_DMA  *D,
   VOID         *Buffer,
   UINTN        *Bytes
   )
@@ -409,7 +409,7 @@ K3EqosReceive (
     return EFI_INVALID_PARAMETER;
   }
 
-  if (!K3EqosPacketReady (D)) {
+  if (!EqosPacketReady (D)) {
     return EFI_NOT_READY;
   }
 
@@ -418,11 +418,11 @@ K3EqosReceive (
   UINTN   Length = Status & 0x7fff;
 
   if (((Status & (FIRST | LAST | ERROR | BIT30)) != (FIRST | LAST)) || (Length < 14) ||
-      (Length > K3_EQOS_FRAME_BYTES))
+      (Length > EQOS_FRAME_BYTES))
   {
     D->RxError++;
     RxReturn (D, D->RxHead);
-    D->RxHead = (D->RxHead + 1) % K3_EQOS_RX;
+    D->RxHead = (D->RxHead + 1) % EQOS_RX;
     return EFI_DEVICE_ERROR;
   }
 
@@ -438,9 +438,9 @@ K3EqosReceive (
     return EFI_INVALID_PARAMETER;
   }
 
-  CopyMem (Buffer, D->RxBytes + D->RxHead * K3_EQOS_FRAME_BYTES, Length);
+  CopyMem (Buffer, D->RxBytes + D->RxHead * EQOS_FRAME_BYTES, Length);
   D->RxGood++;
   RxReturn (D, D->RxHead);
-  D->RxHead = (D->RxHead + 1) % K3_EQOS_RX;
+  D->RxHead = (D->RxHead + 1) % EQOS_RX;
   return EFI_SUCCESS;
 }

@@ -6,12 +6,12 @@
  */
 #include <Library/BaseLib.h>
 #include <Library/IoLib.h>
-#include <Library/K3EqosLib.h>
+#include <Library/EqosLib.h>
 #include <Library/TimerLib.h>
 
 STATIC EFI_STATUS
 WaitIdle (
-  K3_EQOS_PORT  *P
+  EQOS_PORT  *P
   )
 {
   for (UINTN Elapsed = 0; Elapsed <= 10000; Elapsed += 10) {
@@ -31,7 +31,7 @@ WaitIdle (
 
 STATIC EFI_STATUS
 Transfer (
-  K3_EQOS_PORT  *P,
+  EQOS_PORT  *P,
   UINT32        Register,
   UINT16        *Value,
   BOOLEAN       Write
@@ -69,8 +69,8 @@ Transfer (
 }
 
 EFI_STATUS
-K3EqosMdioRead (
-  K3_EQOS_PORT  *P,
+EqosMdioRead (
+  EQOS_PORT  *P,
   UINT32        Register,
   UINT16        *Value
   )
@@ -83,8 +83,8 @@ K3EqosMdioRead (
 }
 
 EFI_STATUS
-K3EqosMdioWrite (
-  K3_EQOS_PORT  *P,
+EqosMdioWrite (
+  EQOS_PORT  *P,
   UINT32        Register,
   UINT16        Value
   )
@@ -94,14 +94,14 @@ K3EqosMdioWrite (
 
 STATIC EFI_STATUS
 Modify (
-  K3_EQOS_PORT  *P,
+  EQOS_PORT  *P,
   UINT32        Register,
   UINT16        Mask,
   UINT16        Set
   )
 {
   UINT16      Value;
-  EFI_STATUS  Status = K3EqosMdioRead (P, Register, &Value);
+  EFI_STATUS  Status = EqosMdioRead (P, Register, &Value);
 
   if (EFI_ERROR (Status)) {
     return Status;
@@ -109,12 +109,12 @@ Modify (
 
   UINT16  New = (Value & ~Mask) | (Set & Mask);
 
-  return New == Value ? EFI_SUCCESS : K3EqosMdioWrite (P, Register, New);
+  return New == Value ? EFI_SUCCESS : EqosMdioWrite (P, Register, New);
 }
 
 STATIC EFI_STATUS
 RestorePage (
-  K3_EQOS_PORT  *P,
+  EQOS_PORT  *P,
   UINT16        Saved,
   EFI_STATUS    Original
   )
@@ -126,7 +126,7 @@ RestorePage (
     return Original;
   }
 
-  EFI_STATUS  Status = K3EqosMdioWrite (P, 31, Saved);
+  EFI_STATUS  Status = EqosMdioWrite (P, 31, Saved);
 
   if (EFI_ERROR (Status)) {
     P->RestoreError = Status;
@@ -139,7 +139,7 @@ RestorePage (
 
 STATIC EFI_STATUS
 PagedModify (
-  K3_EQOS_PORT  *P,
+  EQOS_PORT  *P,
   UINT16        Page,
   UINT32        Register,
   UINT16        Mask,
@@ -147,13 +147,13 @@ PagedModify (
   )
 {
   UINT16      Saved;
-  EFI_STATUS  Status = K3EqosMdioRead (P, 31, &Saved);
+  EFI_STATUS  Status = EqosMdioRead (P, 31, &Saved);
 
   if (EFI_ERROR (Status)) {
     return Status;
   }
 
-  Status = K3EqosMdioWrite (P, 31, Page);
+  Status = EqosMdioWrite (P, 31, Page);
   if (!EFI_ERROR (Status)) {
     Status = Modify (P, Register, Mask, Set);
   }
@@ -163,7 +163,7 @@ PagedModify (
 
 STATIC EFI_STATUS
 SoftReset (
-  K3_EQOS_PORT  *P
+  EQOS_PORT  *P
   )
 {
   EFI_STATUS  Status = Modify (P, 0, BIT15, BIT15);
@@ -175,7 +175,7 @@ SoftReset (
   UINT16  Value;
 
   for (UINTN Elapsed = 0; Elapsed <= 500000; Elapsed += 5000) {
-    Status = K3EqosMdioRead (P, 0, &Value);
+    Status = EqosMdioRead (P, 0, &Value);
     if (EFI_ERROR (Status)) {
       return Status;
     }
@@ -195,8 +195,8 @@ SoftReset (
 }
 
 EFI_STATUS
-K3EqosPhyConfigure (
-  K3_EQOS_PORT  *P
+EqosPhyConfigure (
+  EQOS_PORT  *P
   )
 {
   UINT16  Id1, Id2;
@@ -205,10 +205,10 @@ K3EqosPhyConfigure (
     return EFI_NOT_READY;
   }
 
-  EFI_STATUS  Status = K3EqosMdioRead (P, 2, &Id1);
+  EFI_STATUS  Status = EqosMdioRead (P, 2, &Id1);
 
   if (!EFI_ERROR (Status)) {
-    Status = K3EqosMdioRead (P, 3, &Id2);
+    Status = EqosMdioRead (P, 3, &Id2);
   }
 
   if (EFI_ERROR (Status)) {
@@ -263,8 +263,8 @@ K3EqosPhyConfigure (
 }
 
 EFI_STATUS
-K3EqosLink (
-  K3_EQOS_PORT  *P,
+EqosLink (
+  EQOS_PORT  *P,
   BOOLEAN       *Up,
   BOOLEAN       *FullDuplex,
   UINT32        *Speed
@@ -282,24 +282,24 @@ K3EqosLink (
     return EFI_NOT_READY;
   }
 
-  EFI_STATUS  Status = K3EqosMdioRead (P, 1, &Bmsr);
+  EFI_STATUS  Status = EqosMdioRead (P, 1, &Bmsr);
 
   if (!EFI_ERROR (Status)) {
-    Status = K3EqosMdioRead (P, 1, &Bmsr);
+    Status = EqosMdioRead (P, 1, &Bmsr);
   }
 
   if (EFI_ERROR (Status) || !(Bmsr & BIT2) || !(Bmsr & BIT5)) {
     return Status;
   }
 
-  Status = K3EqosMdioRead (P, 31, &Saved);
+  Status = EqosMdioRead (P, 31, &Saved);
   if (EFI_ERROR (Status)) {
     return Status;
   }
 
-  Status = K3EqosMdioWrite (P, 31, 0xa43);
+  Status = EqosMdioWrite (P, 31, 0xa43);
   if (!EFI_ERROR (Status)) {
-    Status = K3EqosMdioRead (P, 0x1a, &PhyStatus);
+    Status = EqosMdioRead (P, 0x1a, &PhyStatus);
   }
 
   Status = RestorePage (P, Saved, Status);

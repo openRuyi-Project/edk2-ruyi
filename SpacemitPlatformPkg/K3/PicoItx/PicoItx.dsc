@@ -41,7 +41,7 @@
   BootManagerLib|RuyiPlatformPkg/Library/BootManagerLib/BootManagerLib.inf
   BootLogoLib|MdeModulePkg/Library/BootLogoLib/BootLogoLib.inf
   BmpSupportLib|MdeModulePkg/Library/BaseBmpSupportLib/BaseBmpSupportLib.inf
-  SnpAdapterInfoLib|SpacemitPlatformPkg/Library/SnpAdapterInfoLib/SnpAdapterInfoLib.inf
+  SnpAdapterInfoLib|RuyiPlatformPkg/Library/SnpAdapterInfoLib/SnpAdapterInfoLib.inf
   Rtl8127SnpLib|SpacemitPlatformPkg/Library/Rtl8127SnpLib/Rtl8127SnpLib.inf
   PlatformMacAddressLib|SpacemitPlatformPkg/Library/K3BoardMacLib/K3BoardMacLib.inf
   SpacemitTlvLib|SpacemitPlatformPkg/Library/SpacemitTlvLib/SpacemitTlvLib.inf
@@ -74,7 +74,8 @@
   NonDiscoverableDeviceRegistrationLib|MdeModulePkg/Library/NonDiscoverableDeviceRegistrationLib/NonDiscoverableDeviceRegistrationLib.inf
   K3HardwareLib|SpacemitPlatformPkg/Library/K3HardwareLib/K3HardwareLib.inf
   K3EcLib|SpacemitPlatformPkg/Library/K3EcLib/K3EcLib.inf
-  K3EqosLib|SpacemitPlatformPkg/Library/K3EqosLib/K3EqosLib.inf
+  EqosLib|RuyiPlatformPkg/Library/EqosLib/EqosLib.inf
+  EqosPlatformLib|SpacemitPlatformPkg/Library/K3EqosPlatformLib/K3EqosPlatformLib.inf
   DesignWarePciLib|SpacemitPlatformPkg/Library/DesignWarePciLib/DesignWarePciLib.inf
   PciSegmentLib|SpacemitPlatformPkg/Library/SpacemitPciSegmentLib/SpacemitPciSegmentLib.inf
   PciHostBridgeLib|SpacemitPlatformPkg/Library/SpacemitPciHostBridgeLib/SpacemitPciHostBridgeLib.inf
@@ -265,7 +266,7 @@
   }
   SpacemitPlatformPkg/Drivers/K3ClockDxe/K3ClockDxe.inf
 !if $(NETWORK_ENABLE) == TRUE
-  SpacemitPlatformPkg/Drivers/K3EqosSnpDxe/K3EqosSnpDxe.inf
+  RuyiPlatformPkg/Drivers/EqosSnpDxe/EqosSnpDxe.inf
   SpacemitPlatformPkg/Drivers/Rtl8127SnpDxe/Rtl8127SnpDxe.inf
 !endif
 !if $(K3_PCIE_ENABLE) == TRUE || $(K3_USB_HOST_ENABLE) == TRUE

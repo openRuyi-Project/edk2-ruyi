@@ -15,9 +15,7 @@
   K3QspiLib|Include/Library/K3QspiLib.h
   K3PowerDomainLib|Include/Library/K3PowerDomainLib.h
   K3FirmwareUpdateLib|Include/Library/K3FirmwareUpdateLib.h
-  SnpAdapterInfoLib|Include/Library/SnpAdapterInfoLib.h
   Rtl8127SnpLib|Include/Library/Rtl8127SnpLib.h
-  PlatformMacAddressLib|Include/Library/PlatformMacAddressLib.h
   SpacemitTlvLib|Include/Library/SpacemitTlvLib.h
   K3BoardEepromLib|Include/Library/K3BoardEepromLib.h
   Rtl8127Lib|Include/Library/Rtl8127Lib.h
@@ -32,7 +30,6 @@
   K3InnoDpLib|Include/Library/K3InnoDpLib.h
   K3HardwareLib|Include/Library/K3HardwareLib.h
   K3EcLib|Include/Library/K3EcLib.h
-  K3EqosLib|Include/Library/K3EqosLib.h
   DesignWarePciLib|Include/Library/DesignWarePciLib.h
   FastbootTransportLib|Include/Library/FastbootTransportLib.h
   FastbootPlatformLib|Include/Library/FastbootPlatformLib.h
