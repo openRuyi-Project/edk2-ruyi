@@ -38,7 +38,7 @@ typedef struct {
   VOID                *Host;
   UINTN               Bytes;
   DMA_ALLOCATION      *Allocation;
-  BOOLEAN             Bounce;
+  VOID                *Bounce;
 } DMA_MAPPING;
 
 STATIC LIST_ENTRY  mAllocations = INITIALIZE_LIST_HEAD_VARIABLE (mAllocations);
@@ -92,10 +92,12 @@ Flush (UINTN Address, UINTN Bytes)
 {
   UINTN  End = Address + Bytes;
 
-  // EIC7700 L3 Flush64 writes back and invalidates the inclusive hierarchy.
+  // Flush64 writes back and invalidates the inclusive cache hierarchy.
+  // As in Linux sifive_ccache, fence the range rather than every cache line.
+  // IoLib has no relaxed MMIO write, so use volatile 64-bit stores here.
   MemoryFence ();
   for (Address &= ~(mCacheLine - 1); Address < End; Address += mCacheLine) {
-    MmioWrite64 (mCacheBase + CCACHE_FLUSH64, Address);
+    *(volatile UINT64 *)(mCacheBase + CCACHE_FLUSH64) = Address;
   }
   MemoryFence ();
 }
@@ -271,17 +273,24 @@ Map (DMA_MAP_OPERATION Operation, VOID *Host, UINTN *Bytes,
       Status = EFI_INVALID_PARAMETER;
       goto FreeRecord;
     }
-    Status = Allocate (EfiBootServicesData, EFI_SIZE_TO_PAGES (*Bytes), EFI_PAGE_SIZE, &Bounce);
-    if (EFI_ERROR (Status)) {
+    // Streaming bounce buffers are not shared concurrently with the device.
+    // Keep CPU copies cacheable and transfer ownership with cache maintenance.
+    Bounce = AllocatePages (EFI_SIZE_TO_PAGES (*Bytes));
+    if (Bounce == NULL) {
+      Status = EFI_OUT_OF_RESOURCES;
       goto FreeRecord;
     }
-    Allocation         = AllocationFor ((UINTN)Bounce, *Bytes);
-    Record->Allocation = Allocation;
-    Record->Bounce     = TRUE;
+    Status = RamRange ((UINTN)Bounce, *Bytes);
+    if (EFI_ERROR (Status)) {
+      FreePages (Bounce, EFI_SIZE_TO_PAGES (*Bytes));
+      goto FreeRecord;
+    }
+    Record->Bounce = Bounce;
     if (Operation == MapOperationBusMasterRead) {
       CopyMem (Bounce, Host, *Bytes);
     }
-    *Device = (UINTN)Allocation->Cached;
+    Flush ((UINTN)Bounce, *Bytes);
+    *Device = (UINTN)Bounce;
   } else if (Allocation) {
     *Device = (UINTN)Allocation->Cached + (UINTN)Host - (UINTN)Allocation->Alias;
   } else {
@@ -307,7 +316,6 @@ Unmap (VOID *Mapping)
 {
   LIST_ENTRY   *Link;
   DMA_MAPPING  *Record = NULL;
-  EFI_STATUS   Status;
 
   BASE_LIST_FOR_EACH (Link, &mMappings) {
     if (BASE_CR (Link, DMA_MAPPING, Link) == Mapping) {
@@ -322,20 +330,17 @@ Unmap (VOID *Mapping)
   MemoryFence ();
   if (Record->Operation == MapOperationBusMasterWrite) {
     if (Record->Bounce) {
-      CopyMem (Record->Host, Record->Allocation->Alias, Record->Bytes);
+      Flush ((UINTN)Record->Bounce, Record->Bytes);
+      CopyMem (Record->Host, Record->Bounce, Record->Bytes);
     } else if (!Record->Allocation) {
       Flush ((UINTN)Record->Host, Record->Bytes);
     }
   }
   if (Record->Allocation) {
     Record->Allocation->ActiveMaps--;
-    if (Record->Bounce) {
-      Status = Free (Record->Allocation->Pages, Record->Allocation->Alias);
-      if (EFI_ERROR (Status)) {
-        Record->Allocation->ActiveMaps++;
-        return Status;
-      }
-    }
+  }
+  if (Record->Bounce) {
+    FreePages (Record->Bounce, EFI_SIZE_TO_PAGES (Record->Bytes));
   }
   RemoveEntryList (&Record->Link);
   FreePool (Record);
