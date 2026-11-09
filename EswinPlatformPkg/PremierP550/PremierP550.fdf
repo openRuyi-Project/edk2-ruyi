@@ -63,6 +63,8 @@ INF  EswinPlatformPkg/Drivers/PremierP550SmbiosDxe/PremierP550SmbiosDxe.inf
 INF  RuyiPlatformPkg/Drivers/SystemInfoDxe/SystemInfoDxe.inf
 INF  MdeModulePkg/Universal/WatchdogTimerDxe/WatchdogTimer.inf
 INF  MdeModulePkg/Universal/Variable/RuntimeDxe/VariableRuntimeDxe.inf
+INF  EswinPlatformPkg/Drivers/PremierP550NvStorageDxe/PremierP550NvStorageDxe.inf
+INF  MdeModulePkg/Universal/FaultTolerantWriteDxe/FaultTolerantWriteDxe.inf
 INF  MdeModulePkg/Universal/Console/ConPlatformDxe/ConPlatformDxe.inf
 INF  MdeModulePkg/Universal/Console/ConSplitterDxe/ConSplitterDxe.inf
 INF  MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf

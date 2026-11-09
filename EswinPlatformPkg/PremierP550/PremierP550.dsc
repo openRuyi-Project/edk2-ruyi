@@ -18,6 +18,10 @@
 !include Silicon/RISC-V/RiscV.dsc.inc
 
 [LibraryClasses]
+  NvFvbLib|RuyiPlatformPkg/Library/NvFvbLib/NvFvbLib.inf
+  NvStorageLib|RuyiPlatformPkg/Library/NvStorageLib/NvStorageLib.inf
+  Eic7700SpiNorLib|EswinPlatformPkg/Library/Eic7700SpiNorLib/Eic7700SpiNorLib.inf
+  PremierP550NvFlashLib|EswinPlatformPkg/Library/PremierP550NvFlashLib/PremierP550NvFlashLib.inf
   FastbootTransportLib|RuyiPlatformPkg/Library/Dwc3FastbootLib/Dwc3FastbootLib.inf
   FastbootStorageLib|RuyiPlatformPkg/Library/FastbootStorageLib/FastbootStorageLib.inf
   FastbootPlatformLib|EswinPlatformPkg/Library/Eic7700FastbootPlatformLib/Eic7700FastbootPlatformLib.inf
@@ -66,7 +70,7 @@
   gUefiRiscVPlatformPkgTokenSpaceGuid.PcdTemporaryRamBase64|0x84000000
   gUefiRiscVPlatformPkgTokenSpaceGuid.PcdTemporaryRamSize|0x02000000
   gUefiCpuPkgTokenSpaceGuid.PcdPeiTemporaryRamStackSize|0x10000
-  gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable|TRUE
+  gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableSize|0x40000
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingSize|0x10000
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareSize|0x40000
@@ -126,3 +130,14 @@
   MdeModulePkg/Universal/Acpi/BootGraphicsResourceTableDxe/BootGraphicsResourceTableDxe.inf
 
 !include RuyiPlatformPkg/Network.dsc.inc
+
+[Components]
+  EswinPlatformPkg/Drivers/PremierP550NvStorageDxe/PremierP550NvStorageDxe.inf
+  MdeModulePkg/Universal/FaultTolerantWriteDxe/FaultTolerantWriteDxe.inf {
+    <LibraryClasses>
+      NULL|RuyiPlatformPkg/Library/NvReadyLib/FtwReadyLib.inf
+  }
+  MdeModulePkg/Universal/Variable/RuntimeDxe/VariableRuntimeDxe.inf {
+    <LibraryClasses>
+      NULL|RuyiPlatformPkg/Library/NvReadyLib/NvReadyLib.inf
+  }

@@ -1,0 +1,16 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = PremierP550NvFlashLib
+  FILE_GUID = d470e76b-691e-4a6f-9bb3-6dbdb18619ed
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = PremierP550NvFlashLib
+[Sources]
+  Flash.c
+[Packages]
+  EswinPlatformPkg/EswinPlatformPkg.dec
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  Eic7700SpiNorLib

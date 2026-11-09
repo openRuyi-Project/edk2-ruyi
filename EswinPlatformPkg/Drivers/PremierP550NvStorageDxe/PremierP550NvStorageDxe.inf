@@ -1,0 +1,26 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = PremierP550NvStorageDxe
+  FILE_GUID = 5a478e52-9037-4c9a-83d1-3887c7720861
+  MODULE_TYPE = DXE_RUNTIME_DRIVER
+  ENTRY_POINT = PremierP550NvStorageEntry
+[Sources]
+  Storage.c
+[Packages]
+  EmbeddedPkg/EmbeddedPkg.dec
+  EswinPlatformPkg/EswinPlatformPkg.dec
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  Eic7700SpiNorLib
+  UefiBootServicesTableLib
+  NvStorageLib
+  PremierP550NvFlashLib
+  UefiDriverEntryPoint
+[Protocols]
+  gFdtClientProtocolGuid
+  gEfiCpuArchProtocolGuid
+  gEfiTimerArchProtocolGuid
+[Depex]
+  gFdtClientProtocolGuid AND gEfiCpuArchProtocolGuid AND gEfiTimerArchProtocolGuid
