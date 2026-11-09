@@ -1,0 +1,21 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Eic7700EqosPlatformLib
+  FILE_GUID = d452236d-6d4f-49ea-a0b3-41552e2feab5
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = EqosPlatformLib
+[Sources]
+  Platform.c
+[Packages]
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  FdtHardwareLib
+  FdtLib
+  IoLib
+  MemoryAllocationLib
+  TimerLib
