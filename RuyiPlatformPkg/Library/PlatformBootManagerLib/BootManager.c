@@ -11,6 +11,8 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
 
+VOID RegisterBootOptionsPolicy (VOID);
+
 STATIC VOID  *mGraphicsRegistration;
 
 STATIC VOID EFIAPI
@@ -62,6 +64,7 @@ PlatformBootManagerBeforeConsole (
   EfiEventGroupSignal (&gEfiEndOfDxeEventGroupGuid);
   EfiBootManagerDispatchDeferredImages ();
   BootManagerConfigureNetworkBoot ();
+  RegisterBootOptionsPolicy ();
   // Install binding policy before enabling foreign image execution.
   if (!EFI_ERROR (PciGopInitialize ())) {
     PciGopConnectEmulator ();

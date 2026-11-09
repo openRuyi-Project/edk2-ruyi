@@ -7,12 +7,16 @@
   LIBRARY_CLASS = PlatformBootManagerLib|DXE_DRIVER
 [Sources]
   BootManager.c
+  Options.c
 [Packages]
   MdePkg/MdePkg.dec
   ShellPkg/ShellPkg.dec
   MdeModulePkg/MdeModulePkg.dec
   RuyiPlatformPkg/RuyiPlatformPkg.dec
 [LibraryClasses]
+  BaseLib
+  DebugLib
+  MemoryAllocationLib
   BootManagerLib
   BootProgressLib
   PciGopLoaderLib
@@ -21,6 +25,7 @@
   UefiBootServicesTableLib
   UefiLib
 [Protocols]
+  gEdkiiPlatformBootManagerProtocolGuid
   gEfiGraphicsOutputProtocolGuid
 [Guids]
   gEfiEndOfDxeEventGroupGuid
