@@ -1,0 +1,30 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Eic7700FastbootPlatformLib
+  FILE_GUID = 60637a6e-04f9-431f-8dfc-d9f39528feef
+  MODULE_TYPE = DXE_DRIVER
+  LIBRARY_CLASS = FastbootPlatformLib
+[Sources]
+  Storage.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  DevicePathLib
+  FastbootStorageLib
+  FdtBoardInfoLib
+  FdtHardwareLib
+  FdtLib
+  MemoryAllocationLib
+  PcdLib
+  PrintLib
+  UefiBootServicesTableLib
+  UefiLib
+[Protocols]
+  gEfiBlockIoProtocolGuid
+  gEdkiiNonDiscoverableDeviceProtocolGuid
+[Pcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVersionString
