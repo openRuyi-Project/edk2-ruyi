@@ -86,14 +86,9 @@ INF  MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
 INF  MdeModulePkg/Universal/SerialDxe/SerialDxe.inf
 INF  ShellPkg/Application/Shell/Shell.inf
 
-
 INF MdeModulePkg/Application/BootManagerMenuApp/BootManagerMenuApp.inf
 
-
-
 INF SecurityPkg/Hash2DxeCrypto/Hash2DxeCrypto.inf
-!if $(NETWORK_ENABLE) == TRUE
-!endif
 !include RuyiPlatformPkg/Network.fdf.inc
 
 INF EswinPlatformPkg/Drivers/Eic7700UsbHostDxe/Eic7700UsbHostDxe.inf
@@ -104,6 +99,7 @@ INF MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
 INF MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
 INF MdeModulePkg/Universal/Disk/UdfDxe/UdfDxe.inf
 
+INF RuyiPlatformPkg/Drivers/EqosSnpDxe/EqosSnpDxe.inf
 INF EswinPlatformPkg/Drivers/Eic7700SdhciDxe/Eic7700SdhciDxe.inf
 INF MdeModulePkg/Bus/Pci/SdMmcPciHcDxe/SdMmcPciHcDxe.inf
 INF MdeModulePkg/Bus/Sd/SdDxe/SdDxe.inf
