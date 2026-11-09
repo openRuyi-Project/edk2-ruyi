@@ -40,3 +40,18 @@ FastbootLocateNvme (
   FASTBOOT_NVME_TARGET  **Targets,
   UINTN                 *Count
   );
+
+EFI_STATUS
+FastbootMediaCapacity (
+  EFI_BLOCK_IO_PROTOCOL  *Io,
+  UINT64                *Bytes
+  );
+
+EFI_STATUS
+FastbootReadImage (
+  EFI_BLOCK_IO_PROTOCOL      *Io,
+  UINT64                     Offset,
+  UINTN                      Size,
+  VOID                       *Data,
+  FASTBOOT_STORAGE_PROGRESS  Progress OPTIONAL
+  );

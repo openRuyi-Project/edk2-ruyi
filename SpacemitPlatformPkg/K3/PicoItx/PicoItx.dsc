@@ -80,9 +80,9 @@
   PciSegmentLib|SpacemitPlatformPkg/Library/SpacemitPciSegmentLib/SpacemitPciSegmentLib.inf
   PciHostBridgeLib|SpacemitPlatformPkg/Library/SpacemitPciHostBridgeLib/SpacemitPciHostBridgeLib.inf
   DmaLib|SpacemitPlatformPkg/Library/SpacemitDmaLib/SpacemitDmaLib.inf
-  FastbootTransportLib|SpacemitPlatformPkg/Library/Dwc3FastbootLib/Dwc3FastbootLib.inf
+  FastbootTransportLib|RuyiPlatformPkg/Library/Dwc3FastbootLib/Dwc3FastbootLib.inf
   FastbootPlatformLib|SpacemitPlatformPkg/Library/K3FastbootPlatformLib/K3FastbootPlatformLib.inf
-  FastbootStorageLib|SpacemitPlatformPkg/Library/FastbootStorageLib/FastbootStorageLib.inf
+  FastbootStorageLib|RuyiPlatformPkg/Library/FastbootStorageLib/FastbootStorageLib.inf
   UsbDevicePlatformLib|SpacemitPlatformPkg/Library/K3UsbDevicePlatformLib/K3UsbDevicePlatformLib.inf
   BaseLib|MdePkg/Library/BaseLib/BaseLib.inf
   BaseMemoryLib|MdePkg/Library/BaseMemoryLib/BaseMemoryLib.inf
@@ -299,7 +299,7 @@
   MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
 !endif
   EmbeddedPkg/Application/AndroidFastboot/AndroidFastbootApp.inf
-  SpacemitPlatformPkg/Drivers/K3FastbootDxe/K3FastbootDxe.inf {
+  RuyiPlatformPkg/Drivers/FastbootDxe/FastbootDxe.inf {
     <LibraryClasses>
       # Firmware integrity checks only use deterministic SHA-256.
       RngLib|MdePkg/Library/BaseRngLibNull/BaseRngLibNull.inf

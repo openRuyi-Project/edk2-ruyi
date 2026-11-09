@@ -7,10 +7,11 @@
   LIBRARY_CLASS = FastbootStorageLib
 [Sources]
   Image.c
+  Read.c
   Nvme.c
 [Packages]
   MdePkg/MdePkg.dec
-  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
 [LibraryClasses]
   BaseLib
   BaseMemoryLib

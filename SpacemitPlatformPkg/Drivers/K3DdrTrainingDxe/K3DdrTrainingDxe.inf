@@ -8,6 +8,7 @@
 [Sources]
   DdrTraining.c
 [Packages]
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   SpacemitPlatformPkg/SpacemitPlatformPkg.dec

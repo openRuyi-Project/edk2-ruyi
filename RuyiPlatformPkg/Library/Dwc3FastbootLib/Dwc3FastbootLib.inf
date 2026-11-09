@@ -9,14 +9,14 @@
   Usb.c
   Dwc3.h
 [Packages]
+  EmbeddedPkg/EmbeddedPkg.dec
   MdePkg/MdePkg.dec
-  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
 [LibraryClasses]
   BaseLib
   BaseMemoryLib
-  CacheMaintenanceLib
+  DmaLib
   IoLib
-  MemoryAllocationLib
   TimerLib
   UefiLib
   UsbDevicePlatformLib

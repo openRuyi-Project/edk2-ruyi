@@ -10,6 +10,7 @@
   Spi.c
   Spi.h
 [Packages]
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   SpacemitPlatformPkg/SpacemitPlatformPkg.dec

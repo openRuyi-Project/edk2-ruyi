@@ -278,3 +278,22 @@ UsbDevicePlatformInit (
 
   return EFI_SUCCESS;
 }
+
+CONST USB_DEVICE_INFO *
+UsbDevicePlatformGetInfo (
+  VOID
+  )
+{
+  STATIC CONST USB_DEVICE_INFO Info = {
+    0x361c, 0x1001, "SpacemiT", "K3 UEFI Fastboot"
+  };
+  return &Info;
+}
+
+EFI_STATUS
+UsbDevicePlatformStop (
+  VOID
+  )
+{
+  return EFI_SUCCESS;
+}

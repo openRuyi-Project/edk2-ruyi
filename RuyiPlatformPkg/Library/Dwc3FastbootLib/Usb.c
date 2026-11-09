@@ -2,10 +2,9 @@
 #include <Uefi.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
-#include <Library/CacheMaintenanceLib.h>
+#include <Library/DmaLib.h>
 #include <Library/FastbootTransportLib.h>
 #include <Library/IoLib.h>
-#include <Library/MemoryAllocationLib.h>
 #include <Library/TimerLib.h>
 #include <Library/UefiLib.h>
 #include <Library/UsbDevicePlatformLib.h>
@@ -16,6 +15,10 @@ typedef enum {
 } CONTROL_STATE;
 STATIC UINTN          mBase;
 STATIC UINT8          *mDma;
+STATIC VOID           *mMapping;
+STATIC PHYSICAL_ADDRESS mDeviceAddress;
+STATIC BOOLEAN        mPlatformActive;
+STATIC CONST USB_DEVICE_INFO *mDeviceInfo;
 STATIC DWC3_TRB       *mTrb;
 STATIC UINT8          *mSetup, *mControl, *mRx, *mTx;
 STATIC UINT32         mEventOffset, mGeneration, mSeenGeneration;
@@ -26,13 +29,13 @@ STATIC UINTN          mRxTransferBytes;
 STATIC UINT16         mBulkPacket;
 STATIC EFI_STATUS     mError;
 STATIC CONTROL_STATE  mControlState;
-// Separate pages avoid invalidating unrelated CPU-owned data.
+// Keep event, descriptor and transfer areas in one common DMA mapping.
 #define DMA_PAGES            12
 #define COMMAND_TIMEOUT_US   1000
 #define HALT_TIMEOUT_US      100000
 #define TRANSFER_TIMEOUT_NS  2000000000ULL
 
-STATIC CONST UINT8  mDevice[] = {
+STATIC UINT8  mDevice[] = {
   18, 1, 0, 2, 0, 0, 0, 64, 0x1c, 0x36, 1, 0x10, 0, 1, 1, 2, 0, 1
 };
 STATIC CONST UINT8  mConfig[] = {
@@ -155,25 +158,17 @@ Start (
 {
   DWC3_TRB    *Trb = &mTrb[Ep];
   EFI_STATUS  Status;
-  UINT64      Address = (UINTN)Buffer, TrbAddress = (UINTN)Trb;
+  UINT64      Address = mDeviceAddress + ((UINT8 *)Buffer - mDma);
+  UINT64      TrbAddress = mDeviceAddress + ((UINT8 *)Trb - mDma);
 
   if (mResource[Ep]) {
     return EFI_ALREADY_STARTED;
-  }
-
-  if (Size != 0) {
-    if (Ep & 1) {
-      WriteBackDataCacheRange (Buffer, Size);
-    } else {
-      WriteBackInvalidateDataCacheRange (Buffer, Size);
-    }
   }
 
   Trb->Low     = (UINT32)Address;
   Trb->High    = (UINT32)(Address >> 32);
   Trb->Size    = (UINT32)Size;
   Trb->Control = TRB_HWO | TRB_LAST | TRB_ISP | TRB_IOC | ((UINT32)Type << 4);
-  WriteBackDataCacheRange (Trb, sizeof (*Trb));
   MemoryFence ();
   Status = Command (Ep, CMD_START, (UINT32)(TrbAddress >> 32), (UINT32)TrbAddress, 0);
   if (!EFI_ERROR (Status)) {
@@ -275,7 +270,6 @@ SetupRequest (
   UINTN       Bytes = 0;
   EFI_STATUS  Status;
 
-  InvalidateDataCacheRange (mSetup, 64);
   MemoryFence ();
   RequestType = mSetup[0];
   Request     = mSetup[1];
@@ -318,7 +312,7 @@ SetupRequest (
           Data        = mControl;
           Bytes       = 4;
         } else if (((Value & 0xff) <= 2) && (Index == 0x409)) {
-          CONST CHAR8  *Text = (Value & 0xff) == 1 ? "SpacemiT" : "K3 UEFI Fastboot";
+          CONST CHAR8  *Text = (Value & 0xff) == 1 ? mDeviceInfo->Manufacturer : mDeviceInfo->Product;
           Bytes       = 2 + 2 * AsciiStrLen (Text);
           mControl[0] = (UINT8)Bytes;
           mControl[1] = 3;
@@ -436,7 +430,6 @@ Event (
   if (Type == 1) {
     // Transfer complete.
     mResource[Ep] = 0;
-    InvalidateDataCacheRange (&mTrb[Ep], sizeof (mTrb[Ep]));
     MemoryFence ();
     if ((Ep == 0) && (mControlState == Setup)) {
       return SetupRequest ();
@@ -455,7 +448,6 @@ Event (
       }
 
       mRxBytes = mRxTransferBytes - Residual;
-      InvalidateDataCacheRange (mRx, BULK_BYTES);
       MemoryFence ();
       mRxReady = TRUE;
     } else if (Ep == 3) {
@@ -503,7 +495,6 @@ FastbootUsbPoll (
       break;
     }
 
-    InvalidateDataCacheRange (mDma + mEventOffset, 4);
     MemoryFence ();
     UINT32  Value = ReadUnaligned32 ((UINT32 *)(mDma + mEventOffset));
     mEventOffset = (mEventOffset + 4) % EVENT_BYTES;
@@ -534,32 +525,48 @@ FastbootUsbStop (
   VOID
   )
 {
-  if (mDma == NULL) {
-    return EFI_SUCCESS;
-  }
+  EFI_STATUS Status;
 
-  // A host that stopped reading can leave bulk IN active indefinitely.
-  // End transfers while the endpoint command interface is still running.
-  for (UINTN Ep = 0; Ep < ARRAY_SIZE (mResource); Ep++) {
-    End (Ep);
-  }
+  if (mDma != NULL) {
+    // End transfers before halting the core. Retain DMA on a halt failure.
+    for (UINTN Ep = 0; Ep < ARRAY_SIZE (mResource); Ep++) {
+      End (Ep);
+    }
 
-  Write (DCTL, Read (DCTL) & ~RUN_STOP);
-  if (EFI_ERROR (Wait (DSTS, CORE_HALTED, CORE_HALTED, HALT_TIMEOUT_US))) {
-    mError   = EFI_TIMEOUT;
+    Write (DCTL, Read (DCTL) & ~RUN_STOP);
     mStarted = FALSE;
-    Print (L"DWC3 did not halt; DMA allocation retained.\r\n");
-    return EFI_TIMEOUT;
+    if (EFI_ERROR (Wait (DSTS, CORE_HALTED, CORE_HALTED, HALT_TIMEOUT_US))) {
+      mError = EFI_TIMEOUT;
+      Print (L"DWC3 did not halt; DMA allocation retained.\r\n");
+      return EFI_TIMEOUT;
+    }
+
+    Write (DEVTEN, 0);
+    Write (GEVNTSIZ, BIT31);
+    Write (GEVNTCOUNT, Read (GEVNTCOUNT) & 0xffff);
+    Write (GEVNTADRLO, 0);
+    Write (GEVNTADRHI, 0);
+    if (mMapping != NULL) {
+      Status = DmaUnmap (mMapping);
+      if (EFI_ERROR (Status)) {
+        return Status;
+      }
+      mMapping = NULL;
+    }
+    Status = DmaFreeBuffer (DMA_PAGES, mDma);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+    mDma = NULL;
   }
 
-  Write (DEVTEN, 0);
-  Write (GEVNTSIZ, BIT31);
-  Write (GEVNTCOUNT, Read (GEVNTCOUNT) & 0xffff);
-  Write (GEVNTADRLO, 0);
-  Write (GEVNTADRHI, 0);
-  FreePages (mDma, DMA_PAGES);
-  mDma     = NULL;
-  mStarted = FALSE;
+  if (mPlatformActive) {
+    Status = UsbDevicePlatformStop ();
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+    mPlatformActive = FALSE;
+  }
   return EFI_SUCCESS;
 }
 
@@ -568,33 +575,58 @@ FastbootUsbStart (
   VOID
   )
 {
-  EFI_STATUS  Status;
+  EFI_STATUS Status, Cleanup;
+  UINTN      Bytes = DMA_PAGES * EFI_PAGE_SIZE;
 
-  if (mDma != NULL) {
+  if ((mDma != NULL) || mPlatformActive) {
     return EFI_ALREADY_STARTED;
   }
+
+  mDeviceInfo = UsbDevicePlatformGetInfo ();
+  if ((mDeviceInfo == NULL) || (mDeviceInfo->Manufacturer == NULL) ||
+      (mDeviceInfo->Product == NULL) ||
+      (AsciiStrLen (mDeviceInfo->Manufacturer) > 126) ||
+      (AsciiStrLen (mDeviceInfo->Product) > 126))
+  {
+    return EFI_INVALID_PARAMETER;
+  }
+  WriteUnaligned16 ((UINT16 *)(mDevice + 8), mDeviceInfo->VendorId);
+  WriteUnaligned16 ((UINT16 *)(mDevice + 10), mDeviceInfo->ProductId);
 
   Status = UsbDevicePlatformInit (&mBase);
   if (EFI_ERROR (Status)) {
     return Status;
   }
+  mPlatformActive = TRUE;
 
   if ((Read (GSNPSID) & 0xffff0000U) != 0x55330000U) {
-    return EFI_UNSUPPORTED;
+    Status = EFI_UNSUPPORTED;
+    goto Fail;
   }
 
   Write (DCTL, (Read (DCTL) & ~RUN_STOP) | CORE_RESET);
   Status = Wait (DCTL, CORE_RESET, 0, HALT_TIMEOUT_US);
   if (EFI_ERROR (Status)) {
-    return Status;
+    goto Fail;
   }
 
-  mDma = AllocatePages (DMA_PAGES);
-  if (mDma == NULL) {
-    return EFI_OUT_OF_RESOURCES;
+  Status = DmaAllocateBuffer (EfiBootServicesData, DMA_PAGES, (VOID **)&mDma);
+  if (EFI_ERROR (Status)) {
+    goto Fail;
+  }
+  Status = DmaMap (MapOperationBusMasterCommonBuffer, mDma, &Bytes,
+                  &mDeviceAddress, &mMapping);
+  if (EFI_ERROR (Status)) {
+    goto Fail;
+  }
+  if ((Bytes != DMA_PAGES * EFI_PAGE_SIZE) ||
+      (mDeviceAddress > MAX_UINT64 - Bytes))
+  {
+    Status = EFI_UNSUPPORTED;
+    goto Fail;
   }
 
-  ZeroMem (mDma, DMA_PAGES * EFI_PAGE_SIZE);
+  ZeroMem (mDma, Bytes);
   mTrb     = (VOID *)(mDma + EFI_PAGE_SIZE);
   mSetup   = mDma + 2 * EFI_PAGE_SIZE;
   mControl = mDma + 3 * EFI_PAGE_SIZE;
@@ -608,14 +640,14 @@ FastbootUsbStart (
   mGeneration++;
   mSeenGeneration = mGeneration;
   mError          = EFI_SUCCESS;
-  WriteBackInvalidateDataCacheRange (mDma, DMA_PAGES * EFI_PAGE_SIZE);
+  MemoryFence ();
   Write (GCTL, (Read (GCTL) & ~(3U << 12)) | (2U << 12));
-  // Retained K3 DT requires these PHY suspend/low-power quirks.
+  // Keep both PHYs active while the polling transport owns the controller.
   Write (GUSB2PHYCFG, Read (GUSB2PHYCFG) & ~(BIT6 | BIT8));
   Write (GUSB3PIPECTL, Read (GUSB3PIPECTL) & ~BIT17);
   Write (DCFG, Read (DCFG) & ~((0x7fU << 3) | 7U | BIT22));
-  Write (GEVNTADRLO, (UINT32)(UINTN)mDma);
-  Write (GEVNTADRHI, (UINT32)((UINT64)(UINTN)mDma >> 32));
+  Write (GEVNTADRLO, (UINT32)mDeviceAddress);
+  Write (GEVNTADRHI, (UINT32)(mDeviceAddress >> 32));
   Write (GEVNTSIZ, EVENT_BYTES | BIT31);
   Write (GEVNTCOUNT, Read (GEVNTCOUNT) & 0xffff);
   Write (DEVTEN, BIT0 | BIT1 | BIT2 | BIT9);
@@ -634,12 +666,12 @@ FastbootUsbStart (
     Write (DCTL, Read (DCTL) | RUN_STOP);
     Status = Wait (DSTS, CORE_HALTED, 0, HALT_TIMEOUT_US);
   }
-
-  if (EFI_ERROR (Status)) {
-    FastbootUsbStop ();
+  if (!EFI_ERROR (Status)) {
+    return EFI_SUCCESS;
   }
-
-  return Status;
+Fail:
+  Cleanup = FastbootUsbStop ();
+  return EFI_ERROR (Cleanup) ? Cleanup : Status;
 }
 
 EFI_STATUS

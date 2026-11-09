@@ -7,6 +7,10 @@
 [Includes]
   Include
 [LibraryClasses]
+  FastbootTransportLib|Include/Library/FastbootTransportLib.h
+  FastbootPlatformLib|Include/Library/FastbootPlatformLib.h
+  FastbootStorageLib|Include/Library/FastbootStorageLib.h
+  UsbDevicePlatformLib|Include/Library/UsbDevicePlatformLib.h
   EqosLib|Include/Library/EqosLib.h
   EqosPlatformLib|Include/Library/EqosLib.h
   PlatformMacAddressLib|Include/Library/PlatformMacAddressLib.h
@@ -24,6 +28,7 @@
   PlatformCpuInfoLib|Include/Library/PlatformCpuInfoLib.h
 
 [Guids]
+  gRuyiFastbootFileGuid = {0x9588502a, 0x5370, 0x11e3, {0x86, 0x31, 0xd7, 0xc5, 0x95, 0x13, 0x64, 0xc8}}
   gRuyiNetworkBootConfigGuid = {0xecf743ad, 0xb42f, 0x48cc, {0xbd, 0xd7, 0xe1, 0xcd, 0x5e, 0x6a, 0x79, 0x43}}
   gRuyiBootMenuFileGuid = {0xeec25bdc, 0x67f2, 0x4d95, {0xb1, 0xd5, 0xf8, 0x1b, 0x20, 0x39, 0xd1, 0x1d}}
   gRuyiLogoGuid = {0xb9317e41, 0x2a84, 0x4d83, {0x8e, 0x31, 0xa6, 0x78, 0x38, 0x81, 0x5f, 0xf2}}

@@ -31,10 +31,6 @@
   K3HardwareLib|Include/Library/K3HardwareLib.h
   K3EcLib|Include/Library/K3EcLib.h
   DesignWarePciLib|Include/Library/DesignWarePciLib.h
-  FastbootTransportLib|Include/Library/FastbootTransportLib.h
-  FastbootPlatformLib|Include/Library/FastbootPlatformLib.h
-  FastbootStorageLib|Include/Library/FastbootStorageLib.h
-  UsbDevicePlatformLib|Include/Library/UsbDevicePlatformLib.h
 
 [Protocols]
   gSpacemitClockProtocolGuid = { 0xee06e639, 0xc2e1, 0x4751, { 0xb2, 0x4d, 0x2c, 0x0a, 0x45, 0x46, 0xaa, 0xb7 } }

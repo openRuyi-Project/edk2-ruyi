@@ -1,5 +1,5 @@
 /** @file
-  K3 backends for the EmbeddedPkg Fastboot application.
+  Platform and transport backends for the EmbeddedPkg Fastboot application.
 
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
@@ -312,8 +312,11 @@ PlatformFlash (
     return mProgressStatus;
   }
 
-  if (!EFI_ERROR (Status) && (AsciiStrCmp (Name, "ec") == 0)) {
-    return SendInfo ("EC verified; use oem reboot-ec to activate");
+  if (!EFI_ERROR (Status)) {
+    CONST CHAR8 *Message = FastbootFlashInfo (Name);
+    if (Message != NULL) {
+      return SendInfo (Message);
+    }
   }
 
   return Status;
@@ -332,18 +335,15 @@ PlatformOem (
   IN CHAR8  *Command
   )
 {
-  EFI_STATUS  Status;
+  CONST CHAR8  *Message = NULL;
+  EFI_STATUS   Status;
 
-  if (AsciiStrCmp (Command, "reboot-ec") != 0) {
-    return EFI_NOT_FOUND;
-  }
-
-  Status = FastbootRebootEc ();
-  if (EFI_ERROR (Status)) {
+  Status = FastbootOem (Command, &Message);
+  if (EFI_ERROR (Status) || (Message == NULL)) {
     return Status;
   }
 
-  return SendInfo ("Wait 15 seconds, then reboot the board");
+  return SendInfo (Message);
 }
 
 STATIC EFI_STATUS EFIAPI
@@ -397,7 +397,7 @@ STATIC FASTBOOT_PLATFORM_EXTENSION_PROTOCOL  mExtension = {
 };
 
 EFI_STATUS EFIAPI
-K3FastbootEntryPoint (
+FastbootEntryPoint (
   IN EFI_HANDLE        ImageHandle,
   IN EFI_SYSTEM_TABLE  *SystemTable
   )

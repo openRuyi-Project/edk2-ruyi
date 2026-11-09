@@ -1,16 +1,16 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 [Defines]
   INF_VERSION = 0x0001001b
-  BASE_NAME = K3FastbootDxe
+  BASE_NAME = FastbootDxe
   FILE_GUID = 74e2253b-f27c-4b30-a9bb-4ee6d20f5e53
   MODULE_TYPE = DXE_DRIVER
-  ENTRY_POINT = K3FastbootEntryPoint
+  ENTRY_POINT = FastbootEntryPoint
 [Sources]
   Fastboot.c
 [Packages]
   MdePkg/MdePkg.dec
   EmbeddedPkg/EmbeddedPkg.dec
-  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
 [LibraryClasses]
   BaseLib
   FastbootPlatformLib

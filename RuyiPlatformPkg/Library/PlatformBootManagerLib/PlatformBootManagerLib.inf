@@ -31,3 +31,4 @@
   gEfiEndOfDxeEventGroupGuid
   gUefiShellFileGuid
   gRuyiBootMenuFileGuid
+  gRuyiFastbootFileGuid

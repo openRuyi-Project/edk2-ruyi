@@ -92,6 +92,7 @@ PlatformBootManagerAfterConsole (
   )
 {
   EFI_INPUT_KEY  BootMenuKey = { SCAN_F12, 0 };
+  EFI_INPUT_KEY  FastbootKey = { SCAN_F9, 0 };
 
   EfiBootManagerConnectAll ();
   PciGopConnectSelectedDrivers ();
@@ -109,6 +110,13 @@ PlatformBootManagerAfterConsole (
     L"Boot Menu",
     LOAD_OPTION_ACTIVE | LOAD_OPTION_CATEGORY_APP | LOAD_OPTION_HIDDEN,
     &BootMenuKey,
+    FALSE
+    );
+  BootManagerRegisterFvApplication (
+    &gRuyiFastbootFileGuid,
+    L"USB Fastboot",
+    LOAD_OPTION_ACTIVE | LOAD_OPTION_CATEGORY_APP,
+    &FastbootKey,
     FALSE
     );
   BootProgressStart (FALSE);

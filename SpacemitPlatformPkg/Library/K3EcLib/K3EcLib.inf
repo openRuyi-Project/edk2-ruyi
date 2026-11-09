@@ -8,6 +8,7 @@
 [Sources]
   Ec.c
 [Packages]
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
   MdePkg/MdePkg.dec
   SpacemitPlatformPkg/SpacemitPlatformPkg.dec
 [LibraryClasses]

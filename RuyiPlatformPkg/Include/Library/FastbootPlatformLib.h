@@ -14,8 +14,15 @@ FastbootPlatformStop (
   );
 
 EFI_STATUS
-FastbootRebootEc (
-  VOID
+FastbootOem (
+  CONST CHAR8  *Command,
+  CONST CHAR8  **Message
+  );
+
+// Optional host message after a successful flash operation.
+CONST CHAR8 *
+FastbootFlashInfo (
+  CONST CHAR8  *Name
   );
 
 EFI_STATUS
