@@ -1,0 +1,29 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = PremierP550UsbDevicePlatformLib
+  FILE_GUID = 56a82f81-5b8b-476b-9c57-f64879dbcc09
+  MODULE_TYPE = DXE_DRIVER
+  LIBRARY_CLASS = UsbDevicePlatformLib
+[Sources]
+  Platform.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+  EswinPlatformPkg/EswinPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  Eic7700UsbLib
+  FdtBoardInfoLib
+  FdtHardwareLib
+  FdtLib
+  MemoryAllocationLib
+  NonDiscoverableDeviceRegistrationLib
+  UefiBootServicesTableLib
+[Protocols]
+  gEdkiiNonDiscoverableDeviceProtocolGuid
+[Guids]
+  gEdkiiNonDiscoverableXhciDeviceGuid

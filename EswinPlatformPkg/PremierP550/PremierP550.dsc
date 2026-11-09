@@ -18,6 +18,10 @@
 !include Silicon/RISC-V/RiscV.dsc.inc
 
 [LibraryClasses]
+  FastbootTransportLib|RuyiPlatformPkg/Library/Dwc3FastbootLib/Dwc3FastbootLib.inf
+  FastbootStorageLib|RuyiPlatformPkg/Library/FastbootStorageLib/FastbootStorageLib.inf
+  FastbootPlatformLib|EswinPlatformPkg/Library/Eic7700FastbootPlatformLib/Eic7700FastbootPlatformLib.inf
+  UsbDevicePlatformLib|EswinPlatformPkg/Library/PremierP550UsbDevicePlatformLib/PremierP550UsbDevicePlatformLib.inf
   Eic7700UsbLib|EswinPlatformPkg/Library/Eic7700UsbLib/Eic7700UsbLib.inf
   EqosLib|RuyiPlatformPkg/Library/EqosLib/EqosLib.inf
   EqosPlatformLib|EswinPlatformPkg/Library/Eic7700EqosPlatformLib/Eic7700EqosPlatformLib.inf
@@ -99,6 +103,8 @@
   GCC:*_*_*_DLINK_FLAGS = -z common-page-size=0x1000
 
 [Components]
+  EmbeddedPkg/Application/AndroidFastboot/AndroidFastbootApp.inf
+  RuyiPlatformPkg/Drivers/FastbootDxe/FastbootDxe.inf
   EswinPlatformPkg/Drivers/PremierP550FdtDxe/PremierP550FdtDxe.inf
   RuyiPlatformPkg/Drivers/EqosSnpDxe/EqosSnpDxe.inf
   EswinPlatformPkg/Drivers/Eic7700SdhciDxe/Eic7700SdhciDxe.inf
