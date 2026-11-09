@@ -8,6 +8,7 @@
 [Sources]
   Usb.c
 [Packages]
+  EswinPlatformPkg/EswinPlatformPkg.dec
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   RuyiPlatformPkg/RuyiPlatformPkg.dec
@@ -17,11 +18,9 @@
   FdtBoardInfoLib
   FdtHardwareLib
   FdtLib
-  IoLib
+  Eic7700UsbLib
   NonDiscoverableDeviceRegistrationLib
-  TimerLib
   UefiDriverEntryPoint
-  UefiBootServicesTableLib
 [Protocols]
   gEfiCpuArchProtocolGuid
 [Depex]

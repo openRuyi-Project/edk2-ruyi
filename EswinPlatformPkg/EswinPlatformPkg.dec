@@ -7,4 +7,5 @@
 [Includes]
   Include
 [LibraryClasses]
+  Eic7700UsbLib|Include/Library/Eic7700UsbLib.h
   Eic7700InfoLib|Include/Library/Eic7700InfoLib.h

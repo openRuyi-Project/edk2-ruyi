@@ -18,6 +18,7 @@
 !include Silicon/RISC-V/RiscV.dsc.inc
 
 [LibraryClasses]
+  Eic7700UsbLib|EswinPlatformPkg/Library/Eic7700UsbLib/Eic7700UsbLib.inf
   EqosLib|RuyiPlatformPkg/Library/EqosLib/EqosLib.inf
   EqosPlatformLib|EswinPlatformPkg/Library/Eic7700EqosPlatformLib/Eic7700EqosPlatformLib.inf
   PlatformMacAddressLib|EswinPlatformPkg/Library/PremierP550MacLib/PremierP550MacLib.inf

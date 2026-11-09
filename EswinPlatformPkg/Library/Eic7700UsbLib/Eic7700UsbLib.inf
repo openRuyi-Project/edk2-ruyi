@@ -1,0 +1,19 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Eic7700UsbLib
+  FILE_GUID = 4c01efc5-f705-4d38-893d-093e34951a40
+  MODULE_TYPE = DXE_DRIVER
+  LIBRARY_CLASS = Eic7700UsbLib
+[Sources]
+  Usb.c
+[Packages]
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+  EswinPlatformPkg/EswinPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  FdtHardwareLib
+  FdtLib
+  IoLib
+  TimerLib
