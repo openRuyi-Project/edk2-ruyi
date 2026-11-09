@@ -1,0 +1,35 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = NvStorageLib
+  FILE_GUID = 423c0d85-8a38-4a5c-874c-13f269593144
+  MODULE_TYPE = DXE_RUNTIME_DRIVER
+  LIBRARY_CLASS = NvStorageLib|DXE_RUNTIME_DRIVER
+[Sources]
+  Storage.c
+[Packages]
+  EmbeddedPkg/EmbeddedPkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  MemoryAllocationLib
+  NvFvbLib
+  PcdLib
+  UefiBootServicesTableLib
+  UefiLib
+  UefiRuntimeLib
+[Protocols]
+  gEfiDevicePathProtocolGuid
+  gEfiFaultTolerantWriteProtocolGuid
+  gEfiFirmwareVolumeBlockProtocolGuid
+[Guids]
+  gEdkiiNvVarStoreFormattedGuid
+  gEfiEventVirtualAddressChangeGuid
+  gRuyiNvFvbReadyGuid
+[Pcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase64
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingBase64
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase64

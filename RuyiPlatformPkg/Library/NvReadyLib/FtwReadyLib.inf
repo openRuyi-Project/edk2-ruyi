@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = FtwReadyLib
+  FILE_GUID = 393cb803-04e1-4de6-8dcb-6225d6ea2ff1
+  MODULE_TYPE = DXE_DRIVER
+  LIBRARY_CLASS = NULL
+  CONSTRUCTOR = NvReadyConstructor
+[Sources]
+  Ready.c
+[LibraryClasses]
+  PcdLib
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[Pcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase64
+[Guids]
+  gRuyiNvFvbReadyGuid
+[Depex]
+  gRuyiNvFvbReadyGuid
