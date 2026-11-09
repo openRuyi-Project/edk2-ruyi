@@ -1,0 +1,28 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Eic7700SpiNorLib
+  FILE_GUID = 16eb824b-b77e-4894-b72d-ecf697ec9af9
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = Eic7700SpiNorLib
+  DESTRUCTOR = Eic7700SpiNorDestructor
+[Sources]
+  Flash.c
+[Packages]
+  MdePkg/MdePkg.dec
+  EswinPlatformPkg/EswinPlatformPkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  DxeServicesTableLib
+  FdtLib
+  HobLib
+  IoLib
+  TimerLib
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+[Guids]
+  gFdtHobGuid
+  gEfiEventExitBootServicesGuid
