@@ -1,0 +1,21 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = PremierP550MacLib
+  FILE_GUID = 5e45f660-8db6-4d35-9fae-013cd6d96f66
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = PlatformMacAddressLib
+[Sources]
+  Mac.c
+[Packages]
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  FdtBoardInfoLib
+  FdtHardwareLib
+  FdtLib
+  IoLib
+  TimerLib
