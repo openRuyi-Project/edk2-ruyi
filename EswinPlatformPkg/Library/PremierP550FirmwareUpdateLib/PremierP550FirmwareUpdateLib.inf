@@ -1,0 +1,24 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = PremierP550FirmwareUpdateLib
+  FILE_GUID = 0c45f5c9-cd44-4f45-8937-59d2885e2f01
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = PlatformFirmwareUpdateLib
+[Sources]
+  Image.c
+  Flash.c
+  Internal.h
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+  EswinPlatformPkg/EswinPlatformPkg.dec
+[LibraryClasses]
+  CorebootImageLib
+  BaseLib
+  BaseMemoryLib
+  FirmwareUpdateLib
+  Eic7700SpiNorLib
+  MemoryAllocationLib
+  UefiBootServicesTableLib
