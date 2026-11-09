@@ -7,6 +7,7 @@
 [Includes]
   Include
 [LibraryClasses]
+  CorebootImageLib|Include/Library/CorebootImageLib.h
   FastbootTransportLib|Include/Library/FastbootTransportLib.h
   FastbootPlatformLib|Include/Library/FastbootPlatformLib.h
   FastbootStorageLib|Include/Library/FastbootStorageLib.h

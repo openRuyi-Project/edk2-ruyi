@@ -1,0 +1,21 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = CorebootImageLib
+  FILE_GUID = d6868272-a184-43b9-8afb-9ee55fb4fd58
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = CorebootImageLib
+[Sources]
+  Image.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  ExtractGuidedSectionLib
+  FdtLib
+  MemoryAllocationLib
+[Guids]
+  gLzmaCustomDecompressGuid
