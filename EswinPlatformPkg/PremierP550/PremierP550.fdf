@@ -99,6 +99,7 @@ INF MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
 INF MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
 INF MdeModulePkg/Universal/Disk/UdfDxe/UdfDxe.inf
 
+INF EswinPlatformPkg/Drivers/PremierP550FdtDxe/PremierP550FdtDxe.inf
 INF RuyiPlatformPkg/Drivers/EqosSnpDxe/EqosSnpDxe.inf
 INF EswinPlatformPkg/Drivers/Eic7700SdhciDxe/Eic7700SdhciDxe.inf
 INF MdeModulePkg/Bus/Pci/SdMmcPciHcDxe/SdMmcPciHcDxe.inf

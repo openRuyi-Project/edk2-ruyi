@@ -1,0 +1,27 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = PremierP550FdtDxe
+  FILE_GUID = 78220f09-d025-481c-811c-17a5de2c58a2
+  MODULE_TYPE = DXE_DRIVER
+  ENTRY_POINT = PremierP550FdtEntry
+[Sources]
+  Fdt.c
+[Packages]
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  FdtLib
+  PlatformMacAddressLib
+  PrintLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiLib
+[Guids]
+  gEfiEventReadyToBootGuid
+  gFdtTableGuid
+[Depex]
+  TRUE

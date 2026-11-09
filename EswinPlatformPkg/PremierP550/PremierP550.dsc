@@ -98,6 +98,7 @@
   GCC:*_*_*_DLINK_FLAGS = -z common-page-size=0x1000
 
 [Components]
+  EswinPlatformPkg/Drivers/PremierP550FdtDxe/PremierP550FdtDxe.inf
   RuyiPlatformPkg/Drivers/EqosSnpDxe/EqosSnpDxe.inf
   EswinPlatformPkg/Drivers/Eic7700SdhciDxe/Eic7700SdhciDxe.inf
   MdeModulePkg/Bus/Pci/SdMmcPciHcDxe/SdMmcPciHcDxe.inf
