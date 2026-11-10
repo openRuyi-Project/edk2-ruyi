@@ -1,0 +1,23 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Eic7700IoMmuDxe
+  FILE_GUID = 5f3ab90a-e640-469f-80ad-a7bfd4138d9d
+  MODULE_TYPE = DXE_DRIVER
+  ENTRY_POINT = Eic7700IoMmuEntry
+[Sources]
+  IoMmu.c
+[Packages]
+  EmbeddedPkg/EmbeddedPkg.dec
+  EswinPlatformPkg/EswinPlatformPkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MdePkg/MdePkg.dec
+[LibraryClasses]
+  DmaLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+[Protocols]
+  gEdkiiIoMmuProtocolGuid
+  gEfiCpuArchProtocolGuid
+[Depex]
+  gEfiCpuArchProtocolGuid

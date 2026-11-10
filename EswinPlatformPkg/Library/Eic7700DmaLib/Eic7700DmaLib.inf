@@ -10,6 +10,7 @@
   Dma.c
 [Packages]
   EmbeddedPkg/EmbeddedPkg.dec
+  EswinPlatformPkg/EswinPlatformPkg.dec
   MdePkg/MdePkg.dec
   RuyiPlatformPkg/RuyiPlatformPkg.dec
 [LibraryClasses]

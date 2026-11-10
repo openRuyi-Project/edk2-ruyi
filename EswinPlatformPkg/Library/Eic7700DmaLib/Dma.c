@@ -4,6 +4,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DmaLib.h>
+#include <Library/Eic7700DmaLib.h>
 #include <Library/DxeServicesTableLib.h>
 #include <Library/FdtBoardInfoLib.h>
 #include <Library/FdtHardwareLib.h>
@@ -125,8 +126,38 @@ AllocationFor (UINTN Address, UINTN Bytes)
   return NULL;
 }
 
+STATIC VOID *
+AllocateBelow (EFI_MEMORY_TYPE Type, UINTN Pages, UINTN Alignment,
+               EFI_PHYSICAL_ADDRESS MaximumAddress)
+{
+  EFI_PHYSICAL_ADDRESS  Address = MaximumAddress;
+  EFI_STATUS            Status;
+  UINTN                 Extra, Aligned, Before, After;
+
+  Alignment = MAX (Alignment, EFI_PAGE_SIZE);
+  Extra = EFI_SIZE_TO_PAGES (Alignment - EFI_PAGE_SIZE);
+  if (Pages > (MAX_UINTN >> EFI_PAGE_SHIFT) - Extra) {
+    return NULL;
+  }
+  Status = gBS->AllocatePages (AllocateMaxAddress, Type, Pages + Extra, &Address);
+  if (EFI_ERROR (Status)) {
+    return NULL;
+  }
+  Aligned = ALIGN_VALUE ((UINTN)Address, Alignment);
+  Before  = EFI_SIZE_TO_PAGES (Aligned - (UINTN)Address);
+  After   = Extra - Before;
+  if (Before) {
+    FreePages ((VOID *)(UINTN)Address, Before);
+  }
+  if (After) {
+    FreePages ((VOID *)(Aligned + EFI_PAGES_TO_SIZE (Pages)), After);
+  }
+  return (VOID *)Aligned;
+}
+
 STATIC EFI_STATUS
-Allocate (EFI_MEMORY_TYPE Type, UINTN Pages, UINTN Alignment, VOID **Host)
+Allocate (EFI_MEMORY_TYPE Type, UINTN Pages, UINTN Alignment,
+          EFI_PHYSICAL_ADDRESS MaximumAddress, VOID **Host)
 {
   DMA_ALLOCATION  *Allocation;
   EFI_STATUS      Status;
@@ -151,9 +182,7 @@ Allocate (EFI_MEMORY_TYPE Type, UINTN Pages, UINTN Alignment, VOID **Host)
     return EFI_OUT_OF_RESOURCES;
   }
 
-  Allocation->Cached = Type == EfiRuntimeServicesData ?
-                       AllocateAlignedRuntimePages (Pages, Alignment) :
-                       AllocateAlignedPages (Pages, Alignment);
+  Allocation->Cached = AllocateBelow (Type, Pages, Alignment, MaximumAddress);
   if (!Allocation->Cached) {
     Status = EFI_OUT_OF_RESOURCES;
     goto FreeRecord;
@@ -229,12 +258,15 @@ Free (UINTN Pages, VOID *Host)
 
 STATIC EFI_STATUS
 Map (DMA_MAP_OPERATION Operation, VOID *Host, UINTN *Bytes,
-     PHYSICAL_ADDRESS *Device, VOID **Mapping)
+     PHYSICAL_ADDRESS *Device, VOID **Mapping,
+     EFI_PHYSICAL_ADDRESS MaximumAddress)
 {
   DMA_ALLOCATION  *Allocation;
   DMA_MAPPING     *Record;
   EFI_STATUS      Status;
   VOID            *Bounce;
+  UINTN           Address;
+  BOOLEAN         BounceNeeded;
 
   if (!Host || !Bytes || !*Bytes || !Device || !Mapping ||
       ((UINT32)Operation >= MapOperationMaximum) ||
@@ -259,6 +291,15 @@ Map (DMA_MAP_OPERATION Operation, VOID *Host, UINTN *Bytes,
     }
   }
 
+  Address = Allocation ? (UINTN)Allocation->Cached + (UINTN)Host -
+                         (UINTN)Allocation->Alias : (UINTN)Host;
+  BounceNeeded = (*Bytes - 1 > MaximumAddress) ||
+                 (Address > MaximumAddress - (*Bytes - 1)) ||
+                 (!Allocation && (((Address | *Bytes) & (mCacheLine - 1)) != 0));
+  if (BounceNeeded && (Operation == MapOperationBusMasterCommonBuffer)) {
+    return EFI_UNSUPPORTED;
+  }
+
   Record = AllocateZeroPool (sizeof (*Record));
   if (!Record) {
     return EFI_OUT_OF_RESOURCES;
@@ -268,14 +309,15 @@ Map (DMA_MAP_OPERATION Operation, VOID *Host, UINTN *Bytes,
   Record->Bytes      = *Bytes;
   Record->Allocation = Allocation;
 
-  if (!Allocation && ((((UINTN)Host | *Bytes) & (mCacheLine - 1)) != 0)) {
+  if (BounceNeeded) {
     if (*Bytes > MAX_UINTN - EFI_PAGE_MASK) {
       Status = EFI_INVALID_PARAMETER;
       goto FreeRecord;
     }
     // Streaming bounce buffers are not shared concurrently with the device.
     // Keep CPU copies cacheable and transfer ownership with cache maintenance.
-    Bounce = AllocatePages (EFI_SIZE_TO_PAGES (*Bytes));
+    Bounce = AllocateBelow (EfiBootServicesData, EFI_SIZE_TO_PAGES (*Bytes),
+                            EFI_PAGE_SIZE, MaximumAddress);
     if (Bounce == NULL) {
       Status = EFI_OUT_OF_RESOURCES;
       goto FreeRecord;
@@ -292,7 +334,7 @@ Map (DMA_MAP_OPERATION Operation, VOID *Host, UINTN *Bytes,
     Flush ((UINTN)Bounce, *Bytes);
     *Device = (UINTN)Bounce;
   } else if (Allocation) {
-    *Device = (UINTN)Allocation->Cached + (UINTN)Host - (UINTN)Allocation->Alias;
+    *Device = Address;
   } else {
     Flush ((UINTN)Host, *Bytes);
     *Device = (UINTN)Host;
@@ -348,13 +390,21 @@ Unmap (VOID *Mapping)
 }
 
 EFI_STATUS EFIAPI
+Eic7700DmaMap (DMA_MAP_OPERATION Operation, VOID *Host, UINTN *Bytes,
+               PHYSICAL_ADDRESS *Device, VOID **Mapping,
+               EFI_PHYSICAL_ADDRESS MaximumAddress)
+{
+  EFI_TPL     Old = gBS->RaiseTPL (TPL_NOTIFY);
+  EFI_STATUS  Status = Map (Operation, Host, Bytes, Device, Mapping, MaximumAddress);
+  gBS->RestoreTPL (Old);
+  return Status;
+}
+
+EFI_STATUS EFIAPI
 DmaMap (DMA_MAP_OPERATION Operation, VOID *Host, UINTN *Bytes,
         PHYSICAL_ADDRESS *Device, VOID **Mapping)
 {
-  EFI_TPL     Old = gBS->RaiseTPL (TPL_NOTIFY);
-  EFI_STATUS  Status = Map (Operation, Host, Bytes, Device, Mapping);
-  gBS->RestoreTPL (Old);
-  return Status;
+  return Eic7700DmaMap (Operation, Host, Bytes, Device, Mapping, MAX_UINT64);
 }
 
 EFI_STATUS EFIAPI
@@ -370,7 +420,17 @@ EFI_STATUS EFIAPI
 DmaAllocateAlignedBuffer (EFI_MEMORY_TYPE Type, UINTN Pages, UINTN Alignment, VOID **Host)
 {
   EFI_TPL     Old = gBS->RaiseTPL (TPL_NOTIFY);
-  EFI_STATUS  Status = Allocate (Type, Pages, Alignment, Host);
+  EFI_STATUS  Status = Allocate (Type, Pages, Alignment, MAX_UINT64, Host);
+  gBS->RestoreTPL (Old);
+  return Status;
+}
+
+EFI_STATUS EFIAPI
+Eic7700DmaAllocateBuffer (EFI_MEMORY_TYPE Type, UINTN Pages, VOID **Host,
+                         EFI_PHYSICAL_ADDRESS MaximumAddress)
+{
+  EFI_TPL     Old = gBS->RaiseTPL (TPL_NOTIFY);
+  EFI_STATUS  Status = Allocate (Type, Pages, EFI_PAGE_SIZE, MaximumAddress, Host);
   gBS->RestoreTPL (Old);
   return Status;
 }
