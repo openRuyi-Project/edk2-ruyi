@@ -14,6 +14,7 @@
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
+#include <Library/DwcPcieTrainingLib.h>
 #include <Library/FdtBoardInfoLib.h>
 #include <Library/FdtHardwareLib.h>
 #include <Library/FdtLib.h>
@@ -50,15 +51,12 @@
 #define DBI_MSI_CAP            0x050
 #define DBI_EXP_CAP            0x070
 #define DBI_LINK_CAP           (DBI_EXP_CAP + 0x0c)
-#define DBI_LINK_STATUS        (DBI_EXP_CAP + 0x10)
-#define DBI_LINK_CONTROL2      (DBI_EXP_CAP + 0x30)
 #define DBI_PORT_LINK          0x710
 #define DBI_LINK_MODE_MASK     (0x3fU << 16)
 #define DBI_DLL_ENABLE         BIT5
 #define DBI_FAST_LINK          BIT7
 #define DBI_GEN2_CONTROL       0x80c
 #define DBI_PREDETERMINED_LANES (0x1fU << 8)
-#define DBI_SPEED_CHANGE       BIT17
 #define DBI_MISC_CONTROL       0x8bc
 #define DBI_RO_WRITE           BIT0
 #define DBI_MULTI_LANE         0x8c0
@@ -311,10 +309,15 @@ Parse (CONST VOID *Fdt)
 STATIC EFI_STATUS
 Poll (UINTN Address, UINT32 Mask, UINT32 Expected, UINTN TimeoutUs)
 {
+  UINT32 Value = 0;
+
   for (UINTN Elapsed = 0; Elapsed < TimeoutUs; Elapsed += 10) {
-    if ((MmioRead32 (Address) & Mask) == Expected) { return EFI_SUCCESS; }
+    Value = MmioRead32 (Address);
+    if ((Value & Mask) == Expected) { return EFI_SUCCESS; }
     MicroSecondDelay (10);
   }
+  DEBUG ((DEBUG_ERROR, "EIC7700 PCIe poll timeout at %Lx: value %08x mask %08x expected %08x\n",
+          (UINT64)Address, Value, Mask, Expected));
   return EFI_TIMEOUT;
 }
 
@@ -385,6 +388,24 @@ Config (UINT16 Segment, UINT8 Bus, UINT8 Device, UINT8 Function,
   return Status;
 }
 
+STATIC BOOLEAN EFIAPI
+LinkReady (VOID *Context)
+{
+  return (MmioRead32 (mElbi + ELBI_STATUS) & (ELBI_PHY_AUX_CLOCK | 0xff)) == ELBI_L0_STATUS;
+}
+
+STATIC VOID EFIAPI
+EnableLtssm (VOID *Context)
+{
+  MmioOr32 (mElbi + ELBI_CONTROL, ELBI_LTSSM_ENABLE);
+}
+
+STATIC EFI_STATUS EFIAPI
+ReadPartner (VOID *Context, UINT16 Register, UINT32 *Value)
+{
+  return Config (0, 1, 0, 0, Register, sizeof (*Value), FALSE, Value);
+}
+
 STATIC VOID
 Stop (VOID)
 {
@@ -400,8 +421,12 @@ Stop (VOID)
 STATIC EFI_STATUS
 Start (VOID)
 {
-  UINT32 Value, Version;
+  UINT32 Version;
+  UINT16 LinkStatus;
   EFI_STATUS Status;
+  DWC_PCIE_TRAINING Training = {
+    "EIC7700", mDbi, mMaxSpeed, mLanes, NULL, LinkReady, EnableLtssm, ReadPartner
+  };
 
   mSavedPad = MmioRead32 (mPins + PERST_PAD);
   MmioOr32 (mPins + PERST_PAD, PAD_INPUT_ENABLE);
@@ -446,18 +471,15 @@ Start (VOID)
   // As in Linux DWC, require one lane to exit electrical idle, then negotiate.
   MmioAndThenOr32 (mDbi + DBI_GEN2_CONTROL, ~DBI_PREDETERMINED_LANES, 1U << 8);
   MmioAndThenOr32 (mDbi + DBI_LINK_CAP, ~0x3ffU, (mLanes << 4) | mMaxSpeed);
-  MmioAndThenOr32 (mDbi + DBI_LINK_CONTROL2, ~0xfU, mMaxSpeed);
   MmioAnd32 (mDbi + DBI_MULTI_LANE, ~0x7fU);
   MmioAnd32 (mDbi + DBI_MISC_CONTROL, ~(UINT32)DBI_RO_WRITE);
-  MmioOr32 (mDbi + DBI_GEN2_CONTROL, DBI_SPEED_CHANGE);
-  MmioOr32 (mElbi + ELBI_CONTROL, ELBI_LTSSM_ENABLE);
-  Status = Poll (mElbi + ELBI_STATUS, 0xff, ELBI_L0_STATUS, 1000000);
-  if (EFI_ERROR (Status)) { return Status; }
-  MicroSecondDelay (100000);
-  if (!LinkUp ()) { return EFI_TIMEOUT; }
-  Value = MmioRead32 (mDbi + DBI_LINK_STATUS);
+  Status = DwcPcieTrainLink (&Training, &LinkStatus);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "EIC7700 PCIe ELBI status: %08x\n", MmioRead32 (mElbi + ELBI_STATUS)));
+    return Status;
+  }
   DEBUG ((DEBUG_INFO, "EIC7700 PCIe: Gen%u x%u, DesignWare %08x\n",
-          (Value >> 16) & 0xf, (Value >> 20) & 0x3f, Version));
+          LinkStatus & 0xf, (LinkStatus >> 4) & 0x3f, Version));
   for (UINTN I = 0; I < mWindowCount; I++) {
     PCI_WINDOW *Range = &mWindows[I];
     Status = Window (I + 1, Range->Type, Range->Cpu, Range->Pci, Range->Size);
