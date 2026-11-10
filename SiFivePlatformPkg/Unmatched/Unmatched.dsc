@@ -62,7 +62,7 @@
   # Match RiscVVirt: avoid walking entire lists on every network/pool operation.
   gEfiMdePkgTokenSpaceGuid.PcdMaximumLinkedListLength|0
   gSiFivePlatformTokenSpaceGuid.PcdUnmatchedDefaultEmulation|$(MAU_DEFAULT_ENABLE)
-  gSiFivePlatformTokenSpaceGuid.PcdUnmatchedEmulationAvailable|$(X64EMU_ENABLE)
+  gRuyiPlatformTokenSpaceGuid.PcdDriverEmulationAvailable|$(X64EMU_ENABLE)
   # FU740 has Sv39, but neither Svpbmt nor Zicbom.
   gEfiMdePkgTokenSpaceGuid.PcdRiscVFeatureOverride|0
   gUefiCpuPkgTokenSpaceGuid.PcdCpuRiscVMmuMaxSatpMode|8
@@ -109,7 +109,7 @@
 
 [Components]
   SiFivePlatformPkg/Drivers/UnmatchedSettingsDxe/UnmatchedSettingsDxe.inf
-  SiFivePlatformPkg/Drivers/UnmatchedSettingsUiDxe/UnmatchedSettingsUiDxe.inf
+  RuyiPlatformPkg/Drivers/PlatformSettingsUiDxe/PlatformSettingsUiDxe.inf
   MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf {
     <LibraryClasses>
 !if $(X64EMU_ENABLE) == TRUE

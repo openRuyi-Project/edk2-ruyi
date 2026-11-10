@@ -13,6 +13,7 @@
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   SiFivePlatformPkg/SiFivePlatformPkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
   MultiArchUefiPkg/MultiArchUefiPkg.dec
 [LibraryClasses]
   UefiDriverEntryPoint
@@ -31,11 +32,11 @@
 [Protocols]
   gEfiCpuArchProtocolGuid
   gEfiTimerArchProtocolGuid
-  gUnmatchedSettingsProtocolGuid
+  gRuyiEmulationConfigProtocolGuid
 [Pcd]
   gMauPkgTokenSpaceGuid.PcdMauEmulationEnabled
 [FixedPcd]
   gSiFivePlatformTokenSpaceGuid.PcdUnmatchedDefaultEmulation
-  gSiFivePlatformTokenSpaceGuid.PcdUnmatchedEmulationAvailable
+  gRuyiPlatformTokenSpaceGuid.PcdDriverEmulationAvailable
 [Depex]
   gEfiCpuArchProtocolGuid AND gEfiTimerArchProtocolGuid

@@ -5,7 +5,7 @@
 #include <Library/DebugLib.h>
 #include <Library/PcdLib.h>
 #include <Library/UefiBootServicesTableLib.h>
-#include <Protocol/UnmatchedSettings.h>
+#include <Protocol/EmulationConfig.h>
 #include "Record.h"
 
 STATIC SETTINGS_RECORD  mRecord;
@@ -100,7 +100,7 @@ Set (
   EFI_STATUS       Status;
   EFI_TPL          Tpl;
 
-  if ((Enabled > 1) || (Enabled && !FixedPcdGetBool (PcdUnmatchedEmulationAvailable))) {
+  if ((Enabled > 1) || (Enabled && !FixedPcdGetBool (PcdDriverEmulationAvailable))) {
     return EFI_UNSUPPORTED;
   }
 
@@ -176,7 +176,7 @@ UnmatchedSettingsEntry (
   EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  STATIC UNMATCHED_SETTINGS_PROTOCOL  Protocol = { Get, Set };
+  STATIC RUYI_EMULATION_CONFIG_PROTOCOL  Protocol = { Get, Set };
   EFI_HANDLE                          Handle   = NULL;
   EFI_STATUS                          Status   = SettingsFlashInit ();
 
@@ -191,7 +191,7 @@ UnmatchedSettingsEntry (
 
   Status = PcdSetBoolS (
              PcdMauEmulationEnabled,
-             FixedPcdGetBool (PcdUnmatchedEmulationAvailable) &&
+             FixedPcdGetBool (PcdDriverEmulationAvailable) &&
              ((mRecord.Flags & SETTINGS_ENABLED) != 0)
              );
   if (EFI_ERROR (Status)) {
@@ -206,7 +206,7 @@ UnmatchedSettingsEntry (
     ));
   return gBS->InstallProtocolInterface (
                 &Handle,
-                &gUnmatchedSettingsProtocolGuid,
+                &gRuyiEmulationConfigProtocolGuid,
                 EFI_NATIVE_INTERFACE,
                 &Protocol
                 );

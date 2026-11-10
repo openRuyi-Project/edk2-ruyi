@@ -1,10 +1,10 @@
 ## SPDX-License-Identifier: BSD-2-Clause-Patent
 [Defines]
   INF_VERSION = 0x0001001B
-  BASE_NAME = UnmatchedSettingsUiDxe
+  BASE_NAME = PlatformSettingsUiDxe
   FILE_GUID = 2cf274eb-648f-46dc-9ca4-0d94fa6055d8
   MODULE_TYPE = DXE_DRIVER
-  ENTRY_POINT = UnmatchedSettingsUiEntry
+  ENTRY_POINT = PlatformSettingsUiEntry
 [Sources]
   Ui.c
   Forms.h
@@ -13,7 +13,6 @@
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
-  SiFivePlatformPkg/SiFivePlatformPkg.dec
   RuyiPlatformPkg/RuyiPlatformPkg.dec
 [LibraryClasses]
   UefiDriverEntryPoint
@@ -28,10 +27,10 @@
   gEfiDevicePathProtocolGuid
   gEfiHiiConfigAccessProtocolGuid
   gEfiHiiConfigRoutingProtocolGuid
-  gUnmatchedSettingsProtocolGuid
+  gRuyiEmulationConfigProtocolGuid
 [Guids]
   gEfiIfrFrontPageGuid
 [FixedPcd]
-  gSiFivePlatformTokenSpaceGuid.PcdUnmatchedEmulationAvailable
+  gRuyiPlatformTokenSpaceGuid.PcdDriverEmulationAvailable
 [Depex]
-  gEfiHiiConfigRoutingProtocolGuid AND gUnmatchedSettingsProtocolGuid
+  gEfiHiiConfigRoutingProtocolGuid AND gRuyiEmulationConfigProtocolGuid

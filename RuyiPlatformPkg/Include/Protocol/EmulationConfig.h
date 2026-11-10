@@ -1,13 +1,13 @@
 /* SPDX-License-Identifier: BSD-2-Clause-Patent */
 
-#ifndef UNMATCHED_SETTINGS_H_
-#define UNMATCHED_SETTINGS_H_
+#ifndef RUYI_EMULATION_CONFIG_H_
+#define RUYI_EMULATION_CONFIG_H_
 #include <Uefi.h>
 
 typedef struct {
   EFI_STATUS (EFIAPI *Get)(BOOLEAN *Enabled, BOOLEAN *DefaultEnabled);
   EFI_STATUS (EFIAPI *Set)(BOOLEAN Enabled);
-} UNMATCHED_SETTINGS_PROTOCOL;
+} RUYI_EMULATION_CONFIG_PROTOCOL;
 
-extern EFI_GUID  gUnmatchedSettingsProtocolGuid;
+extern EFI_GUID  gRuyiEmulationConfigProtocolGuid;
 #endif

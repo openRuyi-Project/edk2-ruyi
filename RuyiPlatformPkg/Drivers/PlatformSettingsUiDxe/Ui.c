@@ -6,7 +6,7 @@
 #include <Library/BaseLib.h>
 #include <Library/HiiLib.h>
 #include <Library/PcdLib.h>
-#include <Protocol/UnmatchedSettings.h>
+#include <Protocol/EmulationConfig.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/NetworkBootConfigLib.h>
 #include <Library/PrintLib.h>
@@ -14,9 +14,9 @@
 #include "Forms.h"
 
 extern UINT8                            SettingsFormsBin[];
-extern UINT8                            UnmatchedSettingsUiDxeStrings[];
-STATIC UNMATCHED_SETTINGS_PROTOCOL      *mSettings;
-STATIC EFI_GUID                         mFormGuid = UNMATCHED_FORMSET_GUID;
+extern UINT8                            PlatformSettingsUiDxeStrings[];
+STATIC RUYI_EMULATION_CONFIG_PROTOCOL      *mSettings;
+STATIC EFI_GUID                         mFormGuid = PLATFORM_FORMSET_GUID;
 STATIC EFI_HANDLE                       mHandle;
 STATIC EFI_HII_HANDLE                   mHiiHandle;
 STATIC EFI_HII_CONFIG_ROUTING_PROTOCOL  *mRouting;
@@ -26,7 +26,7 @@ STATIC struct {
 } mPath = {
   {
     { HARDWARE_DEVICE_PATH, HW_VENDOR_DP,                   { sizeof (VENDOR_DEVICE_PATH),       0 }
-    }, UNMATCHED_FORMSET_GUID
+    }, PLATFORM_FORMSET_GUID
   },
   { END_DEVICE_PATH_TYPE, END_ENTIRE_DEVICE_PATH_SUBTYPE, { sizeof (EFI_DEVICE_PATH_PROTOCOL), 0 }
   }
@@ -34,7 +34,7 @@ STATIC struct {
 
 STATIC EFI_STATUS
 ReadSettings (
-  UNMATCHED_CONFIGURATION  *Config
+  PLATFORM_CONFIGURATION  *Config
   )
 {
   BOOLEAN     Enabled, DefaultEnabled;
@@ -45,7 +45,7 @@ ReadSettings (
     return Status;
   }
 
-  Config->Available        = FixedPcdGetBool (PcdUnmatchedEmulationAvailable);
+  Config->Available        = FixedPcdGetBool (PcdDriverEmulationAvailable);
   Config->EmulationEnabled = Config->Available && Enabled;
   Status = NetworkBootConfigGet (&Network);
   Config->PxeBoot = Network.Pxe;
@@ -61,7 +61,7 @@ ExtractConfig (
   EFI_STRING                            *Results
   )
 {
-  UNMATCHED_CONFIGURATION  Config;
+  PLATFORM_CONFIGURATION  Config;
   EFI_STATUS               Status;
   EFI_STRING               FullRequest = NULL;
   EFI_STRING               Header;
@@ -73,7 +73,7 @@ ExtractConfig (
 
   *Progress = Request;
   *Results  = NULL;
-  if (Request && !HiiIsConfigHdrMatch (Request, &mFormGuid, L"UnmatchedConfig")) {
+  if (Request && !HiiIsConfigHdrMatch (Request, &mFormGuid, L"PlatformConfig")) {
     return EFI_NOT_FOUND;
   }
 
@@ -83,7 +83,7 @@ ExtractConfig (
   }
 
   if (!Request || !StrStr (Request, L"&OFFSET=")) {
-    Header = HiiConstructConfigHdr (&mFormGuid, L"UnmatchedConfig", mHandle);
+    Header = HiiConstructConfigHdr (&mFormGuid, L"PlatformConfig", mHandle);
     if (!Header) {
       return EFI_OUT_OF_RESOURCES;
     }
@@ -123,7 +123,7 @@ RouteConfig (
   EFI_STRING                            *Progress
   )
 {
-  UNMATCHED_CONFIGURATION  Config;
+  PLATFORM_CONFIGURATION  Config;
   EFI_STATUS               Status;
   UINTN                    Size = sizeof (Config);
 
@@ -132,7 +132,7 @@ RouteConfig (
   }
 
   *Progress = Configuration;
-  if (!HiiIsConfigHdrMatch (Configuration, &mFormGuid, L"UnmatchedConfig")) {
+  if (!HiiIsConfigHdrMatch (Configuration, &mFormGuid, L"PlatformConfig")) {
     return EFI_NOT_FOUND;
   }
 
@@ -148,7 +148,7 @@ RouteConfig (
 
   if ((Config.EmulationEnabled > 1) ||
       (Config.PxeBoot > 1) || (Config.HttpBoot > 1) ||
-      (Config.Available != FixedPcdGetBool (PcdUnmatchedEmulationAvailable)))
+      (Config.Available != FixedPcdGetBool (PcdDriverEmulationAvailable)))
   {
     return EFI_INVALID_PARAMETER;
   }
@@ -181,7 +181,7 @@ Callback (
       return Status;
     }
 
-    Value->u8 = FixedPcdGetBool (PcdUnmatchedEmulationAvailable) && DefaultEnabled;
+    Value->u8 = FixedPcdGetBool (PcdDriverEmulationAvailable) && DefaultEnabled;
     if (ActionRequest != NULL) {
       *ActionRequest = EFI_BROWSER_ACTION_REQUEST_NONE;
     }
@@ -194,14 +194,14 @@ Callback (
 STATIC EFI_HII_CONFIG_ACCESS_PROTOCOL  mAccess = { ExtractConfig, RouteConfig, Callback };
 
 EFI_STATUS EFIAPI
-UnmatchedSettingsUiEntry (
+PlatformSettingsUiEntry (
   EFI_HANDLE        ImageHandle,
   EFI_SYSTEM_TABLE  *SystemTable
   )
 {
   EFI_STATUS  Status;
 
-  Status = gBS->LocateProtocol (&gUnmatchedSettingsProtocolGuid, NULL, (VOID **)&mSettings);
+  Status = gBS->LocateProtocol (&gRuyiEmulationConfigProtocolGuid, NULL, (VOID **)&mSettings);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -223,7 +223,7 @@ UnmatchedSettingsUiEntry (
     return Status;
   }
 
-  mHiiHandle = HiiAddPackages (&mFormGuid, mHandle, UnmatchedSettingsUiDxeStrings, SettingsFormsBin, NULL);
+  mHiiHandle = HiiAddPackages (&mFormGuid, mHandle, PlatformSettingsUiDxeStrings, SettingsFormsBin, NULL);
   if (!mHiiHandle) {
     gBS->UninstallMultipleProtocolInterfaces (
            mHandle,

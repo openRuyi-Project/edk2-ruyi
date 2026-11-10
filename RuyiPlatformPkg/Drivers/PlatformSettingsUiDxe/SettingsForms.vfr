@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: BSD-2-Clause-Patent
 #include "Forms.h"
 formset
-  guid = UNMATCHED_FORMSET_GUID,
+  guid = PLATFORM_FORMSET_GUID,
   title = STRING_TOKEN(STR_TITLE),
   help = STRING_TOKEN(STR_HELP),
   classguid = gEfiIfrFrontPageGuid,
-  varstore UNMATCHED_CONFIGURATION,
+  varstore PLATFORM_CONFIGURATION,
     varid = 1,
-    name = UnmatchedConfig,
-    guid = UNMATCHED_FORMSET_GUID;
+    name = PlatformConfig,
+    guid = PLATFORM_FORMSET_GUID;
   form formid = 1,
     title = STRING_TOKEN(STR_TITLE);
-    grayoutif ideqval UnmatchedConfig.Available == 0;
-      oneof varid = UnmatchedConfig.EmulationEnabled,
+    grayoutif ideqval PlatformConfig.Available == 0;
+      oneof varid = PlatformConfig.EmulationEnabled,
         questionid = 0x1001,
         prompt = STRING_TOKEN(STR_EMULATION),
         help = STRING_TOKEN(STR_EMULATION_HELP),
@@ -21,14 +21,14 @@ formset
         option text = STRING_TOKEN(STR_ENABLED), value = 1, flags = 0;
       endoneof;
     endif;
-    oneof varid = UnmatchedConfig.PxeBoot,
+    oneof varid = PlatformConfig.PxeBoot,
       prompt = STRING_TOKEN(STR_PXE_BOOT),
       help = STRING_TOKEN(STR_PXE_HELP),
       flags = RESET_REQUIRED,
       option text = STRING_TOKEN(STR_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING;
       option text = STRING_TOKEN(STR_ENABLED), value = 1, flags = 0;
     endoneof;
-    oneof varid = UnmatchedConfig.HttpBoot,
+    oneof varid = PlatformConfig.HttpBoot,
       prompt = STRING_TOKEN(STR_HTTP_BOOT),
       help = STRING_TOKEN(STR_HTTP_HELP),
       flags = RESET_REQUIRED,

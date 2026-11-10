@@ -6,8 +6,6 @@
   PACKAGE_VERSION = 0.1
 [Includes]
   Include
-[Protocols]
-  gUnmatchedSettingsProtocolGuid = { 0x0d6effa2, 0x9626, 0x4dea, { 0xa2, 0xe5, 0x6e, 0x61, 0xba, 0x31, 0xb7, 0x1a } }
 [LibraryClasses]
   Fu740SpiNorLib|Include/Library/Fu740SpiNorLib.h
   Fu740InfoLib|Include/Library/Fu740InfoLib.h
@@ -18,4 +16,3 @@
 
 [PcdsFixedAtBuild]
   gSiFivePlatformTokenSpaceGuid.PcdUnmatchedDefaultEmulation|FALSE|BOOLEAN|0x1
-  gSiFivePlatformTokenSpaceGuid.PcdUnmatchedEmulationAvailable|TRUE|BOOLEAN|0x2
