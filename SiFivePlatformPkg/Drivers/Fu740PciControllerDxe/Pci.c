@@ -12,6 +12,7 @@
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
+#include <Library/DwcPcieTrainingLib.h>
 #include <Library/DxeServicesTableLib.h>
 #include <Library/FdtLib.h>
 #include <Library/HobLib.h>
@@ -35,8 +36,8 @@
 #define PHY_RX_OVERRIDE   0x1008
 #define PHY_RX_VALUE      (BIT0 | BIT5 | BIT9 | BIT10 | BIT11)
 #define DBI_RO_WRITE      0x8bc
+#define DBI_LINK_DEBUG    0x728
 #define DBI_LINK_STATUS   0x72c
-#define DBI_LINK_SPEED    0x80c
 #define DBI_VERSION       0x8f8
 #define ATU_OFFSET        0x300000
 #define ATU_STRIDE        0x200
@@ -44,6 +45,9 @@
 #define ATU_LARGE_REGION  BIT13
 #define PRCI_PCIE_AUX     0x14
 #define PRCI_RESET_N      0x28
+#define PRCI_PCIE_RESET_N BIT4
+#define DBI_LTSSM_MASK    0x3fU
+#define DBI_LTSSM_L0      0x11U
 #define GPIO_INPUT_EN     0x04
 #define GPIO_OUTPUT_EN    0x08
 #define GPIO_OUTPUT_VAL   0x0c
@@ -51,7 +55,6 @@
 #define GPIO_OUTPUT_XOR   0x40
 
 #define BOARD_RESET_DELAY_US  100000
-#define LINK_CONFIG_DELAY_US  100000
 
 STATIC UINTN                         mDbi, mConfig, mMgmt, mPrci, mGpio;
 STATIC UINT32                        mPowerPin, mResetPin, mVersion;
@@ -144,14 +147,19 @@ Poll (
   UINTN   TimeoutUs
   )
 {
+  UINT32  Last = 0;
+
   for (UINTN Time = 0; Time < TimeoutUs; Time += 10) {
-    if ((MmioRead32 (Address) & Mask) == Value) {
+    Last = MmioRead32 (Address);
+    if ((Last & Mask) == Value) {
       return EFI_SUCCESS;
     }
 
     MicroSecondDelay (10);
   }
 
+  DEBUG ((DEBUG_ERROR, "FU740 PCIe poll timeout at %Lx: value %08x mask %08x expected %08x\n",
+          (UINT64)Address, Last, Mask, Value));
   return EFI_TIMEOUT;
 }
 
@@ -200,25 +208,26 @@ LinkUp (
   return (MmioRead32 (mDbi + DBI_LINK_STATUS) & (BIT4 | BIT29)) == BIT4;
 }
 
-STATIC EFI_STATUS
-WaitLink (
-  VOID
-  )
+STATIC BOOLEAN EFIAPI
+LinkReady (VOID *Context)
 {
-  for (UINTN Retry = 0; Retry < 100; Retry++) {
-    if (LinkUp ()) {
-      // Match Linux's post-training delay before configuration requests.
-      if (mMaxSpeed > 2) {
-        MicroSecondDelay (LINK_CONFIG_DELAY_US);
-      }
+  return LinkUp () && (MmioRead32 (mDbi + DBI_LINK_DEBUG) & DBI_LTSSM_MASK) == DBI_LTSSM_L0;
+}
 
-      return LinkUp () ? EFI_SUCCESS : EFI_TIMEOUT;
-    }
+STATIC VOID EFIAPI
+EnableLtssm (VOID *Context)
+{
+  MmioWrite32 (mMgmt + PCIE_LTSSM, 1);
+}
 
-    MicroSecondDelay (10000);
-  }
-
-  return EFI_TIMEOUT;
+STATIC VOID
+Stop (VOID)
+{
+  GpioSet (mResetPin, FALSE);
+  MmioWrite32 (mMgmt + PCIE_PERST, 0);
+  MmioWrite32 (mMgmt + PCIE_LTSSM, 0);
+  // Reset DBI state too, including any temporary Gen1 capability setting.
+  MmioAnd32 (mPrci + PRCI_RESET_N, ~(UINT32)PRCI_PCIE_RESET_N);
 }
 
 STATIC EFI_STATUS
@@ -331,14 +340,22 @@ Config (
   return Status;
 }
 
+STATIC EFI_STATUS EFIAPI
+ReadPartner (VOID *Context, UINT16 Register, UINT32 *Value)
+{
+  return Config (0, 1, 0, 0, Register, sizeof (*Value), FALSE, Value);
+}
+
 STATIC EFI_STATUS
 Start (
   VOID
   )
 {
   EFI_STATUS  Status;
-  UINT8       Cap;
-  UINT32      Original, Value;
+  UINT16      LinkStatus;
+  DWC_PCIE_TRAINING Training = {
+    "FU740", mDbi, mMaxSpeed, 8, NULL, LinkReady, EnableLtssm, ReadPartner
+  };
 
   // Match U-Boot's board power/reset sequence, including a powered-off
   // interval on re-entry. PCIe_PWREN also supplies the Unmatched M.2 slots.
@@ -354,7 +371,7 @@ Start (
   MicroSecondDelay (BOARD_RESET_DELAY_US);
   MmioOr32 (mPrci + PRCI_PCIE_AUX, BIT0);
   MmioWrite32 (mMgmt + PCIE_PHY_RESET, 1);
-  MmioOr32 (mPrci + PRCI_RESET_N, BIT4);
+  MmioOr32 (mPrci + PRCI_RESET_N, PRCI_PCIE_RESET_N);
   for (UINTN Phy = 0; Phy < 2; Phy++) {
     MmioWrite32 (mMgmt + Phy * PHY_STRIDE + PCIE_PHY_SELECT, 1);
   }
@@ -383,47 +400,14 @@ Start (
   MmioWrite16 (mDbi + (PCI_CLASSCODE_OFFSET + 1), 0x0604);
   MmioWrite32 (mDbi + PCI_BRIDGE_PRIMARY_BUS_REGISTER_OFFSET, 0x00ff0100);
   MmioOr16 (mDbi + PCI_COMMAND_OFFSET, EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER);
-  Cap = MmioRead8 (mDbi + PCI_CAPBILITY_POINTER_OFFSET) & ~3U;
-  for (UINTN Retry = 0; Retry < 48; Retry++) {
-    if ((Cap < 0x40) || (Cap > 0xfc)) {
-      return EFI_COMPROMISED_DATA;
-    }
-
-    if (MmioRead8 (mDbi + Cap) == EFI_PCI_CAPABILITY_ID_PCIEXP) {
-      break;
-    }
-
-    Cap = MmioRead8 (mDbi + Cap + 1) & ~3U;
-  }
-
-  if ((Cap > 0xcc) || (MmioRead8 (mDbi + Cap) != EFI_PCI_CAPABILITY_ID_PCIEXP)) {
-    return EFI_UNSUPPORTED;
-  }
-
-  Original = MmioRead32 (mDbi + Cap + 0x0c);
-  // Earlier firmware may leave this writable speed field at 0xf.
-  // FU740 supports Gen3; honor a lower device-tree limit as well.
-  Value = Original & 0xf;
-  if (!Value || (Value > mMaxSpeed)) {
-    Original = (Original & ~0xfU) | mMaxSpeed;
-  }
-
-  MmioWrite32 (mDbi + Cap + 0x0c, (Original & ~0xfU) | 1);
-  MmioWrite32 (mMgmt + PCIE_LTSSM, 1);
-  Status = WaitLink ();
-  if (!EFI_ERROR (Status) && ((Original & 0xf) > 1)) {
-    MmioWrite32 (mDbi + Cap + 0x0c, Original);
-    MmioOr32 (mDbi + DBI_LINK_SPEED, BIT17);
-    Status = WaitLink ();
-  }
-
-  MmioAnd32 (mDbi + DBI_RO_WRITE, ~BIT0);
+  MmioAnd32 (mDbi + DBI_RO_WRITE, ~(UINT32)BIT0);
+  Status = DwcPcieTrainLink (&Training, &LinkStatus);
   if (EFI_ERROR (Status)) {
     return Status;
   }
 
-  Value = MmioRead16 (mDbi + Cap + 0x12);
-  DEBUG ((DEBUG_INFO, "FU740 PCIe: Gen%u x%u, DesignWare %08x\n", Value & 0xf, (Value >> 4) & 0x3f, mVersion));
+  DEBUG ((DEBUG_INFO, "FU740 PCIe: Gen%u x%u, DesignWare %08x\n",
+          LinkStatus & 0xf, (LinkStatus >> 4) & 0x3f, mVersion));
   for (UINTN Index = 0; Index < mWindowCount; Index++) {
     PCI_WINDOW  *Range = &mWindows[Index];
     Status = Window (Index + 1, Range->Type, Range->Cpu, Range->Pci, Range->Size);
@@ -655,14 +639,17 @@ Fu740PciEntry (
 
   Status = Start ();
   if (EFI_ERROR (Status)) {
-    MmioWrite32 (mMgmt + PCIE_LTSSM, 0);
-    MmioAnd32 (mDbi + DBI_RO_WRITE, ~BIT0);
-    GpioSet (mResetPin, FALSE);
+    Stop ();
     DEBUG ((DEBUG_ERROR, "FU740 PCIe initialization: %r\n", Status));
     return Status;
   }
 
   mController.Revision = 1;
   mController.Config   = Config;
-  return gBS->InstallProtocolInterface (&Handle, &gRuyiPciControllerProtocolGuid, EFI_NATIVE_INTERFACE, &mController);
+  Status = gBS->InstallProtocolInterface (&Handle, &gRuyiPciControllerProtocolGuid, EFI_NATIVE_INTERFACE, &mController);
+  if (EFI_ERROR (Status)) {
+    Stop ();
+  }
+
+  return Status;
 }

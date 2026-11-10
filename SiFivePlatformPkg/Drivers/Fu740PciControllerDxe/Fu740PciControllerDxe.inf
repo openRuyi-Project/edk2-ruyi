@@ -17,6 +17,7 @@
   BaseLib
   BaseMemoryLib
   DebugLib
+  DwcPcieTrainingLib
   DxeServicesTableLib
   FdtLib
   HobLib
