@@ -148,6 +148,26 @@ BindingAllowed (
          (mGopImage == Item->Image);
 }
 
+STATIC VOID
+ReportBindingFailure (
+  CONST CHAR8  *Operation,
+  GOP_BINDING  *Item,
+  EFI_HANDLE   Controller,
+  BOOLEAN      Allowed,
+  EFI_STATUS   Status
+  )
+{
+  PCI_TYPE00 Pci;
+
+  if (EFI_ERROR (Status) &&
+      !EFI_ERROR (PciGopReadPciDevice (Controller, &Pci)) &&
+      Pci.Hdr.ClassCode[2] == PCI_CLASS_DISPLAY) {
+    DEBUG ((DEBUG_INFO, "PCI GOP %04x:%04x %a: %r (policy %a, machine %04x)\n",
+            Pci.Hdr.VendorId, Pci.Hdr.DeviceId, Operation, Status,
+            Allowed ? "allowed" : "blocked", Item ? Item->Machine : 0));
+  }
+}
+
 STATIC EFI_STATUS EFIAPI
 GuardSupported (
   EFI_DRIVER_BINDING_PROTOCOL  *This,
@@ -156,8 +176,11 @@ GuardSupported (
   )
 {
   GOP_BINDING  *Item = FindBinding (This);
+  BOOLEAN      Allowed = BindingAllowed (Item, Controller);
+  EFI_STATUS   Status = Allowed ? Item->Supported (This, Controller, Remaining) : EFI_UNSUPPORTED;
 
-  return BindingAllowed (Item, Controller) ? Item->Supported (This, Controller, Remaining) : EFI_UNSUPPORTED;
+  ReportBindingFailure ("Supported", Item, Controller, Allowed, Status);
+  return Status;
 }
 
 STATIC EFI_STATUS EFIAPI
@@ -168,8 +191,11 @@ GuardStart (
   )
 {
   GOP_BINDING  *Item = FindBinding (This);
+  BOOLEAN      Allowed = BindingAllowed (Item, Controller);
+  EFI_STATUS   Status = Allowed ? Item->Start (This, Controller, Remaining) : EFI_UNSUPPORTED;
 
-  return BindingAllowed (Item, Controller) ? Item->Start (This, Controller, Remaining) : EFI_UNSUPPORTED;
+  ReportBindingFailure ("Start", Item, Controller, Allowed, Status);
+  return Status;
 }
 
 STATIC EFI_STATUS EFIAPI
