@@ -10,6 +10,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
   SiFivePlatformPkg/SiFivePlatformPkg.dec
 [LibraryClasses]
   UefiDriverEntryPoint
@@ -25,7 +26,7 @@
 [Guids]
   gFdtHobGuid
 [Protocols]
-  gFu740PciControllerProtocolGuid
+  gRuyiPciControllerProtocolGuid
   gEfiCpuArchProtocolGuid
 [Depex]
   gEfiCpuArchProtocolGuid

@@ -1,7 +1,7 @@
 ## SPDX-License-Identifier: BSD-2-Clause-Patent
 [Defines]
   INF_VERSION = 0x0001001B
-  BASE_NAME = Fu740PciHostBridgeLib
+  BASE_NAME = ControllerPciHostBridgeLib
   FILE_GUID = a519be60-6c97-4cd0-aed1-44ced3675835
   MODULE_TYPE = DXE_DRIVER
   LIBRARY_CLASS = PciHostBridgeLib|DXE_DRIVER
@@ -10,13 +10,13 @@
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
-  SiFivePlatformPkg/SiFivePlatformPkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
 [LibraryClasses]
   DebugLib
   DevicePathLib
   MemoryAllocationLib
   UefiBootServicesTableLib
 [Protocols]
-  gFu740PciControllerProtocolGuid
+  gRuyiPciControllerProtocolGuid
 [Depex]
-  gFu740PciControllerProtocolGuid
+  gRuyiPciControllerProtocolGuid

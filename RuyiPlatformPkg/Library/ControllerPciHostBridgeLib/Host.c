@@ -5,14 +5,14 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PciHostBridgeLib.h>
 #include <Library/UefiBootServicesTableLib.h>
-#include <Protocol/Fu740PciController.h>
+#include <Protocol/PlatformPciController.h>
 
 PCI_ROOT_BRIDGE *EFIAPI
 PciHostBridgeGetRootBridges (
   UINTN  *Count
   )
 {
-  FU740_PCI_CONTROLLER_PROTOCOL  *Controller;
+  RUYI_PCI_CONTROLLER_PROTOCOL  *Controller;
   PCI_ROOT_BRIDGE                *Bridge;
 
   if (Count == NULL) {
@@ -22,7 +22,7 @@ PciHostBridgeGetRootBridges (
   *Count = 0;
   if (EFI_ERROR (
         gBS->LocateProtocol (
-               &gFu740PciControllerProtocolGuid,
+               &gRuyiPciControllerProtocolGuid,
                NULL,
                (VOID **)&Controller
                )
@@ -71,5 +71,5 @@ PciHostBridgeResourceConflict (
   VOID        *Configuration
   )
 {
-  DEBUG ((DEBUG_ERROR, "FU740 PCI resource allocation failed\n"));
+  DEBUG ((DEBUG_ERROR, "PCI resource allocation failed\n"));
 }

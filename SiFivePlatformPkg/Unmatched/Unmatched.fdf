@@ -86,7 +86,7 @@ INF  MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
 INF  MdeModulePkg/Universal/SerialDxe/SerialDxe.inf
 INF  ShellPkg/Application/Shell/Shell.inf
 INF SiFivePlatformPkg/Drivers/Fu740PciControllerDxe/Fu740PciControllerDxe.inf
-INF SiFivePlatformPkg/Drivers/PciCpuIo2Dxe/PciCpuIo2Dxe.inf
+INF RuyiPlatformPkg/Drivers/PciCpuIo2Dxe/PciCpuIo2Dxe.inf
 INF MdeModulePkg/Bus/Pci/PciHostBridgeDxe/PciHostBridgeDxe.inf
 INF MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf
 INF MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf

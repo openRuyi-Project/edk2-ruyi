@@ -18,7 +18,7 @@
 #include <Library/IoLib.h>
 #include <Library/TimerLib.h>
 #include <Library/UefiBootServicesTableLib.h>
-#include <Protocol/Fu740PciController.h>
+#include <Protocol/PlatformPciController.h>
 #include <Protocol/PciHostBridgeResourceAllocation.h>
 #include <Protocol/PciIo.h>
 
@@ -56,7 +56,7 @@
 STATIC UINTN                         mDbi, mConfig, mMgmt, mPrci, mGpio;
 STATIC UINT32                        mPowerPin, mResetPin, mVersion;
 STATIC UINT32                        mMaxSpeed = 3;
-STATIC FU740_PCI_CONTROLLER_PROTOCOL  mController;
+STATIC RUYI_PCI_CONTROLLER_PROTOCOL  mController;
 STATIC struct {
   ACPI_HID_DEVICE_PATH        Root;
   EFI_DEVICE_PATH_PROTOCOL    End;
@@ -664,5 +664,5 @@ Fu740PciEntry (
 
   mController.Revision = 1;
   mController.Config   = Config;
-  return gBS->InstallProtocolInterface (&Handle, &gFu740PciControllerProtocolGuid, EFI_NATIVE_INTERFACE, &mController);
+  return gBS->InstallProtocolInterface (&Handle, &gRuyiPciControllerProtocolGuid, EFI_NATIVE_INTERFACE, &mController);
 }

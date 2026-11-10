@@ -4,9 +4,9 @@
 #include <Library/IoLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Protocol/CpuIo2.h>
-#include <Protocol/Fu740PciController.h>
+#include <Protocol/PlatformPciController.h>
 
-STATIC FU740_PCI_CONTROLLER_PROTOCOL  *mController;
+STATIC RUYI_PCI_CONTROLLER_PROTOCOL  *mController;
 
 STATIC EFI_STATUS
 Transfer (
@@ -147,7 +147,7 @@ IoWrite (
 }
 
 EFI_STATUS EFIAPI
-Fu740CpuIoEntry (
+PciCpuIoEntry (
   EFI_HANDLE        Image,
   EFI_SYSTEM_TABLE  *SystemTable
   )
@@ -158,7 +158,7 @@ Fu740CpuIoEntry (
     { MemoryRead, MemoryWrite }, { IoRead, IoWrite }
   };
 
-  Status = gBS->LocateProtocol (&gFu740PciControllerProtocolGuid, NULL, (VOID **)&mController);
+  Status = gBS->LocateProtocol (&gRuyiPciControllerProtocolGuid, NULL, (VOID **)&mController);
   if (EFI_ERROR (Status)) {
     return Status;
   }

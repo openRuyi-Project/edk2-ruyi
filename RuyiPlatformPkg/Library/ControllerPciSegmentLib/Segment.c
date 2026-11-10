@@ -12,12 +12,12 @@
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/BaseMemoryLib.h>
-#include <Protocol/Fu740PciController.h>
+#include <Protocol/PlatformPciController.h>
 #include <Library/UefiBootServicesTableLib.h>
 
 #include <Library/PciSegmentLib.h>
 
-STATIC FU740_PCI_CONTROLLER_PROTOCOL  *mController;
+STATIC RUYI_PCI_CONTROLLER_PROTOCOL  *mController;
 STATIC EFI_EVENT                      mControllerEvent;
 STATIC VOID                           *mControllerRegistration;
 
@@ -27,9 +27,9 @@ ControllerNotify (
   VOID       *Context
   )
 {
-  FU740_PCI_CONTROLLER_PROTOCOL  *Controller;
+  RUYI_PCI_CONTROLLER_PROTOCOL  *Controller;
   EFI_STATUS                     Status = gBS->LocateProtocol (
-                                                 &gFu740PciControllerProtocolGuid,
+                                                 &gRuyiPciControllerProtocolGuid,
                                                  NULL,
                                                  (VOID **)&Controller
                                                  );
@@ -40,7 +40,7 @@ ControllerNotify (
 }
 
 EFI_STATUS EFIAPI
-Fu740PciSegmentConstructor (
+ControllerPciSegmentConstructor (
   EFI_HANDLE        Image,
   EFI_SYSTEM_TABLE  *SystemTable
   )
@@ -60,7 +60,7 @@ Fu740PciSegmentConstructor (
   }
 
   Status = gBS->RegisterProtocolNotify (
-                  &gFu740PciControllerProtocolGuid,
+                  &gRuyiPciControllerProtocolGuid,
                   mControllerEvent,
                   &mControllerRegistration
                   );
@@ -75,7 +75,7 @@ Fu740PciSegmentConstructor (
 }
 
 EFI_STATUS EFIAPI
-Fu740PciSegmentDestructor (
+ControllerPciSegmentDestructor (
   EFI_HANDLE        Image,
   EFI_SYSTEM_TABLE  *SystemTable
   )
@@ -157,7 +157,7 @@ PciSegmentLibReadWorker (
   PCI_CFG_WIDTH  Width
   )
 {
-  FU740_PCI_CONTROLLER_PROTOCOL  *Controller = mController;
+  RUYI_PCI_CONTROLLER_PROTOCOL  *Controller = mController;
   UINT32                         Value       = MAX_UINT32;
   EFI_STATUS                     Status;
 
@@ -185,7 +185,7 @@ PciSegmentLibWriteWorker (
   UINT32         Value
   )
 {
-  FU740_PCI_CONTROLLER_PROTOCOL  *Controller = mController;
+  RUYI_PCI_CONTROLLER_PROTOCOL  *Controller = mController;
   EFI_STATUS                     Status;
 
   if (Controller) {
@@ -200,7 +200,7 @@ PciSegmentLibWriteWorker (
                            &Value
                            );
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_WARN, "FU740 PCI config write failed: %r\n", Status));
+      DEBUG ((DEBUG_WARN, "PCI config write failed: %r\n", Status));
     }
   }
 

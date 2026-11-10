@@ -1,16 +1,16 @@
 ## SPDX-License-Identifier: BSD-2-Clause-Patent
 [Defines]
   INF_VERSION = 0x0001001B
-  BASE_NAME = Fu740CpuIo2Dxe
+  BASE_NAME = PciCpuIo2Dxe
   FILE_GUID = a3ab1ff1-7f19-465e-bc39-06dc57a75a81
   MODULE_TYPE = DXE_DRIVER
-  ENTRY_POINT = Fu740CpuIoEntry
+  ENTRY_POINT = PciCpuIoEntry
 [Sources]
   CpuIo.c
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
-  SiFivePlatformPkg/SiFivePlatformPkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
 [LibraryClasses]
   UefiDriverEntryPoint
   BaseMemoryLib
@@ -18,6 +18,6 @@
   UefiBootServicesTableLib
 [Protocols]
   gEfiCpuIo2ProtocolGuid
-  gFu740PciControllerProtocolGuid
+  gRuyiPciControllerProtocolGuid
 [Depex]
-  gFu740PciControllerProtocolGuid
+  gRuyiPciControllerProtocolGuid

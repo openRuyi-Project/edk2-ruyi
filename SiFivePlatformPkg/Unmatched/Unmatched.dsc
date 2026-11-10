@@ -47,8 +47,8 @@
 !endif
   PlatformCpuInfoLib|SiFivePlatformPkg/Library/Fu740CpuInfoLib/Fu740CpuInfoLib.inf
   Fu740InfoLib|SiFivePlatformPkg/Library/Fu740InfoLib/Fu740InfoLib.inf
-  PciSegmentLib|SiFivePlatformPkg/Library/Fu740PciSegmentLib/Fu740PciSegmentLib.inf
-  PciHostBridgeLib|SiFivePlatformPkg/Library/Fu740PciHostBridgeLib/Fu740PciHostBridgeLib.inf
+  PciSegmentLib|RuyiPlatformPkg/Library/ControllerPciSegmentLib/ControllerPciSegmentLib.inf
+  PciHostBridgeLib|RuyiPlatformPkg/Library/ControllerPciHostBridgeLib/ControllerPciHostBridgeLib.inf
   FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
   UefiUsbLib|MdePkg/Library/UefiUsbLib/UefiUsbLib.inf
   SynchronizationLib|MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
@@ -117,7 +117,7 @@
 !endif
   }
   SiFivePlatformPkg/Drivers/Fu740PciControllerDxe/Fu740PciControllerDxe.inf
-  SiFivePlatformPkg/Drivers/PciCpuIo2Dxe/PciCpuIo2Dxe.inf
+  RuyiPlatformPkg/Drivers/PciCpuIo2Dxe/PciCpuIo2Dxe.inf
   MdeModulePkg/Bus/Pci/PciHostBridgeDxe/PciHostBridgeDxe.inf
   MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf
   MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
