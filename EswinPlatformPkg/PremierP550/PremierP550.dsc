@@ -17,6 +17,10 @@
 !include RuyiPlatformPkg/NetworkDefines.dsc.inc
 !include Silicon/RISC-V/RiscV.dsc.inc
 
+[PcdsFeatureFlag]
+  # UEFI option ROMs can use the root bridge's 64-bit MMIO aperture.
+  gEfiMdeModulePkgTokenSpaceGuid.PcdPciDegradeResourceForOptionRom|FALSE
+
 [LibraryClasses]
   ExtractGuidedSectionLib|MdePkg/Library/DxeExtractGuidedSectionLib/DxeExtractGuidedSectionLib.inf
   CorebootImageLib|RuyiPlatformPkg/Library/CorebootImageLib/CorebootImageLib.inf
@@ -36,6 +40,8 @@
   PlatformMacAddressLib|EswinPlatformPkg/Library/PremierP550MacLib/PremierP550MacLib.inf
   SnpAdapterInfoLib|RuyiPlatformPkg/Library/SnpAdapterInfoLib/SnpAdapterInfoLib.inf
   DmaLib|EswinPlatformPkg/Library/Eic7700DmaLib/Eic7700DmaLib.inf
+  PciHostBridgeLib|RuyiPlatformPkg/Library/ControllerPciHostBridgeLib/ControllerPciHostBridgeLib.inf
+  PciSegmentLib|RuyiPlatformPkg/Library/ControllerPciSegmentLib/ControllerPciSegmentLib.inf
   NonDiscoverableDeviceRegistrationLib|MdeModulePkg/Library/NonDiscoverableDeviceRegistrationLib/NonDiscoverableDeviceRegistrationLib.inf
   UefiUsbLib|MdePkg/Library/UefiUsbLib/UefiUsbLib.inf
   FdtHardwareLib|RuyiPlatformPkg/Library/FdtHardwareLib/FdtHardwareLib.inf
@@ -118,6 +124,12 @@
   }
   EswinPlatformPkg/Drivers/PremierP550FdtDxe/PremierP550FdtDxe.inf
   RuyiPlatformPkg/Drivers/EqosSnpDxe/EqosSnpDxe.inf
+  EswinPlatformPkg/Drivers/Eic7700IoMmuDxe/Eic7700IoMmuDxe.inf
+  EswinPlatformPkg/Drivers/Eic7700PciControllerDxe/Eic7700PciControllerDxe.inf
+  RuyiPlatformPkg/Drivers/PciCpuIo2Dxe/PciCpuIo2Dxe.inf
+  MdeModulePkg/Bus/Pci/PciHostBridgeDxe/PciHostBridgeDxe.inf
+  MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf
+  MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
   EswinPlatformPkg/Drivers/Eic7700SdhciDxe/Eic7700SdhciDxe.inf
   MdeModulePkg/Bus/Pci/SdMmcPciHcDxe/SdMmcPciHcDxe.inf
   MdeModulePkg/Bus/Sd/SdDxe/SdDxe.inf

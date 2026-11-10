@@ -103,6 +103,12 @@ INF MdeModulePkg/Universal/Disk/UdfDxe/UdfDxe.inf
 
 INF EswinPlatformPkg/Drivers/PremierP550FdtDxe/PremierP550FdtDxe.inf
 INF RuyiPlatformPkg/Drivers/EqosSnpDxe/EqosSnpDxe.inf
+INF EswinPlatformPkg/Drivers/Eic7700IoMmuDxe/Eic7700IoMmuDxe.inf
+INF EswinPlatformPkg/Drivers/Eic7700PciControllerDxe/Eic7700PciControllerDxe.inf
+INF RuyiPlatformPkg/Drivers/PciCpuIo2Dxe/PciCpuIo2Dxe.inf
+INF MdeModulePkg/Bus/Pci/PciHostBridgeDxe/PciHostBridgeDxe.inf
+INF MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf
+INF MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
 INF EswinPlatformPkg/Drivers/Eic7700SdhciDxe/Eic7700SdhciDxe.inf
 INF MdeModulePkg/Bus/Pci/SdMmcPciHcDxe/SdMmcPciHcDxe.inf
 INF MdeModulePkg/Bus/Sd/SdDxe/SdDxe.inf
