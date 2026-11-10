@@ -9,6 +9,8 @@
   BUILD_TARGETS = DEBUG|RELEASE
   SKUID_IDENTIFIER = DEFAULT
   FLASH_DEFINITION = EswinPlatformPkg/PremierP550/PremierP550.fdf
+  DEFINE X64EMU_ENABLE = TRUE
+  DEFINE MAU_DEFAULT_ENABLE = TRUE
   DEFINE RISCV_PEI_BOOTING = FALSE
   DEFINE SECURE_BOOT_ENABLE = FALSE
   DEFINE DEBUG_ON_SERIAL_PORT = TRUE
@@ -56,7 +58,12 @@
   BootLogoLib|MdeModulePkg/Library/BootLogoLib/BootLogoLib.inf
   BmpSupportLib|MdeModulePkg/Library/BaseBmpSupportLib/BaseBmpSupportLib.inf
   NetworkBootConfigLib|RuyiPlatformPkg/Library/VariableNetworkBootConfigLib/VariableNetworkBootConfigLib.inf
+  PciGopPolicyLib|RuyiPlatformPkg/Library/PciGopPolicyLib/PciGopPolicyLib.inf
+!if $(X64EMU_ENABLE) == TRUE
+  PciGopLoaderLib|RuyiPlatformPkg/Library/PciGopLoaderLib/PciGopLoaderLib.inf
+!else
   PciGopLoaderLib|RuyiPlatformPkg/Library/PciGopLoaderLibNull/PciGopLoaderLibNull.inf
+!endif
   FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
   SynchronizationLib|MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
   OemHookStatusCodeLib|MdeModulePkg/Library/OemHookStatusCodeLibNull/OemHookStatusCodeLibNull.inf
@@ -70,6 +77,8 @@
   DebugLib|MdePkg/Library/DxeRuntimeDebugLibSerialPort/DxeRuntimeDebugLibSerialPort.inf
 
 [PcdsFixedAtBuild]
+  gRuyiPlatformTokenSpaceGuid.PcdDriverEmulationAvailable|$(X64EMU_ENABLE)
+  gRuyiPlatformTokenSpaceGuid.PcdDefaultDriverEmulation|$(MAU_DEFAULT_ENABLE)
   gEfiMdeModulePkgTokenSpaceGuid.PcdFrontPageLogoEnable|TRUE
   gEfiMdePkgTokenSpaceGuid.PcdMaximumLinkedListLength|0
   # EIC7700 P550 cores have Sv48, without Svpbmt or Zicbom.
@@ -110,6 +119,9 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingBase64|0
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase64|0
 
+[PcdsDynamicExDefault]
+  gMauPkgTokenSpaceGuid.PcdMauEmulationEnabled|FALSE
+
 [PcdsDynamicHii]
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|L"Timeout"|gEfiGlobalVariableGuid|0x0|5
 
@@ -117,6 +129,17 @@
   GCC:*_*_*_DLINK_FLAGS = -z common-page-size=0x1000
 
 [Components]
+  RuyiPlatformPkg/Drivers/VariableEmulationConfigDxe/VariableEmulationConfigDxe.inf
+  RuyiPlatformPkg/Drivers/PlatformSettingsUiDxe/PlatformSettingsUiDxe.inf
+  MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf {
+    <LibraryClasses>
+!if $(X64EMU_ENABLE) == TRUE
+      NULL|RuyiPlatformPkg/Library/PciGopSecurityLib/PciGopSecurityLib.inf
+!endif
+  }
+!if $(X64EMU_ENABLE) == TRUE
+  RuyiPlatformPkg/Drivers/EmulatorDxe/EmulatorDxe.inf
+!endif
   EmbeddedPkg/Application/AndroidFastboot/AndroidFastbootApp.inf
   RuyiPlatformPkg/Drivers/FastbootDxe/FastbootDxe.inf {
     <LibraryClasses>
