@@ -15,10 +15,11 @@ Le32 (
 
 BOOLEAN
 UnmatchedFirmwareMapValid (
-  CONST UINT8  *Map
+  CONST UINT8  *Map,
+  UINT32       FirmwareSize
   )
 {
-  STATIC CONST struct {
+  CONST struct {
     UINT32         Offset, Size;
     CONST CHAR8    *Name;
     UINT16         Flags;
@@ -26,19 +27,25 @@ UnmatchedFirmwareMapValid (
     { 0,                       SIZE_64KB,             "BOOTBLOCK",       0 },
     { UNMATCHED_CONFIG_OFFSET, UNMATCHED_CONFIG_SIZE, "PLATFORM_CONFIG", 8 },
     { UNMATCHED_FMAP_OFFSET,   UNMATCHED_FMAP_SIZE,   "FMAP",            0 },
-    { UNMATCHED_CBFS_OFFSET,   UNMATCHED_CBFS_SIZE,   "COREBOOT",        0 },
+    { UNMATCHED_CBFS_OFFSET,
+      FirmwareSize == SIZE_32MB ? UNMATCHED_NV_OFFSET - UNMATCHED_CBFS_OFFSET : UNMATCHED_CBFS_SIZE,
+      "COREBOOT", 0 },
     { UNMATCHED_NV_OFFSET,     UNMATCHED_NV_SIZE,     "NVRAM",           8 },
-    { 0x1f90000,               0x70000,               "UNUSED",          0 }
+    { UNMATCHED_NV_OFFSET + UNMATCHED_NV_SIZE,
+      SIZE_32MB - UNMATCHED_NV_OFFSET - UNMATCHED_NV_SIZE, "UNUSED", 0 }
   };
+  // The legacy 32 MiB map includes the variable store and trailing space.
+  UINTN  AreaCount = FirmwareSize == SIZE_32MB ? ARRAY_SIZE (Areas) : ARRAY_SIZE (Areas) - 2;
 
-  if (CompareMem (Map, "__FMAP__\1\1", 10) || ReadUnaligned64 (Map + 10) ||
-      (Le32 (Map + 18) != UNMATCHED_FIRMWARE_SIZE) || CompareMem (Map + 22, "FLASH", 6) ||
-      (ReadUnaligned16 (Map + 54) != ARRAY_SIZE (Areas)))
+  if (((FirmwareSize != UNMATCHED_FIRMWARE_SIZE) && (FirmwareSize != SIZE_32MB)) ||
+      CompareMem (Map, "__FMAP__\1\1", 10) || ReadUnaligned64 (Map + 10) ||
+      (Le32 (Map + 18) != FirmwareSize) || CompareMem (Map + 22, "FLASH", 6) ||
+      (ReadUnaligned16 (Map + 54) != AreaCount))
   {
     return FALSE;
   }
 
-  for (UINTN I = 0; I < ARRAY_SIZE (Areas); I++) {
+  for (UINTN I = 0; I < AreaCount; I++) {
     CONST UINT8  *A = Map + 56 + I * 42;
     if ((Le32 (A) != Areas[I].Offset) || (Le32 (A + 4) != Areas[I].Size) ||
         CompareMem (A + 8, Areas[I].Name, AsciiStrLen (Areas[I].Name) + 1) ||
@@ -80,7 +87,7 @@ UnmatchedFirmwareImageValid (CONST VOID *Buffer, UINTN Size)
     "CONFIG_HIFIVE_UNMATCHED_JTAG_BOOT=", 0x82200000, SIZE_4MB
   };
   if (!Image || Size != UNMATCHED_FIRMWARE_SIZE) { return EFI_BAD_BUFFER_SIZE; }
-  if (!SpiEntryValid (Image) || !UnmatchedFirmwareMapValid (Image + UNMATCHED_FMAP_OFFSET)) {
+  if (!SpiEntryValid (Image) || !UnmatchedFirmwareMapValid (Image + UNMATCHED_FMAP_OFFSET, UNMATCHED_FIRMWARE_SIZE)) {
     return EFI_COMPROMISED_DATA;
   }
   return CorebootImageValidate (Image + UNMATCHED_CBFS_OFFSET, UNMATCHED_CBFS_SIZE, &Layout);

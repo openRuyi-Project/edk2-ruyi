@@ -53,7 +53,8 @@ PlatformFirmwareUpdateValidate (
     Status = ReadFlash (UNMATCHED_FMAP_OFFSET, sizeof (Map), Map);
   }
 
-  if (!EFI_ERROR (Status) && !UnmatchedFirmwareMapValid (Map) && !mRecoveryAllowed) {
+  if (!EFI_ERROR (Status) && !UnmatchedFirmwareMapValid (Map, UNMATCHED_FIRMWARE_SIZE) &&
+      !UnmatchedFirmwareMapValid (Map, SIZE_32MB) && !mRecoveryAllowed) {
     Status = EFI_UNSUPPORTED;
   }
 
@@ -65,8 +66,8 @@ Preserved (
   UINT32  Offset
   )
 {
-  return (Offset >= UNMATCHED_CONFIG_OFFSET && Offset < UNMATCHED_CONFIG_OFFSET + UNMATCHED_CONFIG_SIZE) ||
-         (Offset >= UNMATCHED_NV_OFFSET && Offset < UNMATCHED_NV_OFFSET + UNMATCHED_NV_SIZE);
+  // NVRAM remains beyond the 8 MiB image and is never erased here.
+  return Offset >= UNMATCHED_CONFIG_OFFSET && Offset < UNMATCHED_CONFIG_OFFSET + UNMATCHED_CONFIG_SIZE;
 }
 
 STATIC EFI_STATUS
@@ -93,7 +94,7 @@ PlatformFirmwareUpdate (
   EFI_FIRMWARE_VOLUME_BLOCK_PROTOCOL  *Fvb   = NULL;
   EFI_FVB_ATTRIBUTES_2                Attributes;
   UINT8                               *Saved = NULL, *Scratch = NULL;
-  UINTN                               Done = 0, Total = UNMATCHED_FIRMWARE_SIZE - UNMATCHED_CONFIG_SIZE - UNMATCHED_NV_SIZE;
+  UINTN                               Done = 0, Total = UNMATCHED_FIRMWARE_SIZE - UNMATCHED_CONFIG_SIZE;
   EFI_STATUS                          Status = PlatformFirmwareUpdateValidate (Image, Size);
 
   if (EFI_ERROR (Status)) {
