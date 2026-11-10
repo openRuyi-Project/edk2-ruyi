@@ -46,3 +46,4 @@
 
 [PcdsFixedAtBuild]
   gRuyiPlatformTokenSpaceGuid.PcdDriverEmulationAvailable|TRUE|BOOLEAN|0x1
+  gRuyiPlatformTokenSpaceGuid.PcdDefaultDriverEmulation|TRUE|BOOLEAN|0x2
