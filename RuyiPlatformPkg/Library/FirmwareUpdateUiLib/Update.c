@@ -258,12 +258,10 @@ SelectAndUpdate (
 
   File->Close (File);
   File = NULL;
-  if (UpdateInfo.ChecksumRequired) {
-    Status = CheckFileChecksum (Path, Info->FileName, Image, Size);
-    if (EFI_ERROR (Status)) {
-      Hint = L"Keep the matching SHA256SUMS beside the firmware image.";
-      goto Done;
-    }
+  Status = CheckFileChecksum (Path, Info->FileName, Image, Size);
+  if (EFI_ERROR (Status)) {
+    Hint = L"Keep the matching SHA256SUMS beside the firmware image.";
+    goto Done;
   }
 
   Status = PlatformFirmwareUpdateValidate (Image, Size);
@@ -442,18 +440,6 @@ FirmwareUpdateUiConstructor (
            );
     mHandle = NULL;
     return EFI_OUT_OF_RESOURCES;
-  }
-
-  PLATFORM_FIRMWARE_UPDATE_INFO  Info;
-
-  PlatformFirmwareUpdateGetInfo (&Info);
-  if (Info.ChecksumRequired) {
-    HiiSetString (
-      mHiiHandle,
-      STRING_TOKEN (STR_HELP),
-      L"Select normal-spi.bin from a local filesystem. Keep SHA256SUMS in the same directory.",
-      NULL
-      );
   }
 
   return EFI_SUCCESS;
