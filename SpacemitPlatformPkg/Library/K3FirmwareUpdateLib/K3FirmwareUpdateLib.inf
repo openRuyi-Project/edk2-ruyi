@@ -17,6 +17,8 @@
   SpacemitPlatformPkg/SpacemitPlatformPkg.dec
 [LibraryClasses]
   FirmwareUpdateLib
+  K3CpuConfigLib
+  PlatformSettingsLib
   BaseLib
   BaseMemoryLib
   BaseCryptLib

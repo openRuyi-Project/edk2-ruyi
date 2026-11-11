@@ -14,19 +14,22 @@
   DEFINE K3_UFS_ENABLE = TRUE
   DEFINE K3_PCIE_ENABLE = TRUE
   DEFINE K3_USB_HOST_ENABLE = TRUE
-!if $(TARGET) == DEBUG
-  DEFINE DEBUG_PRINT_ERROR_LEVEL = 0x80000047
-!else
-  DEFINE DEBUG_PRINT_ERROR_LEVEL = 0x80000002
-!endif
 
 !include RuyiPlatformPkg/NetworkDefines.dsc.inc
 !include MdePkg/MdeLibs.dsc.inc
 !include RuyiPlatformPkg/Network.dsc.inc
 
+!include RuyiPlatformPkg/Debug.dsc.inc
+!include RuyiPlatformPkg/Console.dsc.inc
+
 [LibraryClasses]
+  PlatformBootPolicyLib|SpacemitPlatformPkg/Library/K3BootPolicyLib/K3BootPolicyLib.inf
+  PlatformSettingsLib|RuyiPlatformPkg/Library/PlatformSettingsLib/PlatformSettingsLib.inf
+  PlatformSettingsStorageLib|SpacemitPlatformPkg/Library/K3SettingsStorageLib/K3SettingsStorageLib.inf
+  CpuConfigLib|SpacemitPlatformPkg/Library/K3CpuSettingsLib/K3CpuSettingsLib.inf
+  MemoryConfigLib|RuyiPlatformPkg/Library/MemoryConfigLibNull/MemoryConfigLibNull.inf
   FdtHardwareLib|RuyiPlatformPkg/Library/FdtHardwareLib/FdtHardwareLib.inf
-  NetworkBootConfigLib|SpacemitPlatformPkg/Library/K3NetworkBootConfigLib/K3NetworkBootConfigLib.inf
+  NetworkBootConfigLib|RuyiPlatformPkg/Library/PlatformNetworkBootConfigLib/PlatformNetworkBootConfigLib.inf
   FirmwareUpdateLib|RuyiPlatformPkg/Library/FirmwareUpdateLib/FirmwareUpdateLib.inf
   PlatformFirmwareUpdateLib|SpacemitPlatformPkg/Library/K3PlatformFirmwareUpdateLib/K3PlatformFirmwareUpdateLib.inf
   PlatformCpuInfoLib|SpacemitPlatformPkg/Library/K3CpuInfoLib/K3CpuInfoLib.inf
@@ -49,7 +52,6 @@
   Rtl8127Lib|SpacemitPlatformPkg/Library/Rtl8127Lib/Rtl8127Lib.inf
   Rtl8127PacketsLib|SpacemitPlatformPkg/Library/Rtl8127PacketsLib/Rtl8127PacketsLib.inf
   K3SpiNorLib|SpacemitPlatformPkg/Library/K3SpiNorLib/K3SpiNorLib.inf
-  K3SpiConfigLib|SpacemitPlatformPkg/Library/K3SpiConfigLib/K3SpiConfigLib.inf
   K3CpuConfigLib|SpacemitPlatformPkg/Library/K3CpuConfigLib/K3CpuConfigLib.inf
   K3FirmwareUpdateLib|SpacemitPlatformPkg/Library/K3FirmwareUpdateLib/K3FirmwareUpdateLib.inf
   NvFvbLib|RuyiPlatformPkg/Library/NvFvbLib/NvFvbLib.inf
@@ -121,7 +123,7 @@
   TimerLib|UefiCpuPkg/Library/RiscV64CpuTimerLib/RiscV64CpuTimerDxeLib.inf
   SerialPortLib|MdePkg/Library/BaseSerialPortLibRiscVSbiLib/BaseSerialPortLibRiscVSbiLibRam.inf
   UefiBootManagerLib|MdeModulePkg/Library/UefiBootManagerLib/UefiBootManagerLib.inf
-  PlatformBootManagerLib|SpacemitPlatformPkg/Library/BootManagerLib/BootManagerLib.inf
+  PlatformBootManagerLib|RuyiPlatformPkg/Library/BdsBootManagerLib/BdsBootManagerLib.inf
   ResetSystemLib|OvmfPkg/RiscVVirt/Library/ResetSystemLib/BaseResetSystemLib.inf
   SecurityManagementLib|MdeModulePkg/Library/DxeSecurityManagementLib/DxeSecurityManagementLib.inf
   TpmMeasurementLib|MdeModulePkg/Library/TpmMeasurementLibNull/TpmMeasurementLibNull.inf
@@ -173,6 +175,7 @@
   VariablePolicyLib|MdeModulePkg/Library/VariablePolicyLib/VariablePolicyLibRuntimeDxe.inf
 
 [PcdsFixedAtBuild]
+  gRuyiPlatformTokenSpaceGuid.PcdDriverEmulationAvailable|$(X64EMU_ENABLE)
   gEfiMdeModulePkgTokenSpaceGuid.PcdFrontPageLogoEnable|TRUE
   # K3 DRAM starts above 4 GiB; SMBIOS 2.x cannot address its tables.
   gEfiMdeModulePkgTokenSpaceGuid.PcdSmbiosEntryPointProvideMethod|0x2
@@ -184,12 +187,6 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdMaxAuthVariableSize|0x8400
   # Standard UiApp is the firmware setup entry.
   gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerMenuFile|{0x21,0xaa,0x2c,0x46,0x14,0x76,0x03,0x45,0x83,0x6e,0x8a,0xb6,0xf4,0x66,0x23,0x31}
-  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x2f
-  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|$(DEBUG_PRINT_ERROR_LEVEL)
-  # Report progress and errors independently of DEBUG logging.
-  gEfiMdePkgTokenSpaceGuid.PcdReportStatusCodePropertyMask|0x03
-  gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseSerial|TRUE
-  gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseMemory|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableSize|0x40000
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingSize|0x10000
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareSize|0x40000
@@ -214,22 +211,12 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingBase64|0
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase64|0
   gEfiMdeModulePkgTokenSpaceGuid.PcdConOutGlyphScale|4
-  gEfiMdeModulePkgTokenSpaceGuid.PcdVideoHorizontalResolution|0
-  gEfiMdeModulePkgTokenSpaceGuid.PcdVideoVerticalResolution|0
-  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutColumn|80
-  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutRow|25
-  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupVideoHorizontalResolution|0
-  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupVideoVerticalResolution|0
-  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupConOutColumn|80
-  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupConOutRow|25
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|5
   gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVendor|L"SpacemiT"
   gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVersionString|L"EDK II stable202608"
 
-!if $(X64EMU_ENABLE) == TRUE
 [PcdsDynamicExDefault]
   gMauPkgTokenSpaceGuid.PcdMauEmulationEnabled|FALSE
-!endif
 
 [PcdsFeatureFlag]
   # Allow 64-bit BARs for UEFI option ROMs.
@@ -239,16 +226,6 @@
 
 [BuildOptions.common.EDKII.DXE_CORE, BuildOptions.common.EDKII.DXE_DRIVER, BuildOptions.common.EDKII.DXE_RUNTIME_DRIVER, BuildOptions.common.EDKII.UEFI_DRIVER, BuildOptions.common.EDKII.UEFI_APPLICATION]
   GCC:*_*_*_DLINK_FLAGS = -z common-page-size=0x1000
-
-!if $(K3_USB_HOST_ENABLE) == TRUE
-[BuildOptions]
-  GCC:*_*_*_CC_FLAGS = -DK3_USB_HOST_STACK
-!endif
-!if $(X64EMU_ENABLE) == TRUE
-[BuildOptions]
-  GCC:*_*_*_CC_FLAGS = -DK3_X64EMU
-  GCC:*_*_*_VFRPP_FLAGS = -DK3_X64EMU
-!endif
 
 [Components]
 !if $(X64EMU_ENABLE) == TRUE
@@ -331,12 +308,8 @@
   MdeModulePkg/Universal/Metronome/Metronome.inf
   MdeModulePkg/Universal/WatchdogTimerDxe/WatchdogTimer.inf
   MdeModulePkg/Core/RuntimeDxe/RuntimeDxe.inf
-  SpacemitPlatformPkg/Drivers/K3NvStorageDxe/K3NvStorageDxe.inf {
-!if $(X64EMU_ENABLE) == TRUE
-    <LibraryClasses>
-      NULL|SpacemitPlatformPkg/Library/K3EmulationPolicyLib/K3EmulationPolicyLib.inf
-!endif
-  }
+  SpacemitPlatformPkg/Drivers/K3NvStorageDxe/K3NvStorageDxe.inf
+  RuyiPlatformPkg/Drivers/PlatformSettingsDxe/PlatformSettingsDxe.inf
   MdeModulePkg/Universal/FaultTolerantWriteDxe/FaultTolerantWriteDxe.inf {
     <LibraryClasses>
       NULL|SpacemitPlatformPkg/Library/K3NvReadyLib/K3FtwReadyLib.inf
@@ -369,6 +342,7 @@
   MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf
   MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
   SpacemitPlatformPkg/K3/PicoItx/SmbiosDxe/SmbiosDxe.inf
+  RuyiPlatformPkg/Drivers/PlatformDefaultsUiDxe/PlatformDefaultsUiDxe.inf
   RuyiPlatformPkg/Drivers/SystemInfoDxe/SystemInfoDxe.inf
   MdeModulePkg/Application/BootManagerMenuApp/BootManagerMenuApp.inf
   MdeModulePkg/Application/UiApp/UiApp.inf {
@@ -377,7 +351,6 @@
       NULL|MdeModulePkg/Library/BootManagerUiLib/BootManagerUiLib.inf
       NULL|MdeModulePkg/Library/BootMaintenanceManagerUiLib/BootMaintenanceManagerUiLib.inf
       NULL|RuyiPlatformPkg/Library/FirmwareUpdateUiLib/FirmwareUpdateUiLib.inf
-      NULL|SpacemitPlatformPkg/Library/PlatformConfigUiLib/PlatformConfigUiLib.inf
       # Firmware integrity checks only use deterministic SHA-256.
       RngLib|MdePkg/Library/BaseRngLibNull/BaseRngLibNull.inf
   }

@@ -1,0 +1,15 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3CpuSettingsLib
+  FILE_GUID = 9dd829a0-efc2-472c-b510-088b411e3a11
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = CpuConfigLib
+[Sources]
+  Config.c
+[Packages]
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  K3CpuConfigLib

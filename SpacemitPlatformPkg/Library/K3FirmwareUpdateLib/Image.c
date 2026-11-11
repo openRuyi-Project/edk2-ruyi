@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: BSD-2-Clause-Patent */
 #include <Uefi.h>
 #include <Library/BaseLib.h>
+#include <Library/PlatformSettingsLib.h>
+#include <IndustryStandard/K3FirmwareDefaults.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/BaseCryptLib.h>
 #include <Library/FdtLib.h>
@@ -242,6 +244,10 @@ K3FirmwareValidate (
       !CrcMatches (Header, 24, Header + 24) ||
       !CrcMatches (Header + 32, (UINTN)Length, Header + 28))
   {
+    return EFI_COMPROMISED_DATA;
+  }
+
+  if (EFI_ERROR (PlatformSettingsImageValid (Image, Size, K3_DEFAULTS_OFFSET, K3_DEFAULTS_STRIDE))) {
     return EFI_COMPROMISED_DATA;
   }
 

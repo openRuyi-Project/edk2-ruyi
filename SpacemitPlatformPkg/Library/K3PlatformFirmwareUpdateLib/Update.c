@@ -14,8 +14,7 @@ PlatformFirmwareUpdateGetInfo (
   )
 {
   Info->ImageSize          = K3_FIRMWARE_SIZE;
-  Info->ChecksumRequired   = FALSE;
-  Info->PreservationNotice = L"UEFI variables are preserved. Platform settings are reset.";
+  Info->PreservationNotice = L"UEFI variables and CPU selection are preserved. DDR training is reset.";
 }
 
 EFI_STATUS

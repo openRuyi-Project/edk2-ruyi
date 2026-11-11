@@ -94,61 +94,27 @@ FastbootPlatformStop (
   ZeroMem (&mUfs, sizeof (mUfs));
 }
 
-EFI_STATUS
-FastbootGetVar (
-  CONST CHAR8  *Name,
-  CHAR8        *Value,
-  UINTN        Size
-  )
+STATIC EFI_STATUS
+TargetCapacity (CONST CHAR8 *Name, UINT64 *Bytes)
 {
-  CONST CHAR8  *Partition;
-  UINT64       Bytes;
-  CHAR8        CapacityString[19];
-
-  if ((Name == NULL) || (Value == NULL) || (Size == 0)) {
-    return EFI_INVALID_PARAMETER;
+  if (!AsciiStrCmp (Name, "ec")) { *Bytes = K3_EC_UPDATE_SIZE; return EFI_SUCCESS; }
+  if ((!AsciiStrCmp (Name, K3_SPI_TARGET) || !AsciiStrCmp (Name, K3_FIRMWARE_TARGET)) && K3FastbootSpiAvailable ()) {
+    *Bytes = K3FastbootSpiSize (); return EFI_SUCCESS;
   }
+  return FastbootMediaCapacity (Target (Name), Bytes);
+}
 
-  if (!AsciiStrCmp (Name, "product")) {
-    return AsciiStrCpyS (Value, Size, (CONST CHAR8 *)PcdGetPtr (PcdSystemProductName));
-  }
-
-  if (!AsciiStrCmp (Name, "version-bootloader")) {
-    return UnicodeStrToAsciiStrS ((CONST CHAR16 *)PcdGetPtr (PcdFirmwareVersionString), Value, Size);
-  }
-
+EFI_STATUS
+FastbootGetVar (CONST CHAR8 *Name, CHAR8 *Value, UINTN Size)
+{
+  if (Name == NULL || Value == NULL || Size == 0) { return EFI_INVALID_PARAMETER; }
+  if (!AsciiStrCmp (Name, "product")) { return AsciiStrCpyS (Value, Size, (CONST CHAR8 *)PcdGetPtr (PcdSystemProductName)); }
   if (!AsciiStrCmp (Name, "version-ec")) {
-    CHAR8       Version[K3_EC_VERSION_SIZE];
-    EFI_STATUS  Status = K3EcGetVersion (Version);
+    CHAR8 Version[K3_EC_VERSION_SIZE];
+    EFI_STATUS Status = K3EcGetVersion (Version);
     return EFI_ERROR (Status) ? Status : AsciiStrCpyS (Value, Size, Version);
   }
-
-  if (!AsciiStrnCmp (Name, "partition-size:", 15) || !AsciiStrnCmp (Name, "partition-type:", 15)) {
-    Partition = Name + 15;
-  } else if (!AsciiStrnCmp (Name, "has-slot:", 9)) {
-    Partition = Name + 9;
-  } else {
-    return EFI_NOT_FOUND;
-  }
-
-  if (!AsciiStrCmp (Partition, "ec")) {
-    Bytes = K3_EC_UPDATE_SIZE;
-  } else if ((!AsciiStrCmp (Partition, K3_SPI_TARGET) ||
-              !AsciiStrCmp (Partition, K3_FIRMWARE_TARGET)) && K3FastbootSpiAvailable ())
-  {
-    Bytes = K3FastbootSpiSize ();
-  } else if (EFI_ERROR (FastbootMediaCapacity (Target (Partition), &Bytes))) {
-    return EFI_NOT_FOUND;
-  }
-
-  if (!AsciiStrnCmp (Name, "partition-size:", 15)) {
-    AsciiSPrint (CapacityString, sizeof (CapacityString), "0x%Lx", Bytes);
-    return AsciiStrCpyS (Value, Size, CapacityString);
-  } else {
-    return AsciiStrCpyS (Value, Size, !AsciiStrnCmp (Name, "has-slot:", 9) ? "no" : "raw");
-  }
-
-  return EFI_SUCCESS;
+  return FastbootGetCommonVariable (Name, Value, Size, TargetCapacity);
 }
 
 EFI_STATUS

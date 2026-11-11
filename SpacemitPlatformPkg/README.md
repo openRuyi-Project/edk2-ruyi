@@ -31,8 +31,8 @@ unsupported and Linux uses its native P1 RTC driver.
 
 ## Firmware updates
 
-Firmware Update and the Fastboot `firmware` target preserve UEFI variables.
-They reset CPU mode to X100 only and apply the image's emulation setting.
+Firmware Update and the Fastboot `firmware` target preserve UEFI variables,
+valid platform defaults and CPU selection. They clear DDR training data.
 A raw write to the Fastboot `spi` target replaces the entire flash.
 
 See the [K3 build and installation guide](https://github.com/openRuyi-Project/ruyifirmware/blob/ruyi/docs/k3/README.md).

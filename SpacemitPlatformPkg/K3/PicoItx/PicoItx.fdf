@@ -46,7 +46,7 @@ APRIORI DXE {
 !endif
 }
 !if $(X64EMU_ENABLE) == TRUE
-INF RuleOverride = BINARY RuyiPlatformPkg/Drivers/EmulatorDxe/EmulatorDxe.inf
+!include RuyiPlatformPkg/Emulator.fdf.inc
 # Raw files are loaded only for the selected AMD GCN controller class.
 FILE FREEFORM = d4d2e038-f479-44fa-a978-7181b08d532d {
   SECTION RAW = $(WORKSPACE)/AmdGop/Arm64Gop_1_68.efi
@@ -74,6 +74,7 @@ INF MdeModulePkg/Universal/Metronome/Metronome.inf
 INF MdeModulePkg/Universal/WatchdogTimerDxe/WatchdogTimer.inf
 INF MdeModulePkg/Core/RuntimeDxe/RuntimeDxe.inf
 INF SpacemitPlatformPkg/Drivers/K3NvStorageDxe/K3NvStorageDxe.inf
+INF RuyiPlatformPkg/Drivers/PlatformSettingsDxe/PlatformSettingsDxe.inf
 INF MdeModulePkg/Universal/FaultTolerantWriteDxe/FaultTolerantWriteDxe.inf
 INF MdeModulePkg/Universal/Variable/RuntimeDxe/VariableRuntimeDxe.inf
 INF MdeModulePkg/Universal/MonotonicCounterRuntimeDxe/MonotonicCounterRuntimeDxe.inf
@@ -100,6 +101,7 @@ INF MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
 INF MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf
 INF MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
 INF SpacemitPlatformPkg/K3/PicoItx/SmbiosDxe/SmbiosDxe.inf
+INF RuyiPlatformPkg/Drivers/PlatformDefaultsUiDxe/PlatformDefaultsUiDxe.inf
 INF RuyiPlatformPkg/Drivers/SystemInfoDxe/SystemInfoDxe.inf
 INF RuleOverride = SETUP MdeModulePkg/Application/UiApp/UiApp.inf
 INF MdeModulePkg/Application/BootManagerMenuApp/BootManagerMenuApp.inf
@@ -108,7 +110,7 @@ INF ShellPkg/Application/Shell/Shell.inf
 INF SpacemitPlatformPkg/Drivers/TlvEepromCommandDxe/TlvEepromCommandDxe.inf
 INF RuyiPlatformPkg/Drivers/FastbootDxe/FastbootDxe.inf
 # Keep the existing F9 and recovery boot-option device path.
-FILE APPLICATION = gSpacemitFastbootFileGuid {
+FILE APPLICATION = gRuyiFastbootFileGuid {
   SECTION PE32 = $(OUTPUT_DIRECTORY)/$(TARGET)_$(TOOL_CHAIN_TAG)/RISCV64/AndroidFastbootApp.efi
   SECTION UI = "USB Fastboot"
 }

@@ -1,5 +1,7 @@
 /** SPDX-License-Identifier: BSD-2-Clause-Patent */
-#include <Uefi.h>
+#include <PiDxe.h>
+#include <Library/HobLib.h>
+#include <Pi/PiBootMode.h>
 #include <Protocol/PlatformBootManager.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -111,7 +113,7 @@ RefreshStorageOptions (
 }
 
 EFI_STATUS
-InstallStorageBootPolicy (
+PlatformBootPolicyInstall (
   VOID
   )
 {
@@ -131,3 +133,5 @@ InstallStorageBootPolicy (
                 &Protocol
                 );
 }
+
+BOOLEAN PlatformBootPolicyRecovery (VOID) { return GetBootModeHob () == BOOT_IN_RECOVERY_MODE; }

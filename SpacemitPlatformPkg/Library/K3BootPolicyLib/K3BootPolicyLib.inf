@@ -1,0 +1,26 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = K3BootPolicyLib
+  FILE_GUID = ef6c162d-58e3-430b-8bd5-653042a16c69
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = PlatformBootPolicyLib
+[Sources]
+  Storage.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  DevicePathLib
+  MemoryAllocationLib
+  UefiBootManagerLib
+  UefiBootServicesTableLib
+  UfsStorageLib
+  HobLib
+[Protocols]
+  gEdkiiPlatformBootManagerProtocolGuid

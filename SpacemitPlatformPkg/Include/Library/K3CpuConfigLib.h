@@ -32,4 +32,6 @@ K3CpuConfigSet (
   UINT32  Mode
   );
 
+BOOLEAN K3CpuConfigValid (CONST K3_CPU_CONFIG_RECORD *Record);
+
 #endif
