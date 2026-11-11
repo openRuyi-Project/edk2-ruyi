@@ -4,7 +4,6 @@
 
 typedef struct {
   UINTN           ImageSize;
-  BOOLEAN         ChecksumRequired;
   CONST CHAR16    *PreservationNotice;
 } PLATFORM_FIRMWARE_UPDATE_INFO;
 
@@ -14,7 +13,7 @@ PlatformFirmwareUpdateGetInfo (
   );
 
 // Check the board/image format and the installed flash layout. The caller
-// must also check SHA256SUMS when ChecksumRequired is set.
+// must also check SHA256SUMS for updates selected from a filesystem.
 EFI_STATUS
 PlatformFirmwareUpdateValidate (
   CONST VOID  *Image,
