@@ -1,0 +1,17 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = DwcPcieTrainingLib
+  FILE_GUID = 3390ae7e-4624-4308-b5df-9dc5a4d67316
+  MODULE_TYPE = BASE
+  VERSION_STRING = 1.0
+  LIBRARY_CLASS = DwcPcieTrainingLib
+[Sources]
+  Training.c
+[Packages]
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  DebugLib
+  IoLib
+  TimerLib

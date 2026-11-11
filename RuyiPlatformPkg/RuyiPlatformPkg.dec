@@ -8,6 +8,7 @@
   Include
 [LibraryClasses]
   MemoryConfigLib|Include/Library/MemoryConfigLib.h
+  DwcPcieTrainingLib|Include/Library/DwcPcieTrainingLib.h
   CorebootImageLib|Include/Library/CorebootImageLib.h
   FastbootTransportLib|Include/Library/FastbootTransportLib.h
   FastbootPlatformLib|Include/Library/FastbootPlatformLib.h
