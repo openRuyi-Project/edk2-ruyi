@@ -7,6 +7,7 @@
 [Includes]
   Include
 [LibraryClasses]
+  PlatformBootPolicyLib|Include/Library/PlatformBootPolicyLib.h
   PlatformSettingsStorageLib|Include/Library/PlatformSettingsLib.h
   PlatformSettingsLib|Include/Library/PlatformSettingsLib.h
   CpuConfigLib|Include/Library/CpuConfigLib.h

@@ -1,0 +1,51 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = BdsBootManagerLib
+  FILE_GUID = da920763-6ffc-4e44-9d93-96076899aa30
+  MODULE_TYPE = DXE_DRIVER
+  VERSION_STRING = 0.1
+  LIBRARY_CLASS = PlatformBootManagerLib|DXE_DRIVER
+[Sources]
+  BootManager.c
+[Packages]
+  MdePkg/MdePkg.dec
+  ShellPkg/ShellPkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+[LibraryClasses]
+  BootManagerLib
+  PciGopLoaderLib
+  BootProgressLib
+  PlatformBootPolicyLib
+  PcdLib
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  DxeServicesTableLib
+  DevicePathLib
+  MemoryAllocationLib
+  UefiBootManagerLib
+  UefiBootServicesTableLib
+  UefiLib
+[Protocols]
+  gEfiGraphicsOutputProtocolGuid
+  gEfiPciIoProtocolGuid
+  gEfiPciRootBridgeIoProtocolGuid
+  gEdkiiPlatformBootManagerProtocolGuid
+[Guids]
+  gEfiEndOfDxeEventGroupGuid
+  gUefiShellFileGuid
+  gRuyiBootMenuFileGuid
+  gRuyiFastbootFileGuid
+
+[Pcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutGlyphScale
+  gEfiMdeModulePkgTokenSpaceGuid.PcdVideoHorizontalResolution
+  gEfiMdeModulePkgTokenSpaceGuid.PcdVideoVerticalResolution
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupVideoHorizontalResolution
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupVideoVerticalResolution
+  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutColumn
+  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutRow
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupConOutColumn
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupConOutRow

@@ -1,0 +1,22 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = DefaultBootPolicyLib
+  FILE_GUID = 7208f965-bc94-4b17-85f3-99904af53a23
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = PlatformBootPolicyLib
+[Sources]
+  Options.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  DevicePathLib
+  MemoryAllocationLib
+  UefiBootManagerLib
+  UefiBootServicesTableLib
+[Protocols]
+  gEdkiiPlatformBootManagerProtocolGuid
