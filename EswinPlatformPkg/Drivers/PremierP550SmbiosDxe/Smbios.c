@@ -5,6 +5,7 @@
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/Eic7700InfoLib.h>
+#include <Library/Eic7700SpiNorLib.h>
 #include <Library/HobLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -70,6 +71,7 @@ PublishPremierP550Info (
   CONST CHAR8             *MemoryStrings[] = { "Onboard LPDDR5" };
   EFI_STATUS              Status;
   UINT64                  MiB;
+  UINT32                  FlashSize;
 
   Status = Eic7700GetBoardInfo (&Info);
   if (EFI_ERROR (Status)) {
@@ -81,12 +83,18 @@ PublishPremierP550Info (
     return Status;
   }
 
+  Status = Eic7700SpiNorInit (FALSE);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  FlashSize = Eic7700SpiNorSize ();
   Bios.Hdr.Type                               = SMBIOS_TYPE_BIOS_INFORMATION;
   Bios.Hdr.Length                             = sizeof (Bios);
   Bios.Vendor                                 = 1;
   Bios.BiosVersion                            = 2;
-  Bios.BiosSize                               = 0xff;
-  Bios.ExtendedBiosSize.Size                  = 16;
+  Bios.BiosSize                               = FlashSize < SIZE_16MB ? (UINT8)(FlashSize / SIZE_64KB - 1) : 0xff;
+  Bios.ExtendedBiosSize.Size                  = FlashSize / SIZE_1MB;
   Bios.BIOSCharacteristicsExtensionBytes[1]   = BIT3;
   Bios.EmbeddedControllerFirmwareMajorRelease = 0xff;
   Bios.EmbeddedControllerFirmwareMinorRelease = 0xff;

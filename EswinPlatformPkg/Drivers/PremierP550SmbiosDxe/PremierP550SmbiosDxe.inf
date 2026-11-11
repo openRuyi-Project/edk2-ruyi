@@ -17,6 +17,7 @@
   BaseLib
   BaseMemoryLib
   Eic7700InfoLib
+  Eic7700SpiNorLib
   HobLib
   MemoryAllocationLib
   UefiBootServicesTableLib
