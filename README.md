@@ -18,14 +18,15 @@ In UEFI Setup, open Platform Settings and select UEFI driver emulation
 to control non-native UEFI drivers. Ruyi Firmware packages enable
 emulation by default. Save a menu choice and restart to apply it.
 
-The platforms store settings in SPI. The updater built from this revision
-uses these policies:
+The shared settings protocol stores defaults through a platform backend.
+UEFI variables can optionally override them. See [Platform settings](RuyiPlatformPkg/PlatformSettings.md).
+The updater uses these policies:
 
 | Update through Firmware Update | K3 | Unmatched | P550 |
 | --- | --- | --- | --- |
 | UEFI variables | Preserved | Preserved | Preserved |
-| Driver emulation setting | Taken from the update image | Preserved | Preserved |
-| CPU mode | Reset to X100 only | Not applicable | Not applicable |
+| Platform defaults | Preserved | Preserved | Preserved |
+| CPU mode | Preserved | Not applicable | Not applicable |
 | DDR ECC setting | Not applicable | Not applicable | Preserved |
 
 Raw programming bypasses the updater's preservation policy. The Unmatched
@@ -39,9 +40,8 @@ Polaris and Vega M. Other devices, including Vega 10/12/20 and RDNA,
 retain onboard x64 GOPs. The GCN replacement path is experimental.
 Image and binding policies select one driver family per controller while
 preserving the original ROM data. Failed replacements do not fall back
-to the onboard x64 GOP. Developer builds with `X64EMU_ENABLE=FALSE` omit
-the emulator. K3 also omits its Setup option. Unmatched and P550 show
-the option but disable it.
+to the onboard x64 GOP. Builds with `X64EMU_ENABLE=FALSE` omit the emulator
+and hide its Setup option on all boards.
 
 The build fetches unmodified `Arm64Gop_1_68.efi` from AMD's RN-AAR
 release and checks its fixed SHA-256 hash. Set `AMD_GOP_DIR` to a
