@@ -8,6 +8,7 @@
 #include <Library/PcdLib.h>
 #include <Protocol/EmulationConfig.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/MemoryConfigLib.h>
 #include <Library/NetworkBootConfigLib.h>
 #include <Library/PrintLib.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -50,6 +51,15 @@ ReadSettings (
   Status = NetworkBootConfigGet (&Network);
   Config->PxeBoot = Network.Pxe;
   Config->HttpBoot = Network.Http;
+  if (EFI_ERROR (Status)) { return Status; }
+  Config->EccAvailable = 0;
+  Config->EccEnabled = 0;
+  Status = MemoryConfigGet (&Enabled);
+  if (Status == EFI_UNSUPPORTED) { return EFI_SUCCESS; }
+  if (!EFI_ERROR (Status)) {
+    Config->EccAvailable = 1;
+    Config->EccEnabled = Enabled;
+  }
   return Status;
 }
 
@@ -126,6 +136,7 @@ RouteConfig (
   PLATFORM_CONFIGURATION  Config;
   EFI_STATUS               Status;
   UINTN                    Size = sizeof (Config);
+  UINT8                    EccAvailable;
 
   if (!Configuration || !Progress) {
     return EFI_INVALID_PARAMETER;
@@ -141,6 +152,7 @@ RouteConfig (
     return Status;
   }
 
+  EccAvailable = Config.EccAvailable;
   Status = mRouting->ConfigToBlock (mRouting, Configuration, (UINT8 *)&Config, &Size, Progress);
   if (EFI_ERROR (Status)) {
     return Status;
@@ -148,6 +160,8 @@ RouteConfig (
 
   if ((Config.EmulationEnabled > 1) ||
       (Config.PxeBoot > 1) || (Config.HttpBoot > 1) ||
+      (Config.EccAvailable != EccAvailable) || (Config.EccEnabled > 1) ||
+      (!EccAvailable && Config.EccEnabled) ||
       (Config.Available != FixedPcdGetBool (PcdDriverEmulationAvailable)))
   {
     return EFI_INVALID_PARAMETER;
@@ -159,7 +173,9 @@ RouteConfig (
   }
 
   NETWORK_BOOT_CONFIG Network = { Config.PxeBoot, Config.HttpBoot };
-  return NetworkBootConfigSet (&Network);
+  Status = NetworkBootConfigSet (&Network);
+  if (EFI_ERROR (Status) || !EccAvailable) { return Status; }
+  return MemoryConfigSet (Config.EccEnabled);
 }
 
 STATIC EFI_STATUS EFIAPI

@@ -35,5 +35,14 @@ formset
       option text = STRING_TOKEN(STR_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING;
       option text = STRING_TOKEN(STR_ENABLED), value = 1, flags = 0;
     endoneof;
+    suppressif ideqval PlatformConfig.EccAvailable == 0;
+      oneof varid = PlatformConfig.EccEnabled,
+        prompt = STRING_TOKEN(STR_DDR_ECC),
+        help = STRING_TOKEN(STR_DDR_ECC_HELP),
+        flags = RESET_REQUIRED,
+        option text = STRING_TOKEN(STR_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING;
+        option text = STRING_TOKEN(STR_ENABLED), value = 1, flags = 0;
+      endoneof;
+    endif;
   endform;
 endformset;

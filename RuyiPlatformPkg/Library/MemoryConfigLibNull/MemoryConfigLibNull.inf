@@ -1,0 +1,12 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = MemoryConfigLibNull
+  FILE_GUID = 2c310bbe-601b-4800-8c8a-002ae3b77d95
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = MemoryConfigLib
+[Sources]
+  Memory.c
+[Packages]
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec

@@ -10,3 +10,6 @@
 #string STR_HTTP_BOOT #language en-US "HTTP boot"
 #string STR_PXE_HELP #language en-US "Allow PXE network boot. Save and restart to apply."
 #string STR_HTTP_HELP #language en-US "Allow HTTP network boot. Save and restart to apply."
+
+#string STR_DDR_ECC      #language en-US "DDR ECC"
+#string STR_DDR_ECC_HELP #language en-US "Enable inline ECC at the next restart. ECC reserves one eighth of DDR capacity for check bits. Disabled by default."

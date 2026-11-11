@@ -9,5 +9,7 @@ typedef struct {
   UINT8    Available;
   UINT8    PxeBoot;
   UINT8    HttpBoot;
+  UINT8    EccAvailable;
+  UINT8    EccEnabled;
 } PLATFORM_CONFIGURATION;
 #endif
