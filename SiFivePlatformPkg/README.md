@@ -11,8 +11,8 @@ Use an OS and userspace that support RV64GC.
 
 In UEFI Setup, open Platform Settings to change UEFI driver emulation.
 Save the setting and restart to apply it. Ruyi Firmware release images
-initially enable it. Direct EDK2 builds use `MAU_DEFAULT_ENABLE` for the
-fallback when no valid SPI setting exists.
+initially enable it. The SPI image contains persistent defaults shared
+by Setup and the settings tool. UEFI variable overrides are optional.
 
 PXE and HTTP Boot drivers are included in every image. Both boot methods
 are disabled by default. Enable them separately in Platform Settings,
@@ -23,7 +23,8 @@ then save and restart.
 Firmware Update accepts `normal-spi.bin` from a local filesystem.
 Keep its matching `SHA256SUMS` file in the same directory.
 The update preserves platform settings and UEFI variables.
-A complete JTAG SPI reflash replaces both regions.
+An 8 MiB raw image write replaces the defaults. UEFI variables remain
+outside that image.
 
 Unmatched does not provide Fastboot firmware updates.
 

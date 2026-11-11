@@ -16,6 +16,7 @@
   SiFivePlatformPkg/SiFivePlatformPkg.dec
 [LibraryClasses]
   CorebootImageLib
+  PlatformSettingsLib
   BaseLib
   BaseMemoryLib
   FirmwareUpdateLib

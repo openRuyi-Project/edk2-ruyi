@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: BSD-2-Clause-Patent */
 #include <PiDxe.h>
 #include <Library/BaseLib.h>
+#include <Library/PlatformSettingsLib.h>
+#include <IndustryStandard/UnmatchedFirmwareDefaults.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/CorebootImageLib.h>
 #include "Internal.h"
@@ -15,8 +17,7 @@ Le32 (
 
 BOOLEAN
 UnmatchedFirmwareMapValid (
-  CONST UINT8  *Map,
-  UINT32       FirmwareSize
+  CONST UINT8  *Map
   )
 {
   CONST struct {
@@ -27,19 +28,12 @@ UnmatchedFirmwareMapValid (
     { 0,                       SIZE_64KB,             "BOOTBLOCK",       0 },
     { UNMATCHED_CONFIG_OFFSET, UNMATCHED_CONFIG_SIZE, "PLATFORM_CONFIG", 8 },
     { UNMATCHED_FMAP_OFFSET,   UNMATCHED_FMAP_SIZE,   "FMAP",            0 },
-    { UNMATCHED_CBFS_OFFSET,
-      FirmwareSize == SIZE_32MB ? UNMATCHED_NV_OFFSET - UNMATCHED_CBFS_OFFSET : UNMATCHED_CBFS_SIZE,
-      "COREBOOT", 0 },
-    { UNMATCHED_NV_OFFSET,     UNMATCHED_NV_SIZE,     "NVRAM",           8 },
-    { UNMATCHED_NV_OFFSET + UNMATCHED_NV_SIZE,
-      SIZE_32MB - UNMATCHED_NV_OFFSET - UNMATCHED_NV_SIZE, "UNUSED", 0 }
+    { UNMATCHED_CBFS_OFFSET, UNMATCHED_CBFS_SIZE, "COREBOOT", 0 }
   };
-  // The legacy 32 MiB map includes the variable store and trailing space.
-  UINTN  AreaCount = FirmwareSize == SIZE_32MB ? ARRAY_SIZE (Areas) : ARRAY_SIZE (Areas) - 2;
+  UINTN AreaCount = ARRAY_SIZE (Areas);
 
-  if (((FirmwareSize != UNMATCHED_FIRMWARE_SIZE) && (FirmwareSize != SIZE_32MB)) ||
-      CompareMem (Map, "__FMAP__\1\1", 10) || ReadUnaligned64 (Map + 10) ||
-      (Le32 (Map + 18) != FirmwareSize) || CompareMem (Map + 22, "FLASH", 6) ||
+  if (CompareMem (Map, "__FMAP__\1\1", 10) || ReadUnaligned64 (Map + 10) ||
+      (Le32 (Map + 18) != UNMATCHED_FIRMWARE_SIZE) || CompareMem (Map + 22, "FLASH", 6) ||
       (ReadUnaligned16 (Map + 54) != AreaCount))
   {
     return FALSE;
@@ -87,7 +81,10 @@ UnmatchedFirmwareImageValid (CONST VOID *Buffer, UINTN Size)
     "CONFIG_HIFIVE_UNMATCHED_JTAG_BOOT=", 0x82200000, SIZE_4MB
   };
   if (!Image || Size != UNMATCHED_FIRMWARE_SIZE) { return EFI_BAD_BUFFER_SIZE; }
-  if (!SpiEntryValid (Image) || !UnmatchedFirmwareMapValid (Image + UNMATCHED_FMAP_OFFSET, UNMATCHED_FIRMWARE_SIZE)) {
+  if (!SpiEntryValid (Image) || !UnmatchedFirmwareMapValid (Image + UNMATCHED_FMAP_OFFSET)) {
+    return EFI_COMPROMISED_DATA;
+  }
+  if (EFI_ERROR (PlatformSettingsImageValid (Image, Size, UNMATCHED_DEFAULTS_OFFSET, UNMATCHED_DEFAULTS_STRIDE))) {
     return EFI_COMPROMISED_DATA;
   }
   return CorebootImageValidate (Image + UNMATCHED_CBFS_OFFSET, UNMATCHED_CBFS_SIZE, &Layout);

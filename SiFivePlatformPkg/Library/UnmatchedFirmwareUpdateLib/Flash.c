@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause-Patent */
 #include <Library/PlatformFirmwareUpdateLib.h>
+#include <Library/PlatformSettingsLib.h>
+#include <IndustryStandard/UnmatchedFirmwareDefaults.h>
 #include <Library/Fu740SpiNorLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
@@ -16,7 +18,6 @@ PlatformFirmwareUpdateGetInfo (
   )
 {
   Info->ImageSize          = UNMATCHED_FIRMWARE_SIZE;
-  Info->ChecksumRequired   = TRUE;
   Info->PreservationNotice = L"UEFI variables and platform settings are preserved.";
 }
 
@@ -53,21 +54,11 @@ PlatformFirmwareUpdateValidate (
     Status = ReadFlash (UNMATCHED_FMAP_OFFSET, sizeof (Map), Map);
   }
 
-  if (!EFI_ERROR (Status) && !UnmatchedFirmwareMapValid (Map, UNMATCHED_FIRMWARE_SIZE) &&
-      !UnmatchedFirmwareMapValid (Map, SIZE_32MB) && !mRecoveryAllowed) {
+  if (!EFI_ERROR (Status) && !UnmatchedFirmwareMapValid (Map) && !mRecoveryAllowed) {
     Status = EFI_UNSUPPORTED;
   }
 
   return Status;
-}
-
-STATIC BOOLEAN
-Preserved (
-  UINT32  Offset
-  )
-{
-  // NVRAM remains beyond the 8 MiB image and is never erased here.
-  return Offset >= UNMATCHED_CONFIG_OFFSET && Offset < UNMATCHED_CONFIG_OFFSET + UNMATCHED_CONFIG_SIZE;
 }
 
 STATIC EFI_STATUS
@@ -94,14 +85,16 @@ PlatformFirmwareUpdate (
   EFI_FIRMWARE_VOLUME_BLOCK_PROTOCOL  *Fvb   = NULL;
   EFI_FVB_ATTRIBUTES_2                Attributes;
   UINT8                               *Saved = NULL, *Scratch = NULL;
-  UINTN                               Done = 0, Total = UNMATCHED_FIRMWARE_SIZE - UNMATCHED_CONFIG_SIZE;
+  BOOLEAN PreserveDefaults = FALSE;
+  RUYI_SETTINGS_RECORD SavedDefaults;
+  UINTN                               Done = 0, Total = UNMATCHED_FIRMWARE_SIZE;
   EFI_STATUS                          Status = PlatformFirmwareUpdateValidate (Image, Size);
 
   if (EFI_ERROR (Status)) {
     return Status;
   }
 
-  Saved   = AllocatePool (UNMATCHED_CONFIG_SIZE + UNMATCHED_NV_SIZE);
+  Saved   = AllocatePool (UNMATCHED_NV_SIZE);
   Scratch = AllocatePool (SIZE_64KB);
   if (!Saved || !Scratch) {
     Status = EFI_OUT_OF_RESOURCES;
@@ -113,28 +106,33 @@ PlatformFirmwareUpdate (
     goto Out;
   }
 
-  Status = Notify (Progress, FirmwareUpdateRead, 0, UNMATCHED_CONFIG_SIZE + UNMATCHED_NV_SIZE, Context);
+  Status = Notify (Progress, FirmwareUpdateRead, 0, UNMATCHED_NV_SIZE, Context);
   if (EFI_ERROR (Status)) {
     goto Out;
   }
 
-  for (UINT32 Pos = 0; Pos < UNMATCHED_CONFIG_SIZE + UNMATCHED_NV_SIZE; Pos += SIZE_64KB) {
-    UINT32  Offset = Pos < UNMATCHED_CONFIG_SIZE ? UNMATCHED_CONFIG_OFFSET + Pos
-                   : UNMATCHED_NV_OFFSET + Pos - UNMATCHED_CONFIG_SIZE;
+  for (UINT32 Pos = 0; Pos < UNMATCHED_NV_SIZE; Pos += SIZE_64KB) {
+    UINT32 Offset = UNMATCHED_NV_OFFSET + Pos;
     Status = ReadFlash (Offset, SIZE_64KB, Saved + Pos);
     if (EFI_ERROR (Status)) {
       goto Out;
     }
   }
 
+  EFI_TPL DefaultsTpl = gBS->RaiseTPL (TPL_NOTIFY);
+  Status = PlatformSettingsSnapshot (&SavedDefaults);
+  gBS->RestoreTPL (DefaultsTpl);
+  if (!EFI_ERROR (Status)) {
+    PreserveDefaults = TRUE;
+    Total -= UNMATCHED_CONFIG_SIZE;
+  } else if (Status != EFI_NOT_FOUND) { goto Out; }
+
   // Update the first-stage boot block last. Every changed sector is verified
-  // before moving on; unchanged sectors and both persistent regions are kept.
+  // before moving on; unchanged sectors and the variable store is kept.
   for (UINT32 Index = 1; Index <= UNMATCHED_FIRMWARE_SIZE / SIZE_64KB; Index++) {
     UINT32  Offset = Index == UNMATCHED_FIRMWARE_SIZE / SIZE_64KB ? 0 : Index * SIZE_64KB;
-    if (Preserved (Offset)) {
-      continue;
-    }
-
+    if (PreserveDefaults && Offset == UNMATCHED_CONFIG_OFFSET) { continue; }
+    CONST UINT8 *Expected = Image + Offset;
     Status = Notify (Progress, FirmwareUpdateRead, Done, Total, Context);
     if (!EFI_ERROR (Status)) {
       Status = ReadFlash (Offset, SIZE_64KB, Scratch);
@@ -144,7 +142,7 @@ PlatformFirmwareUpdate (
       goto Out;
     }
 
-    if (CompareMem (Scratch, Image + Offset, SIZE_64KB)) {
+    if (CompareMem (Scratch, Expected, SIZE_64KB)) {
       Status = Notify (Progress, FirmwareUpdateErase, Done, Total, Context);
       if (EFI_ERROR (Status)) {
         goto Out;
@@ -166,7 +164,7 @@ PlatformFirmwareUpdate (
       for (UINT32 Page = 0; Page < SIZE_64KB; Page += 256) {
         BOOLEAN  Empty = TRUE;
         for (UINTN I = 0; I < 256; I++) {
-          if (Image[Offset + Page + I] != 0xff) {
+          if (Expected[Page + I] != 0xff) {
             Empty = FALSE;
             break;
           }
@@ -177,7 +175,7 @@ PlatformFirmwareUpdate (
         }
 
         Tpl    = gBS->RaiseTPL (TPL_NOTIFY);
-        Status = Fu740SpiNorWrite (Offset + Page, 256, Image + Offset + Page);
+        Status = Fu740SpiNorWrite (Offset + Page, 256, Expected + Page);
         gBS->RestoreTPL (Tpl);
         if (EFI_ERROR (Status)) {
           goto Out;
@@ -189,7 +187,7 @@ PlatformFirmwareUpdate (
         Status = ReadFlash (Offset, SIZE_64KB, Scratch);
       }
 
-      if (!EFI_ERROR (Status) && CompareMem (Scratch, Image + Offset, SIZE_64KB)) {
+      if (!EFI_ERROR (Status) && CompareMem (Scratch, Expected, SIZE_64KB)) {
         Status = EFI_CRC_ERROR;
       }
 
@@ -201,9 +199,8 @@ PlatformFirmwareUpdate (
     Done += SIZE_64KB;
   }
 
-  for (UINT32 Pos = 0; Pos < UNMATCHED_CONFIG_SIZE + UNMATCHED_NV_SIZE; Pos += SIZE_64KB) {
-    UINT32  Offset = Pos < UNMATCHED_CONFIG_SIZE ? UNMATCHED_CONFIG_OFFSET + Pos
-                   : UNMATCHED_NV_OFFSET + Pos - UNMATCHED_CONFIG_SIZE;
+  for (UINT32 Pos = 0; Pos < UNMATCHED_NV_SIZE; Pos += SIZE_64KB) {
+    UINT32 Offset = UNMATCHED_NV_OFFSET + Pos;
     Status = ReadFlash (Offset, SIZE_64KB, Scratch);
     if (!EFI_ERROR (Status) && CompareMem (Scratch, Saved + Pos, SIZE_64KB)) {
       Status = EFI_CRC_ERROR;

@@ -10,7 +10,6 @@
   SKUID_IDENTIFIER = DEFAULT
   FLASH_DEFINITION = SiFivePlatformPkg/Unmatched/Unmatched.fdf
   DEFINE X64EMU_ENABLE = TRUE
-  DEFINE MAU_DEFAULT_ENABLE = FALSE
   DEFINE RISCV_PEI_BOOTING = FALSE
   DEFINE SECURE_BOOT_ENABLE = FALSE
   DEFINE DEBUG_ON_SERIAL_PORT = TRUE
@@ -24,12 +23,19 @@
   # UEFI option ROMs can use the root bridge's 64-bit MMIO aperture.
   gEfiMdeModulePkgTokenSpaceGuid.PcdPciDegradeResourceForOptionRom|FALSE
 
+!include RuyiPlatformPkg/Debug.dsc.inc
+!include RuyiPlatformPkg/Console.dsc.inc
+
 [LibraryClasses]
+  PlatformBootPolicyLib|RuyiPlatformPkg/Library/DefaultBootPolicyLib/DefaultBootPolicyLib.inf
+  PlatformSettingsLib|RuyiPlatformPkg/Library/PlatformSettingsLib/PlatformSettingsLib.inf
+  PlatformSettingsStorageLib|SiFivePlatformPkg/Library/UnmatchedSettingsStorageLib/UnmatchedSettingsStorageLib.inf
+  CpuConfigLib|RuyiPlatformPkg/Library/CpuConfigLibNull/CpuConfigLibNull.inf
   DwcPcieTrainingLib|RuyiPlatformPkg/Library/DwcPcieTrainingLib/DwcPcieTrainingLib.inf
   MemoryConfigLib|RuyiPlatformPkg/Library/MemoryConfigLibNull/MemoryConfigLibNull.inf
   CorebootImageLib|RuyiPlatformPkg/Library/CorebootImageLib/CorebootImageLib.inf
   FdtBoardInfoLib|RuyiPlatformPkg/Library/FdtBoardInfoLib/FdtBoardInfoLib.inf
-  NetworkBootConfigLib|RuyiPlatformPkg/Library/VariableNetworkBootConfigLib/VariableNetworkBootConfigLib.inf
+  NetworkBootConfigLib|RuyiPlatformPkg/Library/PlatformNetworkBootConfigLib/PlatformNetworkBootConfigLib.inf
   BootProgressLib|RuyiPlatformPkg/Library/BootProgressLib/BootProgressLib.inf
   BootManagerLib|RuyiPlatformPkg/Library/BootManagerLib/BootManagerLib.inf
   BootLogoLib|MdeModulePkg/Library/BootLogoLib/BootLogoLib.inf
@@ -63,7 +69,6 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdFrontPageLogoEnable|TRUE
   # Match RiscVVirt: avoid walking entire lists on every network/pool operation.
   gEfiMdePkgTokenSpaceGuid.PcdMaximumLinkedListLength|0
-  gSiFivePlatformTokenSpaceGuid.PcdUnmatchedDefaultEmulation|$(MAU_DEFAULT_ENABLE)
   gRuyiPlatformTokenSpaceGuid.PcdDriverEmulationAvailable|$(X64EMU_ENABLE)
   # FU740 has Sv39, but neither Svpbmt nor Zicbom.
   gEfiMdePkgTokenSpaceGuid.PcdRiscVFeatureOverride|0
@@ -80,15 +85,6 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdVariableStoreSize|0x40000
   gEfiMdeModulePkgTokenSpaceGuid.PcdMaxVariableSize|0x2000
   gEfiMdeModulePkgTokenSpaceGuid.PcdResetOnMemoryTypeInformationChange|FALSE
-  gEfiMdePkgTokenSpaceGuid.PcdReportStatusCodePropertyMask|0x03
-  gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseSerial|TRUE
-  gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseMemory|FALSE
-  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x2f
-!if $(TARGET) == DEBUG
-  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000047
-!else
-  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000002
-!endif
   gEfiMdePkgTokenSpaceGuid.PcdUartDefaultBaudRate|115200
   gEfiMdePkgTokenSpaceGuid.PcdDefaultTerminalType|4
   gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerMenuFile|{0x21,0xaa,0x2c,0x46,0x14,0x76,0x03,0x45,0x83,0x6e,0x8a,0xb6,0xf4,0x66,0x23,0x31}
@@ -110,8 +106,8 @@
   GCC:*_*_*_DLINK_FLAGS = -z common-page-size=0x1000
 
 [Components]
-  SiFivePlatformPkg/Drivers/UnmatchedSettingsDxe/UnmatchedSettingsDxe.inf
-  RuyiPlatformPkg/Drivers/PlatformSettingsUiDxe/PlatformSettingsUiDxe.inf
+  RuyiPlatformPkg/Drivers/PlatformSettingsDxe/PlatformSettingsDxe.inf
+  RuyiPlatformPkg/Drivers/PlatformDefaultsUiDxe/PlatformDefaultsUiDxe.inf
   MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf {
     <LibraryClasses>
 !if $(X64EMU_ENABLE) == TRUE
@@ -133,7 +129,7 @@
   RuyiPlatformPkg/Drivers/SystemInfoDxe/SystemInfoDxe.inf
 
 [LibraryClasses.common.DXE_DRIVER]
-  PlatformBootManagerLib|RuyiPlatformPkg/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf
+  PlatformBootManagerLib|RuyiPlatformPkg/Library/BdsBootManagerLib/BdsBootManagerLib.inf
 
 [LibraryClasses.common.DXE_RUNTIME_DRIVER]
   # SBI DBCN buffer writes require physical addresses, not OS runtime pointers.

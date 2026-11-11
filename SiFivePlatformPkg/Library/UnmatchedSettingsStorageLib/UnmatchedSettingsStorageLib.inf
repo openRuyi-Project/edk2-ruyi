@@ -1,0 +1,15 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = UnmatchedSettingsStorageLib
+  FILE_GUID = 6ff535fc-cb46-4cf0-b318-7b04a8fc1080
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = PlatformSettingsStorageLib
+[Sources]
+  Defaults.c
+[Packages]
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+  SiFivePlatformPkg/SiFivePlatformPkg.dec
+[LibraryClasses]
+  Fu740SpiNorLib

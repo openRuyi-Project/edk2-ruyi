@@ -12,8 +12,7 @@
 #define UNMATCHED_NV_SIZE        0x90000U
 BOOLEAN
 UnmatchedFirmwareMapValid (
-  CONST UINT8  *Map,
-  UINT32       FirmwareSize
+  CONST UINT8  *Map
   );
 
 EFI_STATUS
