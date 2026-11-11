@@ -1,0 +1,62 @@
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+#include "Forms.h"
+formset
+  guid = PLATFORM_FORMSET_GUID,
+  title = STRING_TOKEN(STR_TITLE),
+  help = STRING_TOKEN(STR_HELP),
+  classguid = gEfiIfrFrontPageGuid,
+  varstore PLATFORM_CONFIGURATION,
+    varid = 1,
+    name = PlatformConfig,
+    guid = PLATFORM_FORMSET_GUID;
+  form formid = 1,
+    title = STRING_TOKEN(STR_TITLE);
+    suppressif ideqval PlatformConfig.OverridesPresent == 0;
+      text help = STRING_TOKEN(STR_OVERRIDE_HELP), text = STRING_TOKEN(STR_OVERRIDE_PRESENT);
+      action questionid = 0x1005,
+        prompt = STRING_TOKEN(STR_CLEAR_OVERRIDES),
+        help = STRING_TOKEN(STR_OVERRIDE_HELP),
+        flags = INTERACTIVE | RESET_REQUIRED,
+        config = STRING_TOKEN(0),
+      endaction;
+    endif;
+    label CPU_LABEL;
+    label CPU_LABEL_END;
+    suppressif ideqval PlatformConfig.Available == 0;
+      oneof varid = PlatformConfig.EmulationEnabled,
+        questionid = 0x1001,
+        prompt = STRING_TOKEN(STR_EMULATION),
+        help = STRING_TOKEN(STR_EMULATION_HELP),
+        flags = RESET_REQUIRED | INTERACTIVE,
+        option text = STRING_TOKEN(STR_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING;
+        option text = STRING_TOKEN(STR_ENABLED), value = 1, flags = 0;
+      endoneof;
+    endif;
+    oneof varid = PlatformConfig.PxeBoot,
+      questionid = 0x1003,
+      prompt = STRING_TOKEN(STR_PXE_BOOT),
+      help = STRING_TOKEN(STR_PXE_HELP),
+      flags = RESET_REQUIRED | INTERACTIVE,
+      option text = STRING_TOKEN(STR_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING;
+      option text = STRING_TOKEN(STR_ENABLED), value = 1, flags = 0;
+    endoneof;
+    oneof varid = PlatformConfig.HttpBoot,
+      questionid = 0x1004,
+      prompt = STRING_TOKEN(STR_HTTP_BOOT),
+      help = STRING_TOKEN(STR_HTTP_HELP),
+      flags = RESET_REQUIRED | INTERACTIVE,
+      option text = STRING_TOKEN(STR_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING;
+      option text = STRING_TOKEN(STR_ENABLED), value = 1, flags = 0;
+    endoneof;
+    suppressif ideqval PlatformConfig.EccAvailable == 0;
+      oneof varid = PlatformConfig.EccEnabled,
+        questionid = 0x1006,
+        prompt = STRING_TOKEN(STR_DDR_ECC),
+        help = STRING_TOKEN(STR_DDR_ECC_HELP),
+        flags = RESET_REQUIRED | INTERACTIVE,
+        option text = STRING_TOKEN(STR_DISABLED), value = 0, flags = DEFAULT | MANUFACTURING;
+        option text = STRING_TOKEN(STR_ENABLED), value = 1, flags = 0;
+      endoneof;
+    endif;
+  endform;
+endformset;

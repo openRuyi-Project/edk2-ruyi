@@ -9,6 +9,7 @@
 [LibraryClasses]
   PlatformSettingsStorageLib|Include/Library/PlatformSettingsLib.h
   PlatformSettingsLib|Include/Library/PlatformSettingsLib.h
+  CpuConfigLib|Include/Library/CpuConfigLib.h
   MemoryConfigLib|Include/Library/MemoryConfigLib.h
   DwcPcieTrainingLib|Include/Library/DwcPcieTrainingLib.h
   CorebootImageLib|Include/Library/CorebootImageLib.h
