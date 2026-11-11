@@ -1,0 +1,16 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = PlatformSettingsLib
+  FILE_GUID = 846710b2-7647-472c-bcb1-8e0138ace601
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = PlatformSettingsLib
+[Sources]
+  Defaults.c
+[Packages]
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  PlatformSettingsStorageLib
