@@ -1,6 +1,8 @@
 /** SPDX-License-Identifier: BSD-2-Clause-Patent */
 #include <PiDxe.h>
 #include <Library/BaseLib.h>
+#include <Library/PlatformSettingsLib.h>
+#include <IndustryStandard/P550FirmwareDefaults.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/CorebootImageLib.h>
 #include <Library/PremierP550NvFlashLib.h>
@@ -88,5 +90,8 @@ PremierP550FirmwareImageValid (CONST VOID *Buffer, UINTN Size)
     End = Offset + SIGNATURE_BYTES + Bytes;
   }
   if (!MapValid (Rom + FMAP_OFFSET)) { return EFI_COMPROMISED_DATA; }
+  if (EFI_ERROR (PlatformSettingsImageValid (Image, Size, P550_DEFAULTS_OFFSET, P550_DEFAULTS_STRIDE))) {
+    return EFI_COMPROMISED_DATA;
+  }
   return CorebootImageValidate (Rom + CBFS_OFFSET, CBFS_BYTES, &Layout);
 }

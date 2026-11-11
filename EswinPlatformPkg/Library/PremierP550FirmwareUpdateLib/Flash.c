@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: BSD-2-Clause-Patent */
 #include <IndustryStandard/Eic7700BootConfig.h>
 #include <Library/PlatformFirmwareUpdateLib.h>
+#include <Library/PlatformSettingsLib.h>
+#include <IndustryStandard/P550FirmwareDefaults.h>
 #include <Library/Eic7700SpiNorLib.h>
 #include <Library/PremierP550NvFlashLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -14,7 +16,6 @@ PlatformFirmwareUpdateGetInfo (
   )
 {
   Info->ImageSize          = P550_SPI_IMAGE_BYTES;
-  Info->ChecksumRequired   = TRUE;
   Info->PreservationNotice = L"UEFI variables and DDR ECC settings are preserved.";
 }
 
@@ -44,12 +45,16 @@ PlatformFirmwareUpdateValidate (
   return Status;
 }
 
+STATIC BOOLEAN mPreserveDefaults;
+
 STATIC BOOLEAN
 Preserved (
   UINT32  Offset
   )
 {
-  return (Offset >= P550_NV_OFFSET && Offset < P550_NV_OFFSET + NV_TOTAL_SIZE) ||
+  return (mPreserveDefaults && Offset >= P550_DEFAULTS_OFFSET &&
+          Offset < P550_DEFAULTS_OFFSET + SETTINGS_SLOT_COUNT * P550_DEFAULTS_STRIDE) ||
+         (Offset >= P550_NV_OFFSET && Offset < P550_NV_OFFSET + NV_TOTAL_SIZE) ||
          (Offset >= EIC7700_BOOT_CONFIG_OFFSET &&
           Offset < EIC7700_BOOT_CONFIG_OFFSET +
                    EIC7700_BOOT_CONFIG_SLOT_COUNT * EIC7700_BOOT_CONFIG_SLOT_SIZE);
@@ -94,6 +99,13 @@ PlatformFirmwareUpdate (
     goto Out;
   }
 
+  RUYI_SETTINGS_RECORD Defaults;
+  EFI_TPL DefaultsTpl = gBS->RaiseTPL (TPL_NOTIFY);
+  Status = PlatformSettingsSnapshot (&Defaults);
+  gBS->RestoreTPL (DefaultsTpl);
+  mPreserveDefaults = !EFI_ERROR (Status);
+  if (EFI_ERROR (Status) && Status != EFI_NOT_FOUND) { goto Out; }
+  if (mPreserveDefaults) { Total -= SETTINGS_SLOT_COUNT * P550_DEFAULTS_STRIDE; }
   Status = FirmwareUpdateFreezeNv (&Fvb, &Attributes);
   if (EFI_ERROR (Status)) {
     goto Out;

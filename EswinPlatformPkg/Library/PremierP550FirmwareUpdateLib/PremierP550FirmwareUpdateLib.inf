@@ -16,9 +16,11 @@
   EswinPlatformPkg/EswinPlatformPkg.dec
 [LibraryClasses]
   CorebootImageLib
+  PlatformSettingsLib
   BaseLib
   BaseMemoryLib
   FirmwareUpdateLib
   Eic7700SpiNorLib
   MemoryAllocationLib
   UefiBootServicesTableLib
+[Protocols]

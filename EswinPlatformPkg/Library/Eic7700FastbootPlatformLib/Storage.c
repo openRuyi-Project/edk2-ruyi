@@ -222,43 +222,26 @@ FastbootPlatformStop (VOID)
   }
 }
 
+STATIC EFI_STATUS
+TargetCapacity (CONST CHAR8 *Name, UINT64 *Bytes)
+{
+  if (IsSpi (Name)) {
+    if (!mSpiAvailable) { return EFI_NOT_FOUND; }
+    *Bytes = Eic7700SpiNorSize (); return EFI_SUCCESS;
+  }
+  return FastbootMediaCapacity (Target (Name), Bytes);
+}
+
 EFI_STATUS
 FastbootGetVar (CONST CHAR8 *Name, CHAR8 *Value, UINTN Size)
 {
-  CONST CHAR8     *Partition;
-  UINT64          Bytes;
-  RUYI_BOARD_INFO Info;
-  EFI_STATUS      Status;
-  CHAR8           Capacity[19];
-
-  if ((Name == NULL) || (Value == NULL) || !Size) {
-    return EFI_INVALID_PARAMETER;
-  }
+  if (Name == NULL || Value == NULL || Size == 0) { return EFI_INVALID_PARAMETER; }
   if (!AsciiStrCmp (Name, "product")) {
-    Status = FdtBoardInfoGet (&Info, NULL);
+    RUYI_BOARD_INFO Info;
+    EFI_STATUS Status = FdtBoardInfoGet (&Info, NULL);
     return EFI_ERROR (Status) ? Status : AsciiStrCpyS (Value, Size, Info.Model);
   }
-  if (!AsciiStrCmp (Name, "version-bootloader")) {
-    return UnicodeStrToAsciiStrS (PcdGetPtr (PcdFirmwareVersionString), Value, Size);
-  }
-  if (!AsciiStrnCmp (Name, "partition-size:", 15) || !AsciiStrnCmp (Name, "partition-type:", 15)) {
-    Partition = Name + 15;
-  } else if (!AsciiStrnCmp (Name, "has-slot:", 9)) {
-    Partition = Name + 9;
-  } else {
-    return EFI_NOT_FOUND;
-  }
-  if (IsSpi (Partition)) {
-    if (!mSpiAvailable) { return EFI_NOT_FOUND; }
-    Bytes = Eic7700SpiNorSize ();
-  } else if (EFI_ERROR (FastbootMediaCapacity (Target (Partition), &Bytes))) {
-    return EFI_NOT_FOUND;
-  }
-  if (!AsciiStrnCmp (Name, "partition-size:", 15)) {
-    AsciiSPrint (Capacity, sizeof (Capacity), "0x%Lx", Bytes);
-    return AsciiStrCpyS (Value, Size, Capacity);
-  }
-  return AsciiStrCpyS (Value, Size, !AsciiStrnCmp (Name, "has-slot:", 9) ? "no" : "raw");
+  return FastbootGetCommonVariable (Name, Value, Size, TargetCapacity);
 }
 
 EFI_STATUS
