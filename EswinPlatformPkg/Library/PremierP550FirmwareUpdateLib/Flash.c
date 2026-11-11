@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: BSD-2-Clause-Patent */
+#include <IndustryStandard/Eic7700BootConfig.h>
 #include <Library/PlatformFirmwareUpdateLib.h>
 #include <Library/Eic7700SpiNorLib.h>
 #include <Library/PremierP550NvFlashLib.h>
@@ -14,7 +15,7 @@ PlatformFirmwareUpdateGetInfo (
 {
   Info->ImageSize          = P550_SPI_IMAGE_BYTES;
   Info->ChecksumRequired   = TRUE;
-  Info->PreservationNotice = L"UEFI variables are preserved.";
+  Info->PreservationNotice = L"UEFI variables and DDR ECC settings are preserved.";
 }
 
 STATIC EFI_STATUS
@@ -48,7 +49,10 @@ Preserved (
   UINT32  Offset
   )
 {
-  return Offset >= P550_NV_OFFSET && Offset < P550_NV_OFFSET + NV_TOTAL_SIZE;
+  return (Offset >= P550_NV_OFFSET && Offset < P550_NV_OFFSET + NV_TOTAL_SIZE) ||
+         (Offset >= EIC7700_BOOT_CONFIG_OFFSET &&
+          Offset < EIC7700_BOOT_CONFIG_OFFSET +
+                   EIC7700_BOOT_CONFIG_SLOT_COUNT * EIC7700_BOOT_CONFIG_SLOT_SIZE);
 }
 
 STATIC EFI_STATUS
@@ -75,7 +79,8 @@ PlatformFirmwareUpdate (
   EFI_FIRMWARE_VOLUME_BLOCK_PROTOCOL  *Fvb   = NULL;
   EFI_FVB_ATTRIBUTES_2                Attributes;
   UINT8                               *Saved = NULL, *Scratch = NULL;
-  UINTN                               Done = 0, Total = P550_SPI_IMAGE_BYTES - NV_TOTAL_SIZE;
+  UINTN                               Done = 0, Total = P550_SPI_IMAGE_BYTES - NV_TOTAL_SIZE -
+      EIC7700_BOOT_CONFIG_SLOT_COUNT * EIC7700_BOOT_CONFIG_SLOT_SIZE;
   EFI_STATUS                          Status = PlatformFirmwareUpdateValidate (Image, Size);
 
   if (EFI_ERROR (Status)) {

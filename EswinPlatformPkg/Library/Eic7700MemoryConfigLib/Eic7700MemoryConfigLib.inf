@@ -1,0 +1,18 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Eic7700MemoryConfigLib
+  FILE_GUID = fdd2b4c7-225f-4bc5-9a4c-b3c2a57f7a95
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = MemoryConfigLib
+[Sources]
+  Memory.c
+[Packages]
+  MdePkg/MdePkg.dec
+  EswinPlatformPkg/EswinPlatformPkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  Eic7700SpiNorLib
+  UefiBootServicesTableLib
