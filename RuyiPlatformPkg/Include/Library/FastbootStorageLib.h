@@ -55,3 +55,7 @@ FastbootReadImage (
   VOID                       *Data,
   FASTBOOT_STORAGE_PROGRESS  Progress OPTIONAL
   );
+
+typedef EFI_STATUS (*FASTBOOT_TARGET_CAPACITY)(CONST CHAR8 *Name, UINT64 *Bytes);
+EFI_STATUS FastbootGetCommonVariable (CONST CHAR8 *Name, CHAR8 *Value, UINTN Size,
+                                     FASTBOOT_TARGET_CAPACITY Capacity);

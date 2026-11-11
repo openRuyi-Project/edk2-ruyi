@@ -8,9 +8,11 @@
 [Sources]
   Image.c
   Read.c
+  Variables.c
   Nvme.c
 [Packages]
   MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
   RuyiPlatformPkg/RuyiPlatformPkg.dec
 [LibraryClasses]
   BaseLib
@@ -18,8 +20,11 @@
   MemoryAllocationLib
   DevicePathLib
   PrintLib
+  PcdLib
   UefiBootServicesTableLib
 [Protocols]
   gEfiBlockIoProtocolGuid
   gEfiDevicePathProtocolGuid
   gEfiPciIoProtocolGuid
+[Pcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVersionString
