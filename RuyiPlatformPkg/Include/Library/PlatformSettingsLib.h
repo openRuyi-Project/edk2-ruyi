@@ -3,6 +3,7 @@
 #include <Protocol/PlatformSettings.h>
 #define SETTINGS_RECORD_MAGIC SIGNATURE_32 ('R', 'Y', 'C', 'F')
 #define SETTINGS_RECORD_COMMIT SIGNATURE_32 ('D', 'O', 'N', 'E')
+#define SETTINGS_RECORD_VERSION 1
 #define SETTINGS_SLOT_COUNT 2
 
 typedef struct {

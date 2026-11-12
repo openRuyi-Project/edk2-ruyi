@@ -63,7 +63,7 @@ SetDefaults (UINT32 Values)
   Status = Read (Records, &Selected);
   if (EFI_ERROR (Status) || (Selected >= 0 && Records[Selected].Values == Values)) { goto Done; }
   Slot = Selected < 0 ? 0 : (UINTN)Selected ^ 1;
-  Next = (RUYI_SETTINGS_RECORD) {SETTINGS_RECORD_MAGIC, 1, sizeof (Next),
+  Next = (RUYI_SETTINGS_RECORD) {SETTINGS_RECORD_MAGIC, SETTINGS_RECORD_VERSION, sizeof (Next),
     Selected < 0 ? 0 : Records[Selected].Generation + 1, Values, 0, SETTINGS_RECORD_COMMIT};
   Next.Crc32 = CalculateCrc32 (&Next, OFFSET_OF (RUYI_SETTINGS_RECORD, Crc32));
   Status = PlatformSettingsStoragePrepare (Slot);

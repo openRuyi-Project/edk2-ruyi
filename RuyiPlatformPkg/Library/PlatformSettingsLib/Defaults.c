@@ -5,7 +5,7 @@
 #include <Library/PlatformSettingsLib.h>
 BOOLEAN PlatformSettingsRecordValid (CONST RUYI_SETTINGS_RECORD *Record)
 {
-  return Record->Magic == SETTINGS_RECORD_MAGIC && Record->Version == 1 &&
+  return Record->Magic == SETTINGS_RECORD_MAGIC && Record->Version == SETTINGS_RECORD_VERSION &&
          Record->Size == sizeof (*Record) && !(Record->Values & ~RUYI_SETTINGS_MASK) &&
          Record->Commit == SETTINGS_RECORD_COMMIT &&
          Record->Crc32 == CalculateCrc32 ((VOID *)Record, OFFSET_OF (RUYI_SETTINGS_RECORD, Crc32));
