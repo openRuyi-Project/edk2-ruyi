@@ -1,5 +1,6 @@
 /** SPDX-License-Identifier: BSD-2-Clause-Patent */
 #include <Uefi.h>
+#include <IndustryStandard/K3UsbPhy.h>
 #include <Guid/Fdt.h>
 #include <Library/BaseLib.h>
 #include <Library/K3HardwareLib.h>
@@ -14,9 +15,6 @@
 #define USB_CLOCK_CONTROL  0x5c
 #define PORT_A_CLOCK       BIT4
 #define PORT_A_RESETS      (BIT5 | BIT6 | BIT7)
-#define PHY_RESET_MODE     0x04
-#define PHY_PLL_READY      BIT0
-#define PHY_PLL_DIVIDER    0x98
 #define DWC3_GUCTL1        0xc11c
 #define DWC3_GUSB2PHYCFG   0xc200
 #define DWC3_GUSB3PIPECTL  0xc2c0
@@ -44,12 +42,12 @@ ColdInit (
   MicroSecondDelay (200);
   // High-speed mode must park both orientation-specific SuperSpeed PHYs.
   for (UINTN I = 0; I < 2; I++) {
-    MmioAndThenOr32 (Pipe[I] + 0x40, ~BIT9, BIT10);
+    MmioAndThenOr32 (Pipe[I] + K3_COMBO_POWER_SELECT, ~K3_COMBO_POWER_STATUS, K3_COMBO_POWER_OVERRIDE);
   }
 
-  MmioWrite32 (Phy + PHY_PLL_DIVIDER, 0xbec4);
+  MmioWrite32 (Phy + K3_USB2_PLL_DIVIDER, K3_USB2_PLL_24MHZ);
   for (UINTN Elapsed = 0; ; Elapsed += 500) {
-    if (MmioRead32 (Phy + PHY_RESET_MODE) & PHY_PLL_READY) {
+    if (MmioRead32 (Phy + K3_USB2_RESET_MODE) & K3_USB2_PLL_READY) {
       break;
     }
 
@@ -61,11 +59,11 @@ ColdInit (
     MicroSecondDelay (500);
   }
 
-  MmioWrite32 (Phy + PHY_RESET_MODE, 0x60ef);
-  MmioWrite32 (Phy + 0x34, 0x1c);
-  MmioAnd32 (Phy + 0x18, ~BIT0);
-  MmioAndThenOr32 (Phy + 0xa4, ~0xfU, 0xc | BIT4);
-  MmioOr32 (Phy + 0x10, BIT2);
+  MmioWrite32 (Phy + K3_USB2_RESET_MODE, K3_USB2_RUNNING_MODE);
+  MmioWrite32 (Phy + K3_USB2_HSTXP_CONTROL, K3_USB2_HSTXP_RUNNING);
+  MmioAnd32 (Phy + K3_USB2_VENDOR_REG18, ~K3_USB2_VENDOR_REG18_CLEAR);
+  MmioAndThenOr32 (Phy + K3_USB2_VENDOR_REGA4, ~K3_USB2_VENDOR_REGA4_MASK, K3_USB2_VENDOR_REGA4_SET);
+  MmioOr32 (Phy + K3_USB2_TX_HOST_CONTROL, K3_USB2_DISC_AUTO_CLEAR);
   // The DWC3 device core reset needs its clock before Fastboot starts it.
   MmioOr32 (Base + DWC3_GUCTL1, FORCE_USB2_CLOCK | BIT28 | BIT17);
   MmioAndThenOr32 (

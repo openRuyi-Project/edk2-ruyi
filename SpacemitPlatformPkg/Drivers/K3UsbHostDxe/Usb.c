@@ -6,6 +6,7 @@
  * Resources and reset IDs are checked against the standard K3 DT bindings.
  */
 #include <PiDxe.h>
+#include <IndustryStandard/K3UsbPhy.h>
 #include <Guid/RiscVSecHobData.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -377,16 +378,16 @@ Initialize (
 
   MicroSecondDelay (200);
   // 24MHz PLL divider; Linux K3 reference bounds the ready wait to 50ms.
-  MmioWrite32 (P->Phy + 0x98, 0xbec4);
-  Status = Wait (P->Phy + 4, USB2_PLL_READY, USB2_PLL_READY, 50000);
+  MmioWrite32 (P->Phy + K3_USB2_PLL_DIVIDER, K3_USB2_PLL_24MHZ);
+  Status = Wait (P->Phy + K3_USB2_RESET_MODE, USB2_PLL_READY, USB2_PLL_READY, 50000);
   if (EFI_ERROR (Status)) {
     return Status;
   }
 
-  MmioWrite32 (P->Phy + 4, 0x60ef);
-  MmioWrite32 (P->Phy + 0x34, 0x1c);
-  MmioAndThenOr32 (P->Phy + 0xa4, ~0xfU, 0xc | BIT4);
-  MmioOr32 (P->Phy + 0x10, BIT2);
+  MmioWrite32 (P->Phy + K3_USB2_RESET_MODE, K3_USB2_RUNNING_MODE);
+  MmioWrite32 (P->Phy + K3_USB2_HSTXP_CONTROL, K3_USB2_HSTXP_RUNNING);
+  MmioAndThenOr32 (P->Phy + K3_USB2_VENDOR_REGA4, ~K3_USB2_VENDOR_REGA4_MASK, K3_USB2_VENDOR_REGA4_SET);
+  MmioOr32 (P->Phy + K3_USB2_TX_HOST_CONTROL, K3_USB2_DISC_AUTO_CLEAR);
   if (P->SuperSpeed) {
     Status = mCombo->Usb3 (mFdt, P->Node);
     if (EFI_ERROR (Status)) {
