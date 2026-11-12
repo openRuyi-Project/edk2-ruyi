@@ -16,6 +16,7 @@
   MdeModulePkg/MdeModulePkg.dec
   RuyiPlatformPkg/RuyiPlatformPkg.dec
 [LibraryClasses]
+  Eic7700BoardGpioLib
   BaseLib
   BaseMemoryLib
   DebugLib

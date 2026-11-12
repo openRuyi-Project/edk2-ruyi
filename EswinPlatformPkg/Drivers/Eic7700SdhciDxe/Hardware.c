@@ -2,6 +2,8 @@
 #include <IndustryStandard/Eic7700ClockIds.h>
 #include <IndustryStandard/Eic7700ResetIds.h>
 #include "Host.h"
+#include <Library/Eic7700BoardGpioLib.h>
+#include <IndustryStandard/Eic7700PinControl.h>
 
 #define SYSCRG_HSP_AXI       0x148
 #define SYSCRG_HSP_CFG       0x14c
@@ -14,11 +16,8 @@
 #define HSP_MMC_BUS_GATE    BIT24
 #define HSP_CLOCK_STABLE     (BIT28 | BIT16 | BIT8 | BIT0)
 #define GPIO_DIRECTION       0x04
+#define GPIO_PORT_STRIDE     0x0c
 #define GPIO_EXTERNAL        0x50
-#define PIN_MODE_SET0        0x04
-#define PIN_FUNCTION_MASK    (7U << 16)
-#define PIN_GPIO_FUNCTION    (2U << 16)
-#define PIN_INPUT_ENABLE     BIT0
 
 // EIC7700 reset-controller binding IDs.
 STATIC EFI_STATUS
@@ -30,14 +29,6 @@ Cell (CONST VOID *Fdt, INT32 Node, CONST CHAR8 *Name, UINT32 *Value)
   if (!Data || Length != sizeof (*Data)) { return EFI_COMPROMISED_DATA; }
   *Value = Fdt32ToCpu (*Data);
   return EFI_SUCCESS;
-}
-
-STATIC BOOLEAN
-String (CONST VOID *Fdt, INT32 Node, CONST CHAR8 *Name, CONST CHAR8 *Value)
-{
-  INT32 Length;
-  CONST CHAR8 *Data = FdtGetProp (Fdt, Node, Name, &Length);
-  return Data && Length == AsciiStrSize (Value) && !AsciiStrCmp (Data, Value);
 }
 
 STATIC EFI_STATUS
@@ -60,6 +51,7 @@ CardDetectPins (CONST VOID *Fdt, INT32 Node, EIC_MMC_PORT *Port)
   INT32 Length, Gpio, Parent, Group, PinController;
   UINT32 Bank, Pin, Flags;
   UINTN PinBase;
+  EIC7700_GPIO_PAD Pad;
   EFI_STATUS Status;
 
   Data = FdtGetProp (Fdt, Node, "cd-gpios", &Length);
@@ -69,20 +61,19 @@ CardDetectPins (CONST VOID *Fdt, INT32 Node, EIC_MMC_PORT *Port)
   Flags = Fdt32ToCpu (Data[2]);
   if (EFI_ERROR (Cell (Fdt, Gpio, "reg", &Bank)) || !FdtNodeEnabled (Fdt, Gpio) ||
       FdtStringListSearch (Fdt, Gpio, "compatible", "snps,dw-apb-gpio-port") < 0 ||
-      Bank != 0 || Pin != 13 || Flags > 1)
+      Bank >= EIC7700_GPIO_BANKS || Pin >= EIC7700_GPIO_PINS_PER_BANK || Flags > 1)
   {
     return EFI_UNSUPPORTED;
   }
   Parent = FdtParentOffset (Fdt, Gpio);
-  Status = FdtGetMmio (Fdt, Parent, 0, GPIO_EXTERNAL + 4, &Port->GpioBase, NULL);
+  Status = FdtGetMmio (Fdt, Parent, 0, GPIO_EXTERNAL + (Bank + 1) * sizeof (UINT32), &Port->GpioBase, NULL);
   if (EFI_ERROR (Status)) { return Status; }
 
   Data = FdtGetProp (Fdt, Node, "pinctrl-0", &Length);
   if (!Data || Length != 4) { return EFI_COMPROMISED_DATA; }
   Group = FdtNodeOffsetByPhandle (Fdt, Fdt32ToCpu (*Data));
-  if (!String (Fdt, Group, "function", "gpio") || !String (Fdt, Group, "pins", "mode_set0")) {
-    return EFI_UNSUPPORTED;
-  }
+  Status = Eic7700BoardGpioPad (Fdt, Group, Eic7700GpioCardDetect, Bank, Pin, &Pad);
+  if (EFI_ERROR (Status)) { return Status; }
   PinController = FdtParentOffset (Fdt, Group);
   while (PinController > 0 &&
          FdtStringListSearch (Fdt, PinController, "compatible", "eswin,eic7700-pinctrl") < 0)
@@ -92,15 +83,15 @@ CardDetectPins (CONST VOID *Fdt, INT32 Node, EIC_MMC_PORT *Port)
   if (PinController <= 0) {
     return EFI_UNSUPPORTED;
   }
-  Status = FdtGetMmio (Fdt, PinController, 0, PIN_MODE_SET0 + 4, &PinBase, NULL);
+  Status = FdtGetMmio (Fdt, PinController, 0, Pad.Offset + sizeof (UINT32), &PinBase, NULL);
   if (EFI_ERROR (Status)) { return Status; }
   Status = FdtMapMmio (Port->GpioBase, 0x80);
   if (EFI_ERROR (Status)) { return Status; }
-  Status = FdtMapMmio (PinBase, PIN_MODE_SET0 + 4);
+  Status = FdtMapMmio (PinBase, Pad.Offset + sizeof (UINT32));
   if (EFI_ERROR (Status)) { return Status; }
-  // GPIOA13 is the mode_set0 pad. The board supplies this wiring in DT.
-  MmioAndThenOr32 (PinBase + PIN_MODE_SET0, ~PIN_FUNCTION_MASK, PIN_GPIO_FUNCTION | PIN_INPUT_ENABLE);
-  MmioAnd32 (Port->GpioBase + GPIO_DIRECTION, ~((UINT32)BIT0 << Pin));
+  // The board provider has validated the DT wiring and pad selection.
+  MmioAndThenOr32 (PinBase + Pad.Offset, ~EIC7700_PIN_FUNCTION_MASK, Pad.Function | EIC7700_PIN_INPUT_ENABLE);
+  MmioAnd32 (Port->GpioBase + Bank * GPIO_PORT_STRIDE + GPIO_DIRECTION, ~((UINT32)BIT0 << Pin));
   Port->GpioBank = Bank;
   Port->GpioBit = Pin;
   Port->ActiveLow = Flags != 0;

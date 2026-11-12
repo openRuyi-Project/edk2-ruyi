@@ -1,0 +1,14 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = PremierP550GpioLib
+  FILE_GUID = 9c8c34d2-62c1-4be7-9459-13aa5df793d6
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = Eic7700BoardGpioLib
+[Sources]
+  Pad.c
+[Packages]
+  MdePkg/MdePkg.dec
+  EswinPlatformPkg/EswinPlatformPkg.dec
+[LibraryClasses]
+  FdtLib

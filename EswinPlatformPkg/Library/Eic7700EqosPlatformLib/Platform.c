@@ -2,6 +2,8 @@
 #include <IndustryStandard/Eic7700ClockIds.h>
 #include <IndustryStandard/Eic7700ResetIds.h>
 #include <Library/BaseLib.h>
+#include <Library/Eic7700BoardGpioLib.h>
+#include <IndustryStandard/Eic7700PinControl.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/EqosLib.h>
@@ -24,9 +26,6 @@
 #define ETH_RX_INVERT     BIT31
 #define GPIO_PORT_STRIDE  0x0c
 #define GPIO_DDR          4
-#define PIN_FUNCTION      (7U << 16)
-#define PIN_INPUT         BIT0
-#define PIN_PULLS         (BIT1 | BIT2)
 #define MAC_VERSION       0x110
 #define MAC_FEATURE1      0x120
 #define MAC_DMA_RESET     0x1000
@@ -35,7 +34,7 @@ typedef struct {
   EQOS_PORT Common;
   UINTN Clock, Reset, Hsp, Gpio, PinBase;
   UINT32 ClockOffset, ResetMask, HspOffset, Delay, IoVoltageOffset, IoVoltage;
-  UINT32 GpioBank, GpioBit, PinIndex, CurrentSpeed;
+  UINT32 GpioBank, GpioBit, PinOffset, PinFunction, CurrentSpeed;
   BOOLEAN InvertRx, ActiveLow;
 } EIC_EQOS_PORT;
 
@@ -72,7 +71,8 @@ Parse (CONST VOID *Fdt, INT32 Node, EIC_EQOS_PORT *Hw)
   STATIC CONST UINT32 ResetIds[] = {EIC7700_RESET_HSP_ETH0_ARST, EIC7700_RESET_HSP_ETH1_ARST};
   EQOS_PORT *P = &Hw->Common;
   CONST UINT32 *Data;
-  CONST CHAR8 *Mode, *Pin;
+  CONST CHAR8 *Mode;
+  EIC7700_GPIO_PAD Pad;
   INT32 Len, Gpio, Group, Pinctrl, Phy;
   UINTN Id, I;
   UINT32 Value, Rate, Tx = 0, Rx = 0;
@@ -171,21 +171,22 @@ Parse (CONST VOID *Fdt, INT32 Node, EIC_EQOS_PORT *Hw)
   Hw->GpioBit = Fdt32ToCpu (Data[1]);
   Hw->ActiveLow = Fdt32ToCpu (Data[2]) != 0;
   Status = Cell (Fdt, Gpio, "reg", &Hw->GpioBank);
-  if (EFI_ERROR (Status) || Hw->GpioBank != 3 || (Hw->GpioBit != 10 && Hw->GpioBit != 15)) { return EFI_UNSUPPORTED; }
+  if (EFI_ERROR (Status) || Hw->GpioBank >= EIC7700_GPIO_BANKS || Hw->GpioBit >= EIC7700_GPIO_PINS_PER_BANK) { return EFI_UNSUPPORTED; }
   Status = FdtGetMmio (Fdt, FdtParentOffset (Fdt, Gpio), 0, 0x80, &Hw->Gpio, NULL);
   if (EFI_ERROR (Status)) { return Status; }
   Status = Cell (Fdt, Node, "pinctrl-0", &Value);
   if (EFI_ERROR (Status)) { return Status; }
   Group = FdtNodeOffsetByPhandle (Fdt, Value);
-  Pin = Hw->GpioBit == 10 ? "gpio106" : "gpio111";
-  if (FdtStringListCount (Fdt, Group, "pins") != 1 || FdtStringListSearch (Fdt, Group, "pins", Pin) != 0 ||
-      FdtStringListSearch (Fdt, Group, "function", "gpio") != 0) { return EFI_UNSUPPORTED; }
-  Hw->PinIndex = Hw->GpioBit == 10 ? 153 : 158;
+  Status = Eic7700BoardGpioPad (Fdt, Group, Eic7700GpioPhyReset,
+                               Hw->GpioBank, Hw->GpioBit, &Pad);
+  if (EFI_ERROR (Status)) { return Status; }
+  Hw->PinOffset = Pad.Offset;
+  Hw->PinFunction = Pad.Function;
   Pinctrl = Group;
   do { Pinctrl = FdtParentOffset (Fdt, Pinctrl); }
   while (Pinctrl > 0 && FdtStringListSearch (Fdt, Pinctrl, "compatible", "eswin,eic7700-pinctrl") < 0);
   if (Pinctrl <= 0) { return EFI_NOT_FOUND; }
-  Status = FdtGetMmio (Fdt, Pinctrl, 0, 4 * (Hw->PinIndex + 1), &Hw->PinBase, NULL);
+  Status = FdtGetMmio (Fdt, Pinctrl, 0, Hw->PinOffset + sizeof (UINT32), &Hw->PinBase, NULL);
   if (EFI_ERROR (Status)) { return Status; }
   Status = Cell (Fdt, Pinctrl, "vrgmii-supply", &Value);
   if (EFI_ERROR (Status)) { return Status; }
@@ -283,7 +284,9 @@ EqosPrepare (EQOS_PORT *P)
   Level = Hw->ActiveLow ? 0 : BIT0 << Hw->GpioBit;
   MmioAndThenOr32 (Reg, ~(BIT0 << Hw->GpioBit), Level);
   MmioOr32 (Reg + GPIO_DDR, BIT0 << Hw->GpioBit);
-  MmioAnd32 (Hw->PinBase + 4 * Hw->PinIndex, ~(PIN_FUNCTION | PIN_INPUT | PIN_PULLS));
+  MmioAndThenOr32 (Hw->PinBase + Hw->PinOffset,
+                   ~(EIC7700_PIN_FUNCTION_MASK | EIC7700_PIN_INPUT_ENABLE | EIC7700_PIN_PULL_MASK),
+                   Hw->PinFunction);
   MicroSecondDelay (P->AssertUs);
   MmioAndThenOr32 (Reg, ~(BIT0 << Hw->GpioBit), Level ^ (BIT0 << Hw->GpioBit));
   MicroSecondDelay (P->DeassertUs);
