@@ -13,7 +13,7 @@ formset
     title = STRING_TOKEN(STR_TITLE);
     suppressif ideqval PlatformConfig.OverridesPresent == 0;
       text help = STRING_TOKEN(STR_OVERRIDE_HELP), text = STRING_TOKEN(STR_OVERRIDE_PRESENT);
-      action questionid = 0x1005,
+      action questionid = CLEAR_OVERRIDES_QUESTION_ID,
         prompt = STRING_TOKEN(STR_CLEAR_OVERRIDES),
         help = STRING_TOKEN(STR_OVERRIDE_HELP),
         flags = INTERACTIVE | RESET_REQUIRED,
@@ -24,7 +24,7 @@ formset
     label CPU_LABEL_END;
     suppressif ideqval PlatformConfig.Available == 0;
       oneof varid = PlatformConfig.EmulationEnabled,
-        questionid = 0x1001,
+        questionid = EMULATION_QUESTION_ID,
         prompt = STRING_TOKEN(STR_EMULATION),
         help = STRING_TOKEN(STR_EMULATION_HELP),
         flags = RESET_REQUIRED | INTERACTIVE,
@@ -33,7 +33,7 @@ formset
       endoneof;
     endif;
     oneof varid = PlatformConfig.PxeBoot,
-      questionid = 0x1003,
+      questionid = PXE_QUESTION_ID,
       prompt = STRING_TOKEN(STR_PXE_BOOT),
       help = STRING_TOKEN(STR_PXE_HELP),
       flags = RESET_REQUIRED | INTERACTIVE,
@@ -41,7 +41,7 @@ formset
       option text = STRING_TOKEN(STR_ENABLED), value = 1, flags = 0;
     endoneof;
     oneof varid = PlatformConfig.HttpBoot,
-      questionid = 0x1004,
+      questionid = HTTP_QUESTION_ID,
       prompt = STRING_TOKEN(STR_HTTP_BOOT),
       help = STRING_TOKEN(STR_HTTP_HELP),
       flags = RESET_REQUIRED | INTERACTIVE,
@@ -50,7 +50,7 @@ formset
     endoneof;
     suppressif ideqval PlatformConfig.EccAvailable == 0;
       oneof varid = PlatformConfig.EccEnabled,
-        questionid = 0x1006,
+        questionid = ECC_QUESTION_ID,
         prompt = STRING_TOKEN(STR_DDR_ECC),
         help = STRING_TOKEN(STR_DDR_ECC_HELP),
         flags = RESET_REQUIRED | INTERACTIVE,

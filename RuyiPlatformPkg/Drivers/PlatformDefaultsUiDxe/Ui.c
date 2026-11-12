@@ -223,17 +223,22 @@ Callback (
   )
 {
   if ((Action == EFI_BROWSER_ACTION_DEFAULT_STANDARD || Action == EFI_BROWSER_ACTION_DEFAULT_MANUFACTURING) &&
-      QuestionId >= 0x1001 && QuestionId <= 0x1004 && QuestionId != CPU_QUESTION_ID && Value) {
+      (QuestionId == EMULATION_QUESTION_ID || QuestionId == PXE_QUESTION_ID ||
+       QuestionId == HTTP_QUESTION_ID) && Value) {
     UINT32 Defaults;
     EFI_STATUS Status = mSettings->GetDefaults (&Defaults);
     if (EFI_ERROR (Status)) { return Status; }
-    if (QuestionId == 0x1001) { Value->u8 = FixedPcdGetBool (PcdDriverEmulationAvailable) && !!(Defaults & RUYI_SETTING_EMULATION); }
-    else if (QuestionId == 0x1003) { Value->u8 = !!(Defaults & RUYI_SETTING_PXE); }
-    else { Value->u8 = !!(Defaults & RUYI_SETTING_HTTP); }
+    switch (QuestionId) {
+      case EMULATION_QUESTION_ID:
+        Value->u8 = FixedPcdGetBool (PcdDriverEmulationAvailable) && !!(Defaults & RUYI_SETTING_EMULATION);
+        break;
+      case PXE_QUESTION_ID: Value->u8 = !!(Defaults & RUYI_SETTING_PXE); break;
+      case HTTP_QUESTION_ID: Value->u8 = !!(Defaults & RUYI_SETTING_HTTP); break;
+    }
     if (ActionRequest) { *ActionRequest = EFI_BROWSER_ACTION_REQUEST_NONE; }
     return EFI_SUCCESS;
   }
-  if (Action == EFI_BROWSER_ACTION_CHANGED && QuestionId == 0x1005) {
+  if (Action == EFI_BROWSER_ACTION_CHANGED && QuestionId == CLEAR_OVERRIDES_QUESTION_ID) {
     EFI_STATUS Status = mSettings->ClearOverrides ();
     PLATFORM_CONFIGURATION Config;
     if (EFI_ERROR (Status)) { return Status; }
@@ -255,7 +260,7 @@ Callback (
     return EFI_SUCCESS;
   }
   if ((Action == EFI_BROWSER_ACTION_DEFAULT_STANDARD || Action == EFI_BROWSER_ACTION_DEFAULT_MANUFACTURING) &&
-      QuestionId == 0x1006 && Value) {
+      QuestionId == ECC_QUESTION_ID && Value) {
     BOOLEAN Enabled;
     EFI_STATUS Status = MemoryConfigGet (&Enabled);
     if (EFI_ERROR (Status)) { return Status; }
