@@ -31,6 +31,8 @@
 #define MTL_RXQ_DEBUG        0xd38
 #define MTL_RXQ_BUSY_MASK    ((0x777fU << 16) | (3U << 4))
 
+#include "Registers.h"
+
 STATIC EFI_PHYSICAL_ADDRESS
 Address (
   EQOS_DMA  *D,
@@ -67,8 +69,8 @@ EqosMacAddress (
   CONST UINT8   *Mac
   )
 {
-  MmioWrite32 (P->Base + 0x300, Mac[4] | ((UINT32)Mac[5] << 8) | BIT31);
-  MmioWrite32 (P->Base + 0x304, Mac[0] | ((UINT32)Mac[1] << 8) | ((UINT32)Mac[2] << 16) | ((UINT32)Mac[3] << 24));
+  MmioWrite32 (P->Base + MAC_ADDRESS0_HIGH, Mac[4] | ((UINT32)Mac[5] << 8) | MAC_ADDRESS_ENABLE);
+  MmioWrite32 (P->Base + MAC_ADDRESS0_LOW, Mac[0] | ((UINT32)Mac[1] << 8) | ((UINT32)Mac[2] << 16) | ((UINT32)Mac[3] << 24));
 }
 
 VOID
@@ -78,17 +80,17 @@ EqosSpeed (
   BOOLEAN       Full
   )
 {
-  UINT32  Set = Full ? BIT13 : 0;
+  UINT32  Set = Full ? MAC_CONFIG_FULL_DUPLEX : 0;
 
   if (Speed != 1000) {
-    Set |= BIT15;
+    Set |= MAC_CONFIG_MII_PORT;
   }
 
   if (Speed == 100) {
-    Set |= BIT14;
+    Set |= MAC_CONFIG_FAST_ETHERNET;
   }
 
-  MmioAndThenOr32 (P->Base, ~(BIT13 | BIT14 | BIT15), Set);
+  MmioAndThenOr32 (P->Base + MAC_CONFIG, ~(MAC_CONFIG_FULL_DUPLEX | MAC_CONFIG_FAST_ETHERNET | MAC_CONFIG_MII_PORT), Set);
 }
 
 STATIC VOID
@@ -103,9 +105,9 @@ RxReturn (
   D->Rx[Index].Word[1] = (UINT32)(Buffer >> 32);
   D->Rx[Index].Word[2] = 0;
   MemoryFence ();
-  D->Rx[Index].Word[3] = OWN | BIT24;
+  D->Rx[Index].Word[3] = OWN | RX_DESCRIPTOR_BUFFER1_VALID;
   MemoryFence ();
-  MmioWrite32 (D->Port->Base + 0x1128, (UINT32)Address (D, &D->Rx[Index]));
+  MmioWrite32 (D->Port->Base + DMA_RX_TAIL, (UINT32)Address (D, &D->Rx[Index]));
 }
 
 EFI_STATUS
@@ -153,16 +155,16 @@ EqosDmaStart (
   D->TxBytes = (UINT8 *)D->Allocation + TX_BYTES;
   D->RxBytes = (UINT8 *)D->Allocation + RX_BYTES;
   // No DMA start bit or device pointer is written until buffers are usable.
-  MmioOr32 (P->Base + 0x1000, BIT0);
+  MmioOr32 (P->Base + DMA_MODE, DMA_SOFT_RESET);
   // RTL8211F link-down power saving can pause RXC for hundreds of ms.
-  Status = Wait (P->Base + 0x1000, BIT0, 0, RESET_TIMEOUT_US);
+  Status = Wait (P->Base + DMA_MODE, DMA_SOFT_RESET, 0, RESET_TIMEOUT_US);
   if (EFI_ERROR (Status)) {
     D->Faulted = TRUE;
     return Status;
   }
 
-  UINT32  Features = MmioRead32 (P->Base + 0x120);
-  UINT32  TxFifo = 128U << ((Features >> 6) & 0x1f), RxFifo = 128U << (Features & 0x1f);
+  UINT32  Features = MmioRead32 (P->Base + MAC_HW_FEATURE1);
+  UINT32  TxFifo = 128U << ((Features >> MAC_TX_FIFO_SHIFT) & MAC_FIFO_SIZE_MASK), RxFifo = 128U << (Features & MAC_FIFO_SIZE_MASK);
 
   if ((TxFifo < 256) || (TxFifo > 32768) || (RxFifo < 256) || (RxFifo > 32768)) {
     EqosDmaFree (D);
@@ -170,39 +172,39 @@ EqosDmaStart (
   }
 
   MmioAndThenOr32 (
-    P->Base + 0xd00,
-    ~((0x1ffU << 16) | (3U << 2)),
-    ((TxFifo / 256 - 1) << 16) | (2U << 2) | BIT1
+    P->Base + MTL_TXQ_OPERATION,
+    ~(MTL_TXQ_SIZE_MASK | MTL_TXQ_ENABLE_MASK),
+    ((TxFifo / 256 - 1) << MTL_TXQ_SIZE_SHIFT) | MTL_TXQ_ENABLE | MTL_TXQ_STORE_FORWARD
     );
-  MmioAndThenOr32 (P->Base + 0xd30, ~(0x3ffU << 20), ((RxFifo / 256 - 1) << 20) | BIT5);
-  MmioAndThenOr32 (P->Base + 0xa0, ~3U, 2);
-  MmioAndThenOr32 (P->Base + 0x1100, ~(7U << 18), BIT16); // Contiguous 16-byte UC descriptors, DSL=0.
-  MmioAndThenOr32 (P->Base + 0x1104, ~(0x3fU << 16), (8U << 16) | BIT4);
+  MmioAndThenOr32 (P->Base + MTL_RXQ_OPERATION, ~MTL_RXQ_SIZE_MASK, ((RxFifo / 256 - 1) << MTL_RXQ_SIZE_SHIFT) | MTL_RXQ_STORE_FORWARD);
+  MmioAndThenOr32 (P->Base + MAC_RXQ_CONTROL0, ~MAC_RXQ_ENABLE_MASK, MAC_RXQ_DCB_ENABLE);
+  MmioAndThenOr32 (P->Base + DMA_CHANNEL_CONTROL, ~DMA_DESCRIPTOR_SKIP_MASK, DMA_PBL_X8); // Contiguous 16-byte UC descriptors, DSL=0.
+  MmioAndThenOr32 (P->Base + DMA_TX_CONTROL, ~DMA_PBL_MASK, (DMA_BURST_LENGTH << DMA_PBL_SHIFT) | DMA_TX_SECOND_PACKET);
   MmioAndThenOr32 (
-    P->Base + 0x1108,
-    ~((0x3fU << 16) | (0x3fffU << 1)),
-    (8U << 16) | (EQOS_FRAME_BYTES << 1)
+    P->Base + DMA_RX_CONTROL,
+    ~(DMA_PBL_MASK | DMA_RX_BUFFER_MASK),
+    (DMA_BURST_LENGTH << DMA_PBL_SHIFT) | (EQOS_FRAME_BYTES << DMA_RX_BUFFER_SHIFT)
     );
-  MmioWrite32 (P->Base + 0x1004, P->DmaBusMode);
-  MmioWrite32 (P->Base + 0x1134, 0); // Firmware polls; do not enable an unowned IRQ route.
-  MmioOr32 (P->Base, BIT21 | BIT20);
+  MmioWrite32 (P->Base + DMA_SYSBUS_MODE, P->DmaBusMode);
+  MmioWrite32 (P->Base + DMA_INTERRUPT_ENABLE, 0); // Firmware polls; do not enable an unowned IRQ route.
+  MmioOr32 (P->Base + MAC_CONFIG, MAC_CONFIG_CRC_TYPE | MAC_CONFIG_AUTO_PAD_CRC);
   EqosMacAddress (P, Mac);
   EFI_PHYSICAL_ADDRESS  Tx = Address (D, D->Tx), Rx = Address (D, D->Rx);
 
-  MmioWrite32 (P->Base + 0x1110, (UINT32)(Tx >> 32));
-  MmioWrite32 (P->Base + 0x1114, (UINT32)Tx);
-  MmioWrite32 (P->Base + 0x1118, (UINT32)(Rx >> 32));
-  MmioWrite32 (P->Base + 0x111c, (UINT32)Rx);
-  MmioWrite32 (P->Base + 0x112c, EQOS_TX - 1);
-  MmioWrite32 (P->Base + 0x1130, EQOS_RX - 1);
+  MmioWrite32 (P->Base + DMA_TX_DESC_HIGH, (UINT32)(Tx >> 32));
+  MmioWrite32 (P->Base + DMA_TX_DESC_LOW, (UINT32)Tx);
+  MmioWrite32 (P->Base + DMA_RX_DESC_HIGH, (UINT32)(Rx >> 32));
+  MmioWrite32 (P->Base + DMA_RX_DESC_LOW, (UINT32)Rx);
+  MmioWrite32 (P->Base + DMA_TX_RING_LENGTH, EQOS_TX - 1);
+  MmioWrite32 (P->Base + DMA_RX_RING_LENGTH, EQOS_RX - 1);
   for (UINTN I = 0; I < EQOS_RX; I++) {
     RxReturn (D, I);
   }
 
   MemoryFence ();
-  MmioOr32 (P->Base + 0x1104, BIT0);
-  MmioOr32 (P->Base + 0x1108, BIT0);
-  MmioOr32 (P->Base, BIT0 | BIT1);
+  MmioOr32 (P->Base + DMA_TX_CONTROL, DMA_START);
+  MmioOr32 (P->Base + DMA_RX_CONTROL, DMA_START);
+  MmioOr32 (P->Base + MAC_CONFIG, MAC_CONFIG_RECEIVE | MAC_CONFIG_TRANSMIT);
   D->Running = TRUE;
   return EFI_SUCCESS;
 }
@@ -222,7 +224,7 @@ EqosDmaStop (
     return EFI_SUCCESS;
   }
 
-  MmioAnd32 (P->Base + 0x1104, ~BIT0);
+  MmioAnd32 (P->Base + DMA_TX_CONTROL, ~DMA_START);
   EFI_STATUS  Status = EFI_TIMEOUT;
 
   for (UINTN Us = 0; Us <= DRAIN_TIMEOUT_US; Us += 10) {
@@ -242,7 +244,7 @@ EqosDmaStop (
     }
   }
 
-  MmioAnd32 (P->Base, ~(BIT0 | BIT1));
+  MmioAnd32 (P->Base + MAC_CONFIG, ~(MAC_CONFIG_RECEIVE | MAC_CONFIG_TRANSMIT));
   if (!EFI_ERROR (Status)) {
     Status = EFI_TIMEOUT;
     for (UINTN Us = 0; Us <= DRAIN_TIMEOUT_US; Us += 10) {
@@ -265,15 +267,15 @@ EqosDmaStop (
     }
   }
 
-  MmioAnd32 (P->Base + 0x1108, ~BIT0);
+  MmioAnd32 (P->Base + DMA_RX_CONTROL, ~DMA_START);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_WARN, "EQoS: queues did not drain; resetting DMA\n"));
   }
 
   // Reset also flushes queued packets if graceful draining timed out.
   // Keep buffers quarantined unless the controller confirms completion.
-  MmioOr32 (P->Base + 0x1000, BIT0);
-  Status = Wait (P->Base + 0x1000, BIT0, 0, RESET_TIMEOUT_US);
+  MmioOr32 (P->Base + DMA_MODE, DMA_SOFT_RESET);
+  Status = Wait (P->Base + DMA_MODE, DMA_SOFT_RESET, 0, RESET_TIMEOUT_US);
 
   if (EFI_ERROR (Status)) {
     D->Faulted = TRUE;
@@ -351,7 +353,7 @@ EqosTransmit (
   D->TxCount++;
   D->TxNext = (Index + 1) % EQOS_TX;
   MemoryFence ();
-  MmioWrite32 (D->Port->Base + 0x1120, (UINT32)Address (D, &D->Tx[D->TxNext]));
+  MmioWrite32 (D->Port->Base + DMA_TX_TAIL, (UINT32)Address (D, &D->Tx[D->TxNext]));
   return EFI_SUCCESS;
 }
 
@@ -415,9 +417,9 @@ EqosReceive (
 
   MemoryFence ();
   UINT32  Status = D->Rx[D->RxHead].Word[3];
-  UINTN   Length = Status & 0x7fff;
+  UINTN   Length = Status & RX_DESCRIPTOR_LENGTH_MASK;
 
-  if (((Status & (FIRST | LAST | ERROR | BIT30)) != (FIRST | LAST)) || (Length < 14) ||
+  if (((Status & (FIRST | LAST | ERROR | RX_DESCRIPTOR_CONTEXT)) != (FIRST | LAST)) || (Length < 14) ||
       (Length > EQOS_FRAME_BYTES))
   {
     D->RxError++;

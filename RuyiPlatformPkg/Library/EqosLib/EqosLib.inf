@@ -6,6 +6,7 @@
   MODULE_TYPE = BASE
   LIBRARY_CLASS = EqosLib
 [Sources]
+  Registers.h
   Phy.c
   Dma.c
 [Packages]

@@ -9,13 +9,15 @@
 #include <Library/EqosLib.h>
 #include <Library/TimerLib.h>
 
+#include "Registers.h"
+
 STATIC EFI_STATUS
 WaitIdle (
   EQOS_PORT  *P
   )
 {
   for (UINTN Elapsed = 0; Elapsed <= 10000; Elapsed += 10) {
-    if (!(MmioRead32 (P->Base + 0x200) & BIT0)) {
+    if (!(MmioRead32 (P->Base + MAC_MDIO_ADDRESS) & MDIO_BUSY)) {
       return EFI_SUCCESS;
     }
 
@@ -52,17 +54,17 @@ Transfer (
   }
 
   if (Write) {
-    MmioWrite32 (P->Base + 0x204, *Value);
+    MmioWrite32 (P->Base + MAC_MDIO_DATA, *Value);
   }
 
   // Always construct a Clause 22 command; never inherit C45/preamble state.
-  UINT32  Command = (P->PhyAddress << 21) | (Register << 16) | ((UINT32)P->MdioRange << 8) |
-                    ((Write ? 1U : 3U) << 2) | BIT0;
+  UINT32  Command = (P->PhyAddress << MDIO_PHY_SHIFT) | (Register << MDIO_REGISTER_SHIFT) | ((UINT32)P->MdioRange << MDIO_CLOCK_SHIFT) |
+                    (Write ? MDIO_WRITE : MDIO_READ) | MDIO_BUSY;
 
-  MmioWrite32 (P->Base + 0x200, Command);
+  MmioWrite32 (P->Base + MAC_MDIO_ADDRESS, Command);
   Status = WaitIdle (P);
   if (!EFI_ERROR (Status) && !Write) {
-    *Value = (UINT16)MmioRead32 (P->Base + 0x204);
+    *Value = (UINT16)MmioRead32 (P->Base + MAC_MDIO_DATA);
   }
 
   return Status;
