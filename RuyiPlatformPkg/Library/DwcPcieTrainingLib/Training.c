@@ -4,6 +4,7 @@
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 #include <Uefi.h>
+#include <IndustryStandard/DwcPcieRegisters.h>
 #include <IndustryStandard/Pci.h>
 #include <Library/DebugLib.h>
 #include <Library/DwcPcieTrainingLib.h>
@@ -12,8 +13,6 @@
 
 #define DWC_SPEED_CONTROL       0x80c
 #define DWC_SPEED_CHANGE        BIT17
-#define DWC_MISC_CONTROL        0x8bc
-#define DWC_DBI_RO_WRITE         BIT0
 #define PCIE_LINK_CAP           0x0c
 #define PCIE_LINK_STATUS        0x12
 #define PCIE_LINK_CAP2          0x2c
@@ -110,9 +109,9 @@ SetSpeedCapability (
   UINT32                   Value
   )
 {
-  MmioOr32 (Training->Dbi + DWC_MISC_CONTROL, DWC_DBI_RO_WRITE);
+  MmioOr32 (Training->Dbi + DWC_DBI_MISC_CONTROL, DWC_DBI_RO_WRITE_ENABLE);
   MmioWrite32 (Training->Dbi + Capability + PCIE_LINK_CAP, Value);
-  MmioAnd32 (Training->Dbi + DWC_MISC_CONTROL, ~(UINT32)DWC_DBI_RO_WRITE);
+  MmioAnd32 (Training->Dbi + DWC_DBI_MISC_CONTROL, ~(UINT32)DWC_DBI_RO_WRITE_ENABLE);
 }
 
 STATIC EFI_STATUS
