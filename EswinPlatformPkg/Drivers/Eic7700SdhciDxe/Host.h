@@ -63,6 +63,16 @@
 #define PHY_DLL_STATUS       0x32e
 #define PHY_DLL_LOCK         BIT0
 #define PHY_DLL_ERROR        BIT1
+// EIC7700 HS400 settings from sdhci-of-dwcmshc.c, eic7700_set_uhs_signaling.
+#define EIC_DLL_POST_DELAY    (2U << 19)
+#define EIC_DLL_SLAVE_DELAY   (2U << 4)
+#define EIC_DLL_WAIT_CYCLES   3U
+#define EIC_DLL_JUMP_STEP     2U
+#define EIC_DLL_SLAVE_INPUT   (3U << 5)
+#define PHY_DLL_ENABLE        BIT0
+#define PHY_DELAY_CODE_MASK   0x7fU
+#define EIC_EMMC_DELAY_CODE   0x17
+#define EIC_SD_DELAY_CODE     0x55
 #define EIC_DMA_BOUNDARY      SIZE_128MB
 
 typedef struct {

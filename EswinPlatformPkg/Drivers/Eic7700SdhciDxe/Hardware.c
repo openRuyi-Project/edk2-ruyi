@@ -147,7 +147,7 @@ ParsePort (CONST VOID *Fdt, INT32 Node, EIC_MMC_PORT *Port)
     case 33: Port->Drive = 0xee; break;
     default: return EFI_UNSUPPORTED;
   }
-  Port->Delay = Port->Emmc ? 0x17 : 0x55;
+  Port->Delay = Port->Emmc ? EIC_EMMC_DELAY_CODE : EIC_SD_DELAY_CODE;
 
   Data = FdtGetProp (Fdt, Node, "clocks", &Length);
   if (!Data || Length != 24 || Fdt32ToCpu (Data[1]) != EIC7700_CLK_GATE_HSP_MSHC0_CORE_CLK + Id ||
@@ -217,7 +217,7 @@ VOID
 SetDelay (EIC_MMC_PORT *Port, UINT8 Delay)
 {
   MmioWrite8 (Port->Base + PHY_CLOCK_DELAY_CFG, PHY_DELAY_UPDATE);
-  MmioWrite8 (Port->Base + PHY_CLOCK_DELAY, Delay & 0x7f);
+  MmioWrite8 (Port->Base + PHY_CLOCK_DELAY, Delay & PHY_DELAY_CODE_MASK);
   MmioWrite8 (Port->Base + PHY_CLOCK_DELAY_CFG, 0);
 }
 
@@ -285,13 +285,13 @@ SetDll (EIC_MMC_PORT *Port)
 {
   UINTN Timeout;
   UINT8 Status;
-  MmioAndThenOr32 (Port->Base + Port->Vendor + DWC_AT_CTRL, ~DWC_POST_DELAY_MASK, 2U << 19);
-  MmioWrite8 (Port->Base + PHY_DLL_CONFIG1, (2U << 4) | 3);
-  MmioWrite8 (Port->Base + PHY_DLL_CONFIG2, 2);
-  MmioWrite8 (Port->Base + PHY_DLL_DELAY, 3U << 5);
+  MmioAndThenOr32 (Port->Base + Port->Vendor + DWC_AT_CTRL, ~DWC_POST_DELAY_MASK, EIC_DLL_POST_DELAY);
+  MmioWrite8 (Port->Base + PHY_DLL_CONFIG1, EIC_DLL_SLAVE_DELAY | EIC_DLL_WAIT_CYCLES);
+  MmioWrite8 (Port->Base + PHY_DLL_CONFIG2, EIC_DLL_JUMP_STEP);
+  MmioWrite8 (Port->Base + PHY_DLL_DELAY, EIC_DLL_SLAVE_INPUT);
   MmioWrite8 (Port->Base + PHY_DLL_OFFSET, 0);
   MmioWrite16 (Port->Base + PHY_DLL_TIMER, MAX_UINT16);
-  MmioWrite8 (Port->Base + PHY_DLL_CONTROL, 1);
+  MmioWrite8 (Port->Base + PHY_DLL_CONTROL, PHY_DLL_ENABLE);
   for (Timeout = 0; Timeout < 1000000; Timeout += 100) {
     Status = MmioRead8 (Port->Base + PHY_DLL_STATUS);
     if (Status & PHY_DLL_LOCK) {
