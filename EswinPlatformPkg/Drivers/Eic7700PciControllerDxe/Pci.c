@@ -13,6 +13,7 @@
 #include <IndustryStandard/Eic7700ResetIds.h>
 #include <Uefi.h>
 #include <IndustryStandard/Pci.h>
+#include <IndustryStandard/DwcPcieRegisters.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
@@ -59,20 +60,15 @@
 #define DBI_FAST_LINK          BIT7
 #define DBI_GEN2_CONTROL       0x80c
 #define DBI_PREDETERMINED_LANES (0x1fU << 8)
-#define DBI_MISC_CONTROL       0x8bc
-#define DBI_RO_WRITE           BIT0
 #define DBI_MULTI_LANE         0x8c0
 #define DBI_VERSION            0x8f8
 #define ATU_OFFSET             0x300000
-#define ATU_STRIDE             0x200
-#define ATU_ENABLE             BIT31
-#define ATU_INCREASE_REGION    BIT13
 #define ATU_MEMORY             0U
 #define ATU_IO                 2U
 #define ATU_CONFIG0            4U
 #define ATU_CONFIG1            5U
 #define MAX_WINDOWS            4
-#define DBI_MAP_SIZE           (ATU_OFFSET + (MAX_WINDOWS + 1) * ATU_STRIDE)
+#define DBI_MAP_SIZE           (ATU_OFFSET + (MAX_WINDOWS + 1) * DWC_ATU_REGION_STRIDE)
 
 STATIC UINTN   mDbi, mConfig, mElbi, mClock, mReset, mPins;
 STATIC UINT32  mLanes, mMaxSpeed = 3;
@@ -333,7 +329,7 @@ LinkUp (VOID)
 STATIC EFI_STATUS
 Window (UINTN Index, UINT32 Type, UINT64 Cpu, UINT64 Pci, UINT64 Size)
 {
-  UINTN Base = mDbi + ATU_OFFSET + Index * ATU_STRIDE;
+  UINTN Base = mDbi + ATU_OFFSET + Index * DWC_ATU_REGION_STRIDE;
   UINT64 Limit;
 
   if (Index > MAX_WINDOWS || !Size || Cpu > MAX_UINT64 - (Size - 1) ||
@@ -341,17 +337,17 @@ Window (UINTN Index, UINT32 Type, UINT64 Cpu, UINT64 Pci, UINT64 Size)
     return EFI_INVALID_PARAMETER;
   }
   Limit = Cpu + Size - 1;
-  if ((Cpu >> 32) != (Limit >> 32)) { Type |= ATU_INCREASE_REGION; }
-  MmioWrite32 (Base + 4, 0);
-  MmioWrite32 (Base + 8, Cpu);
-  MmioWrite32 (Base + 12, Cpu >> 32);
-  MmioWrite32 (Base + 16, Limit);
-  MmioWrite32 (Base + 20, Pci);
-  MmioWrite32 (Base + 24, Pci >> 32);
-  MmioWrite32 (Base + 32, Limit >> 32);
-  MmioWrite32 (Base, Type);
-  MmioWrite32 (Base + 4, ATU_ENABLE);
-  return Poll (Base + 4, ATU_ENABLE, ATU_ENABLE, 1000);
+  if ((Cpu >> 32) != (Limit >> 32)) { Type |= DWC_ATU_INCREASE_REGION; }
+  MmioWrite32 (Base + DWC_ATU_CONTROL2, 0);
+  MmioWrite32 (Base + DWC_ATU_LOWER_BASE, Cpu);
+  MmioWrite32 (Base + DWC_ATU_UPPER_BASE, Cpu >> 32);
+  MmioWrite32 (Base + DWC_ATU_LIMIT, Limit);
+  MmioWrite32 (Base + DWC_ATU_LOWER_TARGET, Pci);
+  MmioWrite32 (Base + DWC_ATU_UPPER_TARGET, Pci >> 32);
+  MmioWrite32 (Base + DWC_ATU_UPPER_LIMIT, Limit >> 32);
+  MmioWrite32 (Base + DWC_ATU_CONTROL1, Type);
+  MmioWrite32 (Base + DWC_ATU_CONTROL2, DWC_ATU_ENABLE);
+  return Poll (Base + DWC_ATU_CONTROL2, DWC_ATU_ENABLE, DWC_ATU_ENABLE, 1000);
 }
 
 STATIC EFI_STATUS EFIAPI
@@ -459,7 +455,7 @@ Start (VOID)
   // Disable their masks through EIC7700's shadow/CS2 window before sizing.
   MmioWrite32 (mDbi + DBI_CS2_OFFSET + PCI_BASE_ADDRESSREG_OFFSET, 0);
   MmioWrite32 (mDbi + DBI_CS2_OFFSET + PCI_BASE_ADDRESSREG_OFFSET + 4, 0);
-  MmioOr32 (mDbi + DBI_MISC_CONTROL, DBI_RO_WRITE);
+  MmioOr32 (mDbi + DWC_DBI_MISC_CONTROL, DWC_DBI_RO_WRITE_ENABLE);
   MmioWrite32 (mDbi, DBI_VENDOR_DEVICE);
   MmioWrite16 (mDbi + PCI_CLASSCODE_OFFSET + 1, 0x0604);
   MmioWrite32 (mDbi + PCI_BASE_ADDRESSREG_OFFSET, 0);
@@ -475,7 +471,7 @@ Start (VOID)
   MmioAndThenOr32 (mDbi + DBI_GEN2_CONTROL, ~DBI_PREDETERMINED_LANES, 1U << 8);
   MmioAndThenOr32 (mDbi + DBI_LINK_CAP, ~0x3ffU, (mLanes << 4) | mMaxSpeed);
   MmioAnd32 (mDbi + DBI_MULTI_LANE, ~0x7fU);
-  MmioAnd32 (mDbi + DBI_MISC_CONTROL, ~(UINT32)DBI_RO_WRITE);
+  MmioAnd32 (mDbi + DWC_DBI_MISC_CONTROL, ~(UINT32)DWC_DBI_RO_WRITE_ENABLE);
   Status = DwcPcieTrainLink (&Training, &LinkStatus);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "EIC7700 PCIe ELBI status: %08x\n", MmioRead32 (mElbi + ELBI_STATUS)));
