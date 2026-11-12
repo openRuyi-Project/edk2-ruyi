@@ -8,6 +8,7 @@
  */
 #include <Uefi.h>
 #include <IndustryStandard/Pci.h>
+#include <IndustryStandard/DwcPcieRegisters.h>
 #include <Guid/FdtHob.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -35,14 +36,10 @@
 #define PHY_STRIDE        0x040
 #define PHY_RX_OVERRIDE   0x1008
 #define PHY_RX_VALUE      (BIT0 | BIT5 | BIT9 | BIT10 | BIT11)
-#define DBI_RO_WRITE      0x8bc
 #define DBI_LINK_DEBUG    0x728
 #define DBI_LINK_STATUS   0x72c
 #define DBI_VERSION       0x8f8
 #define ATU_OFFSET        0x300000
-#define ATU_STRIDE        0x200
-#define ATU_ENABLE        BIT31
-#define ATU_LARGE_REGION  BIT13
 #define PRCI_PCIE_AUX     0x14
 #define PRCI_RESET_N      0x28
 #define PRCI_PCIE_RESET_N BIT4
@@ -239,7 +236,7 @@ Window (
   UINT64  Size
   )
 {
-  UINTN   Base = mDbi + ATU_OFFSET + Index * ATU_STRIDE;
+  UINTN   Base = mDbi + ATU_OFFSET + Index * DWC_ATU_REGION_STRIDE;
   UINT64  Limit;
 
   if (!Size || (Cpu > MAX_UINT64 - (Size - 1)) ||
@@ -250,27 +247,27 @@ Window (
 
   Limit = Cpu + Size - 1;
   if ((Cpu >> 32) != (Limit >> 32)) {
-    if (mVersion < 0x3436302a) {
+    if (mVersion < DWC_VERSION_460A) {
       return EFI_UNSUPPORTED;
     }
 
-    Type |= ATU_LARGE_REGION;
+    Type |= DWC_ATU_INCREASE_REGION;
   }
 
-  MmioWrite32 (Base + 4, 0);
-  MmioWrite32 (Base + 8, Cpu);
-  MmioWrite32 (Base + 12, Cpu >> 32);
-  MmioWrite32 (Base + 16, Limit);
-  MmioWrite32 (Base + 20, Pci);
-  MmioWrite32 (Base + 24, Pci >> 32);
-  if (mVersion >= 0x3436302a) {
-    MmioWrite32 (Base + 32, Limit >> 32);
+  MmioWrite32 (Base + DWC_ATU_CONTROL2, 0);
+  MmioWrite32 (Base + DWC_ATU_LOWER_BASE, Cpu);
+  MmioWrite32 (Base + DWC_ATU_UPPER_BASE, Cpu >> 32);
+  MmioWrite32 (Base + DWC_ATU_LIMIT, Limit);
+  MmioWrite32 (Base + DWC_ATU_LOWER_TARGET, Pci);
+  MmioWrite32 (Base + DWC_ATU_UPPER_TARGET, Pci >> 32);
+  if (mVersion >= DWC_VERSION_460A) {
+    MmioWrite32 (Base + DWC_ATU_UPPER_LIMIT, Limit >> 32);
   }
 
-  MmioWrite32 (Base, Type);
+  MmioWrite32 (Base + DWC_ATU_CONTROL1, Type);
   MemoryFence ();
-  MmioWrite32 (Base + 4, ATU_ENABLE);
-  return Poll (Base + 4, ATU_ENABLE, ATU_ENABLE, 1000);
+  MmioWrite32 (Base + DWC_ATU_CONTROL2, DWC_ATU_ENABLE);
+  return Poll (Base + DWC_ATU_CONTROL2, DWC_ATU_ENABLE, DWC_ATU_ENABLE, 1000);
 }
 
 STATIC EFI_STATUS EFIAPI
@@ -394,13 +391,13 @@ Start (
 
   // Configure the root port while LTSSM is stopped.
   MmioWrite32 (mMgmt + PCIE_LTSSM, 0);
-  MmioOr32 (mDbi + DBI_RO_WRITE, BIT0);
+  MmioOr32 (mDbi + DWC_DBI_MISC_CONTROL, DWC_DBI_RO_WRITE_ENABLE);
   MmioWrite32 (mDbi + 0x10, 0);
   MmioWrite32 (mDbi + 0x14, 0);
   MmioWrite16 (mDbi + (PCI_CLASSCODE_OFFSET + 1), 0x0604);
   MmioWrite32 (mDbi + PCI_BRIDGE_PRIMARY_BUS_REGISTER_OFFSET, 0x00ff0100);
   MmioOr16 (mDbi + PCI_COMMAND_OFFSET, EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER);
-  MmioAnd32 (mDbi + DBI_RO_WRITE, ~(UINT32)BIT0);
+  MmioAnd32 (mDbi + DWC_DBI_MISC_CONTROL, ~(UINT32)DWC_DBI_RO_WRITE_ENABLE);
   Status = DwcPcieTrainLink (&Training, &LinkStatus);
   if (EFI_ERROR (Status)) {
     return Status;
