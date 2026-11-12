@@ -9,6 +9,8 @@
  * Paul Walmsley, Greentime Hu
  * Copyright (C) 2013 Kosagi
  */
+#include <IndustryStandard/Eic7700ClockIds.h>
+#include <IndustryStandard/Eic7700ResetIds.h>
 #include <Uefi.h>
 #include <IndustryStandard/Pci.h>
 #include <Library/BaseLib.h>
@@ -142,9 +144,10 @@ ParseControls (CONST VOID *Fdt, INT32 Node, INT32 Port)
 {
   STATIC CONST CHAR8 *ClockNames[] = {"mstr", "dbi", "phy_reg", "aux"};
   // Stable EIC7700 clock/reset binding IDs, not register offsets.
-  STATIC CONST UINT32 ClockIds[] = {144, 145, 146, 147};
+  STATIC CONST UINT32 ClockIds[] = {EIC7700_CLK_GATE_PCIET_ACLK, EIC7700_CLK_GATE_PCIET_CFG_CLK,
+                                     EIC7700_CLK_GATE_PCIET_CR_CLK, EIC7700_CLK_GATE_PCIET_AUX_CLK};
   STATIC CONST CHAR8 *ResetNames[] = {"dbi", "pwr"};
-  STATIC CONST UINT32 ResetIds[] = {97, 98};
+  STATIC CONST UINT32 ResetIds[] = {EIC7700_RESET_PCIE_CFG, EIC7700_RESET_PCIE_POWEUP};
   CONST UINT32 *Data;
   INT32 Length, Index, PinNode;
   UINT32 Phandle;
@@ -182,7 +185,7 @@ ParseControls (CONST VOID *Fdt, INT32 Node, INT32 Port)
   if (EFI_ERROR (Status)) { return Status; }
   Data = FdtGetProp (Fdt, Port, "resets", &Length);
   if (!Data || Length != 8 || Fdt32ToCpu (Data[0]) != Phandle ||
-      Fdt32ToCpu (Data[1]) != 99 ||
+      Fdt32ToCpu (Data[1]) != EIC7700_RESET_PCIE_PERST ||
       FdtStringListSearch (Fdt, Port, "reset-names", "perst") != 0) {
     return EFI_UNSUPPORTED;
   }

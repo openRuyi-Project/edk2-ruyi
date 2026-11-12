@@ -1,4 +1,6 @@
 /** SPDX-License-Identifier: BSD-2-Clause-Patent */
+#include <IndustryStandard/Eic7700ClockIds.h>
+#include <IndustryStandard/Eic7700ResetIds.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
@@ -66,6 +68,8 @@ EqosNextNode (CONST VOID *Fdt, INT32 Previous)
 STATIC EFI_STATUS
 Parse (CONST VOID *Fdt, INT32 Node, EIC_EQOS_PORT *Hw)
 {
+  STATIC CONST UINT32 TxClockIds[] = {EIC7700_CLK_GATE_HSP_ETH0_CORE_CLK, EIC7700_CLK_GATE_HSP_ETH1_CORE_CLK};
+  STATIC CONST UINT32 ResetIds[] = {EIC7700_RESET_HSP_ETH0_ARST, EIC7700_RESET_HSP_ETH1_ARST};
   EQOS_PORT *P = &Hw->Common;
   CONST UINT32 *Data;
   CONST CHAR8 *Mode, *Pin;
@@ -95,8 +99,8 @@ Parse (CONST VOID *Fdt, INT32 Node, EIC_EQOS_PORT *Hw)
   if (EFI_ERROR (Status)) { return Status; }
   Data = FdtGetProp (Fdt, Node, "clocks", &Len);
   if (!Data || Len != 32 || Data[0] != Data[2] || Data[0] != Data[4] || Data[0] != Data[6] ||
-      Fdt32ToCpu (Data[1]) != 186 || Fdt32ToCpu (Data[3]) != 171 ||
-      Fdt32ToCpu (Data[5]) != 40 || Fdt32ToCpu (Data[7]) != 193 + Id ||
+      Fdt32ToCpu (Data[1]) != EIC7700_CLK_GATE_HSP_ACLK || Fdt32ToCpu (Data[3]) != EIC7700_CLK_GATE_HSP_CFG_CLK ||
+      Fdt32ToCpu (Data[5]) != EIC7700_CLK_MUX_SYSCFG_CLK_ROOT_2MUX1_GFREE || Fdt32ToCpu (Data[7]) != TxClockIds[Id] ||
       FdtStringListSearch (Fdt, Node, "clock-names", "axi") != 0 ||
       FdtStringListSearch (Fdt, Node, "clock-names", "cfg") != 1 ||
       FdtStringListSearch (Fdt, Node, "clock-names", "stmmaceth") != 2 ||
@@ -106,7 +110,7 @@ Parse (CONST VOID *Fdt, INT32 Node, EIC_EQOS_PORT *Hw)
   Hw->ClockOffset = SYS_ETH0 + 4 * Id;
   Hw->ResetMask = BIT26 >> Id;
   Data = FdtGetProp (Fdt, Node, "resets", &Len);
-  if (!Data || Len != 8 || Fdt32ToCpu (Data[1]) != 95 - Id) { return EFI_UNSUPPORTED; }
+  if (!Data || Len != 8 || Fdt32ToCpu (Data[1]) != ResetIds[Id]) { return EFI_UNSUPPORTED; }
   Status = Provider (Fdt, Fdt32ToCpu (*Data), "eswin,eic7700-reset", SYS_HSP_RESET + 4, &Hw->Reset);
   if (EFI_ERROR (Status)) { return Status; }
   Mode = FdtGetProp (Fdt, Node, "phy-mode", &Len);

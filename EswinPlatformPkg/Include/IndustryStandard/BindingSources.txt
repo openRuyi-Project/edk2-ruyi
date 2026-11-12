@@ -1,0 +1,4 @@
+The EIC7700 clock and reset ID headers are copied from Linux commit
+97df13d9b87bd7fb17407e09ac8e85d0934c36ed, include/dt-bindings/{clock,reset}.
+They retain the original dual license and attribution. These numbers are
+stable device-tree identifiers, not hardware register offsets.

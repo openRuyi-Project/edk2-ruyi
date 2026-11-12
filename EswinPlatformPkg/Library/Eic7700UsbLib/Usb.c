@@ -1,4 +1,8 @@
 /** SPDX-License-Identifier: BSD-2-Clause-Patent */
+#include <IndustryStandard/Eic7700ClockIds.h>
+#include <IndustryStandard/Eic7700ResetIds.h>
+#include <IndustryStandard/Eic7700HspClockIds.h>
+#include <IndustryStandard/Eic7700HspResetIds.h>
 #include <PiDxe.h>
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
@@ -10,14 +14,6 @@
 #include <Library/TimerLib.h>
 
 // IDs in the EIC7700 clock and reset DT bindings.
-#define CLK_HSP_CFG          171
-#define CLK_HSP_ACLK         186
-#define CLK_HSP_PHY_REF      187
-#define HSP_CLK_USB0          15
-#define RESET_USB0_VAUX       84
-#define HSP_RESET_USB0        2
-#define HSP_RESET_USB0_PHY    4
-
 // SYSCRG and HSP register fields from the EIC7700 TRM.
 #define HSP_ACLK_CTRL        0x148
 #define HSP_CFG_CLK_CTRL     0x14c
@@ -149,15 +145,15 @@ Eic7700UsbInitialize (CONST VOID *Fdt, INT32 Node, BOOLEAN Device, UINTN *Core)
   {
     return EFI_COMPROMISED_DATA;
   }
-  Status = Provider (Fdt, Clocks, CLK_HSP_ACLK, "eswin,eic7700-clock", HSP_CFG_CLK_CTRL + 4, &Clock);
+  Status = Provider (Fdt, Clocks, EIC7700_CLK_GATE_HSP_ACLK, "eswin,eic7700-clock", HSP_CFG_CLK_CTRL + 4, &Clock);
   if (EFI_ERROR (Status)) {
     return Status;
   }
-  Status = Provider (Fdt, Clocks + 2, CLK_HSP_CFG, "eswin,eic7700-clock", HSP_CFG_CLK_CTRL + 4, &ProviderBase);
+  Status = Provider (Fdt, Clocks + 2, EIC7700_CLK_GATE_HSP_CFG_CLK, "eswin,eic7700-clock", HSP_CFG_CLK_CTRL + 4, &ProviderBase);
   if (EFI_ERROR (Status) || (ProviderBase != Clock)) {
     return EFI_UNSUPPORTED;
   }
-  Status = Provider (Fdt, Clocks + 4, HSP_CLK_USB0 + Port, "eswin,eic7700-hspcrg", HspBytes, &ProviderBase);
+  Status = Provider (Fdt, Clocks + 4, EIC7700_HSP_CLK_GATE_USB0 + Port, "eswin,eic7700-hspcrg", HspBytes, &ProviderBase);
   if (EFI_ERROR (Status) || (ProviderBase != Hsp)) {
     return EFI_UNSUPPORTED;
   }
@@ -180,7 +176,7 @@ Eic7700UsbInitialize (CONST VOID *Fdt, INT32 Node, BOOLEAN Device, UINTN *Core)
   {
     return EFI_COMPROMISED_DATA;
   }
-  Status = Provider (Fdt, Parents + 4, CLK_HSP_PHY_REF, "eswin,eic7700-clock", HSP_PHY_REF_CTRL + 4, &ProviderBase);
+  Status = Provider (Fdt, Parents + 4, EIC7700_CLK_GATE_HSP_SATA_OOB_CLK, "eswin,eic7700-clock", HSP_PHY_REF_CTRL + 4, &ProviderBase);
   if (EFI_ERROR (Status) || (ProviderBase != Clock)) {
     return EFI_UNSUPPORTED;
   }
@@ -193,15 +189,15 @@ Eic7700UsbInitialize (CONST VOID *Fdt, INT32 Node, BOOLEAN Device, UINTN *Core)
   {
     return EFI_COMPROMISED_DATA;
   }
-  Status = Provider (Fdt, Resets, RESET_USB0_VAUX + Port, "eswin,eic7700-reset", HSP_RESET_CTRL + 4, &Reset);
+  Status = Provider (Fdt, Resets, EIC7700_RESET_USB0_VAUX + Port, "eswin,eic7700-reset", HSP_RESET_CTRL + 4, &Reset);
   if (EFI_ERROR (Status)) {
     return Status;
   }
-  Status = Provider (Fdt, Resets + 2, HSP_RESET_USB0 + Port, "eswin,eic7700-hspcrg", HspBytes, &ProviderBase);
+  Status = Provider (Fdt, Resets + 2, EIC7700_HSP_RST_USB0 + Port, "eswin,eic7700-hspcrg", HspBytes, &ProviderBase);
   if (EFI_ERROR (Status) || (ProviderBase != Hsp)) {
     return EFI_UNSUPPORTED;
   }
-  Status = Provider (Fdt, Resets + 4, HSP_RESET_USB0_PHY + Port, "eswin,eic7700-hspcrg", HspBytes, &ProviderBase);
+  Status = Provider (Fdt, Resets + 4, EIC7700_HSP_RST_USB0_PHY + Port, "eswin,eic7700-hspcrg", HspBytes, &ProviderBase);
   if (EFI_ERROR (Status) || (ProviderBase != Hsp)) {
     return EFI_UNSUPPORTED;
   }

@@ -1,9 +1,8 @@
 /** SPDX-License-Identifier: BSD-2-Clause-Patent */
+#include <IndustryStandard/Eic7700ClockIds.h>
+#include <IndustryStandard/Eic7700ResetIds.h>
 #include "Host.h"
 
-#define CLK_MSHC0_CORE       190
-#define CLK_HSP_CFG          171
-#define CLK_HSP_AXI          186
 #define SYSCRG_HSP_AXI       0x148
 #define SYSCRG_HSP_CFG       0x14c
 #define SYSCRG_MSHC0         0x160
@@ -22,15 +21,6 @@
 #define PIN_INPUT_ENABLE     BIT0
 
 // EIC7700 reset-controller binding IDs.
-#define RESET_MSHC0_PHY      72
-#define RESET_MSHC1_PHY      73
-#define RESET_MSHC0_TXRX     75
-#define RESET_MSHC1_TXRX     76
-#define RESET_SD_PRST       87
-#define RESET_EMMC_PRST     88
-#define RESET_SD_ARST       91
-#define RESET_EMMC_ARST     92
-
 STATIC EFI_STATUS
 Cell (CONST VOID *Fdt, INT32 Node, CONST CHAR8 *Name, UINT32 *Value)
 {
@@ -126,8 +116,8 @@ ParsePort (CONST VOID *Fdt, INT32 Node, EIC_MMC_PORT *Port)
   UINT32 Rate, Width, Ohms;
   EFI_STATUS Status;
   STATIC CONST UINT32 ResetIds[2][4] = {
-    {RESET_EMMC_ARST, RESET_MSHC0_PHY, RESET_EMMC_PRST, RESET_MSHC0_TXRX},
-    {RESET_SD_ARST, RESET_MSHC1_PHY, RESET_SD_PRST, RESET_MSHC1_TXRX}
+    {EIC7700_RESET_HSP_EMMC_ARST, EIC7700_RESET_MSHC0_PHY, EIC7700_RESET_HSP_EMMC_PRST, EIC7700_RESET_MSHC0_TXRX},
+    {EIC7700_RESET_HSP_SD0_ARST, EIC7700_RESET_MSHC1_PHY, EIC7700_RESET_HSP_SD0_PRST, EIC7700_RESET_MSHC1_TXRX}
   };
   STATIC CONST CHAR8 *ResetNames[] = {"axi", "phy", "prstn", "txrx"};
 
@@ -169,8 +159,8 @@ ParsePort (CONST VOID *Fdt, INT32 Node, EIC_MMC_PORT *Port)
   Port->Delay = Port->Emmc ? 0x17 : 0x55;
 
   Data = FdtGetProp (Fdt, Node, "clocks", &Length);
-  if (!Data || Length != 24 || Fdt32ToCpu (Data[1]) != CLK_MSHC0_CORE + Id ||
-      Fdt32ToCpu (Data[3]) != CLK_HSP_CFG || Fdt32ToCpu (Data[5]) != CLK_HSP_AXI ||
+  if (!Data || Length != 24 || Fdt32ToCpu (Data[1]) != EIC7700_CLK_GATE_HSP_MSHC0_CORE_CLK + Id ||
+      Fdt32ToCpu (Data[3]) != EIC7700_CLK_GATE_HSP_CFG_CLK || Fdt32ToCpu (Data[5]) != EIC7700_CLK_GATE_HSP_ACLK ||
       Data[0] != Data[2] || Data[0] != Data[4] ||
       FdtStringListSearch (Fdt, Node, "clock-names", "core") != 0 ||
       FdtStringListSearch (Fdt, Node, "clock-names", "bus") != 1 ||

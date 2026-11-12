@@ -8,6 +8,7 @@
 [Sources]
   Sata.c
 [Packages]
+  EswinPlatformPkg/EswinPlatformPkg.dec
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   RuyiPlatformPkg/RuyiPlatformPkg.dec

@@ -4,6 +4,10 @@
  * Copyright 2026, Beijing ESWIN Computing Technology Co., Ltd.
  * Yulin Lu <luyulin@eswincomputing.com>
  */
+#include <IndustryStandard/Eic7700ClockIds.h>
+#include <IndustryStandard/Eic7700ResetIds.h>
+#include <IndustryStandard/Eic7700HspClockIds.h>
+#include <IndustryStandard/Eic7700HspResetIds.h>
 #include <PiDxe.h>
 #include <Guid/EventGroup.h>
 #include <Library/BaseLib.h>
@@ -18,13 +22,6 @@
 #include <Library/UefiBootServicesTableLib.h>
 
 // EIC7700 clock/reset binding IDs and their SYSCRG registers.
-#define CLK_HSP_CFG       171
-#define CLK_HSP_ACLK      186
-#define CLK_SATA_REF      187
-#define HSP_CLK_SATA      17
-#define RESET_SATA_ARST   96
-#define HSP_RESET_PORT    0
-#define HSP_RESET_PHY     1
 #define SYSCRG_HSP_RESET  0x11c
 #define SYSCRG_HSP_ACLK   0x148
 #define SYSCRG_HSP_CFG    0x14c
@@ -148,29 +145,29 @@ Parse (CONST VOID *Fdt, INT32 Node, SATA_CONTEXT *S)
   Status = FdtGetMmio (Fdt, PhyNode, 0, SATA_LOS_IDEN + 4, &S->Phy, NULL);
   if (EFI_ERROR (Status)) { return Status; }
   Status = Provider (Fdt, Node, "clocks", "clock-names", "pclk",
-                     "eswin,eic7700-clock", CLK_HSP_CFG, SYSCRG_SATA_REF + 4,
+                     "eswin,eic7700-clock", EIC7700_CLK_GATE_HSP_CFG_CLK, SYSCRG_SATA_REF + 4,
                      &S->Clock, NULL);
   if (EFI_ERROR (Status)) { return Status; }
   Status = Provider (Fdt, Node, "clocks", "clock-names", "aclk",
-                     "eswin,eic7700-clock", CLK_HSP_ACLK, SYSCRG_SATA_REF + 4, &Base, NULL);
+                     "eswin,eic7700-clock", EIC7700_CLK_GATE_HSP_ACLK, SYSCRG_SATA_REF + 4, &Base, NULL);
   if (EFI_ERROR (Status) || Base != S->Clock) { return EFI_UNSUPPORTED; }
   Status = Provider (Fdt, Node, "resets", "reset-names", "arst",
-                     "eswin,eic7700-reset", RESET_SATA_ARST, SYSCRG_HSP_RESET + 4,
+                     "eswin,eic7700-reset", EIC7700_RESET_SATA_ARST, SYSCRG_HSP_RESET + 4,
                      &S->Reset, NULL);
   if (EFI_ERROR (Status)) { return Status; }
   Status = Provider (Fdt, PhyNode, "clocks", "clock-names", "phy",
-                     "eswin,eic7700-hspcrg", HSP_CLK_SATA, HSP_SATA_RESET + 4,
+                     "eswin,eic7700-hspcrg", EIC7700_HSP_CLK_GATE_SATA, HSP_SATA_RESET + 4,
                      &S->Hsp, &HspNode);
   if (EFI_ERROR (Status)) { return Status; }
   if (S->Phy != S->Hsp + HSP_SATA_BASE) { return EFI_UNSUPPORTED; }
   Status = Provider (Fdt, HspNode, "clocks", "clock-names", "sata",
-                     "eswin,eic7700-clock", CLK_SATA_REF, SYSCRG_SATA_REF + 4, &Base, NULL);
+                     "eswin,eic7700-clock", EIC7700_CLK_GATE_HSP_SATA_OOB_CLK, SYSCRG_SATA_REF + 4, &Base, NULL);
   if (EFI_ERROR (Status) || Base != S->Clock) { return EFI_UNSUPPORTED; }
   Status = Provider (Fdt, PhyNode, "resets", "reset-names", "port",
-                     "eswin,eic7700-hspcrg", HSP_RESET_PORT, HSP_SATA_RESET + 4, &Base, NULL);
+                     "eswin,eic7700-hspcrg", EIC7700_HSP_RST_SATA_P0, HSP_SATA_RESET + 4, &Base, NULL);
   if (EFI_ERROR (Status) || Base != S->Hsp) { return EFI_UNSUPPORTED; }
   Status = Provider (Fdt, PhyNode, "resets", "reset-names", "phy",
-                     "eswin,eic7700-hspcrg", HSP_RESET_PHY, HSP_SATA_RESET + 4, &Base, NULL);
+                     "eswin,eic7700-hspcrg", EIC7700_HSP_RST_SATA_PHY, HSP_SATA_RESET + 4, &Base, NULL);
   if (EFI_ERROR (Status) || Base != S->Hsp) { return EFI_UNSUPPORTED; }
   Status = Tuning (Fdt, PhyNode, "eswin,tx-amplitude-tuning", Amplitude, 0x7f, &S->Amplitude);
   if (EFI_ERROR (Status)) { return Status; }
