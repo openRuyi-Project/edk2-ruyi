@@ -40,7 +40,6 @@
   gRuyiFastbootFileGuid
 
 [Pcd]
-  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutGlyphScale
   gEfiMdeModulePkgTokenSpaceGuid.PcdVideoHorizontalResolution
   gEfiMdeModulePkgTokenSpaceGuid.PcdVideoVerticalResolution
   gEfiMdeModulePkgTokenSpaceGuid.PcdSetupVideoHorizontalResolution

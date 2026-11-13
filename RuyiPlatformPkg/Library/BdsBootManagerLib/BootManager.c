@@ -5,7 +5,6 @@
 #include <Protocol/PciIo.h>
 #include <Protocol/PciRootBridgeIo.h>
 #include <IndustryStandard/Pci.h>
-#include <Uefi/UefiInternalFormRepresentation.h>
 #include <Guid/EventGroup.h>
 #include <Library/BaseLib.h>
 #include <Library/BootProgressLib.h>
@@ -31,6 +30,25 @@ UpdateConsoleGeometry (
 {
   EFI_GRAPHICS_OUTPUT_PROTOCOL  *Gop;
   UINTN                         Columns, Rows;
+  UINTN                         Mode;
+  EFI_STATUS                    Status;
+
+  // Keep the configured text grid readable on serial terminals. A graphics
+  // console can provide this grid without changing its underlying GOP mode.
+  for (Mode = 0; Mode < (UINTN)gST->ConOut->Mode->MaxMode; Mode++) {
+    Status = gST->ConOut->QueryMode (gST->ConOut, Mode, &Columns, &Rows);
+    if (!EFI_ERROR (Status) &&
+        (Columns == PcdGet32 (PcdConOutColumn)) &&
+        (Rows == PcdGet32 (PcdConOutRow)))
+    {
+      if (gST->ConOut->Mode->Mode != (INT32)Mode) {
+        Status = gST->ConOut->SetMode (gST->ConOut, Mode);
+        DEBUG ((DEBUG_INFO, "Console text mode %ux%u: %r\n", Columns, Rows, Status));
+      }
+
+      break;
+    }
+  }
 
   if (EFI_ERROR (
         gBS->HandleProtocol (
@@ -39,28 +57,16 @@ UpdateConsoleGeometry (
                (VOID **)&Gop
                )
         ) ||
-      (Gop->Mode == NULL) || (Gop->Mode->Info == NULL) ||
-      EFI_ERROR (
-        gST->ConOut->QueryMode (
-                       gST->ConOut,
-                       gST->ConOut->Mode->Mode,
-                       &Columns,
-                       &Rows
-                       )
-        ))
+      (Gop->Mode == NULL) || (Gop->Mode->Info == NULL))
   {
     return;
   }
 
-  // ConsoleSplitter owns the common graphics and text modes for all outputs.
+  // Preserve the selected pixel resolution for Setup as well as boot graphics.
   PcdSet32S (PcdVideoHorizontalResolution, Gop->Mode->Info->HorizontalResolution);
   PcdSet32S (PcdVideoVerticalResolution, Gop->Mode->Info->VerticalResolution);
   PcdSet32S (PcdSetupVideoHorizontalResolution, Gop->Mode->Info->HorizontalResolution);
   PcdSet32S (PcdSetupVideoVerticalResolution, Gop->Mode->Info->VerticalResolution);
-  PcdSet32S (PcdConOutColumn, (UINT32)Columns);
-  PcdSet32S (PcdConOutRow, (UINT32)Rows);
-  PcdSet32S (PcdSetupConOutColumn, (UINT32)Columns);
-  PcdSet32S (PcdSetupConOutRow, (UINT32)Rows);
 }
 
 STATIC VOID EFIAPI
@@ -73,7 +79,7 @@ GraphicsAvailable (
   EFI_DEVICE_PATH_PROTOCOL      *Path;
   EFI_GRAPHICS_OUTPUT_PROTOCOL  *Gop;
   UINTN                         Size;
-  UINT32                        Width, Height, Scale;
+  UINT32                        Width, Height;
 
   for ( ; ;) {
     Size = sizeof (Handle);
@@ -106,22 +112,11 @@ GraphicsAvailable (
     {
       Width  = Gop->Mode->Info->HorizontalResolution;
       Height = Gop->Mode->Info->VerticalResolution;
-      Scale  = MAX (
-                 1,
-                 MIN (
-                   PcdGet32 (PcdConOutGlyphScale),
-                   MIN (Width / (80 * EFI_GLYPH_WIDTH), Height / (25 * EFI_GLYPH_HEIGHT))
-                   )
-                 );
-      // Seed the first console from EDID; later outputs use the common modes.
+      // Seed the pixel resolution from EDID and retain the configured text grid.
       PcdSet32S (PcdVideoHorizontalResolution, Width);
       PcdSet32S (PcdVideoVerticalResolution, Height);
       PcdSet32S (PcdSetupVideoHorizontalResolution, Width);
       PcdSet32S (PcdSetupVideoVerticalResolution, Height);
-      PcdSet32S (PcdConOutColumn, Width / (EFI_GLYPH_WIDTH * Scale));
-      PcdSet32S (PcdConOutRow, Height / (EFI_GLYPH_HEIGHT * Scale));
-      PcdSet32S (PcdSetupConOutColumn, Width / (EFI_GLYPH_WIDTH * Scale));
-      PcdSet32S (PcdSetupConOutRow, Height / (EFI_GLYPH_HEIGHT * Scale));
       mGraphicsConfigured = TRUE;
     }
 
