@@ -119,11 +119,28 @@ NvStorageInstall (
   }
 
   Status = NvFvbInitialize (&mFvb, Mirror, Flash, FlashOffset);
-  // An interrupted reclaim can leave the header invalid. Publish the block
-  // interface for FTW to repair it, without yet publishing variable readiness.
   if (EFI_ERROR (Status) && (Status != EFI_VOLUME_CORRUPTED)) {
     DEBUG ((DEBUG_ERROR, "NV storage initialization failed: %r\n", Status));
     goto Error;
+  }
+
+  if (Status == EFI_VOLUME_CORRUPTED) {
+    DEBUG ((DEBUG_WARN, "NV store header invalid; erasing and initializing\n"));
+    for (UINT32 Offset = 0; Offset < NV_TOTAL_SIZE; Offset += NV_BLOCK_SIZE) {
+      Status = Flash->Erase (Flash->Context, FlashOffset + Offset);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "NV store erase failed at 0x%08x: %r\n",
+                FlashOffset + Offset, Status));
+        goto Error;
+      }
+    }
+
+    // Reload the erased region and write a fresh variable-store header.
+    Status = NvFvbInitialize (&mFvb, Mirror, Flash, FlashOffset);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "NV store initialization failed: %r\n", Status));
+      goto Error;
+    }
   }
 
   Status = PcdSet64S (PcdFlashNvStorageVariableBase64, (UINTN)Mirror);
