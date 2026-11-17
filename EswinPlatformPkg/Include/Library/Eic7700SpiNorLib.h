@@ -4,6 +4,7 @@
 
 EFI_STATUS Eic7700SpiNorInit (BOOLEAN Runtime);
 UINT32 Eic7700SpiNorSize (VOID);
+EFI_STATUS Eic7700SpiNorReadUniqueId (UINT8 Id[8]);
 EFI_STATUS Eic7700SpiNorRead (UINT32 Offset, UINTN Size, VOID *Buffer);
 // Program one page without crossing its 256-byte boundary.
 EFI_STATUS Eic7700SpiNorWrite (UINT32 Offset, UINTN Size, CONST VOID *Buffer);

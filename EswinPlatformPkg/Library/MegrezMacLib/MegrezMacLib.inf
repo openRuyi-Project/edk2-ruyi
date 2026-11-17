@@ -1,0 +1,22 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = MegrezMacLib
+  FILE_GUID = 198dcf73-c7c5-480a-bc73-3780d2a3f848
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = PlatformMacAddressLib
+[Sources]
+  Mac.c
+[Packages]
+  MdePkg/MdePkg.dec
+  CryptoPkg/CryptoPkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+  EswinPlatformPkg/EswinPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  BaseCryptLib
+  Eic7700SpiNorLib
+  FdtBoardInfoLib
+  FdtLib
+  PrintLib

@@ -392,6 +392,28 @@ Eic7700SpiNorErase (UINT32 Offset, UINTN Size)
   return Status;
 }
 
+EFI_STATUS
+Eic7700SpiNorReadUniqueId (UINT8 Id[8])
+{
+  SPI_ACCESS Access;
+  EFI_STATUS Status;
+  UINT8 Bytes[9];
+  UINT8 Any = 0, All = 0xff;
+
+  if (Id == NULL) { return EFI_INVALID_PARAMETER; }
+  Status = BeginAccess (&Access);
+  if (EFI_ERROR (Status)) { return Status; }
+  // Winbond 4Bh uses four dummy bytes. ReadData supplies three through
+  // its address field. Discard the first received byte for the fourth.
+  Status = Execute (0x4b, ReadData, 0, sizeof (Bytes), NULL, Bytes);
+  EndAccess (&Access);
+  if (EFI_ERROR (Status)) { return Status; }
+  for (UINTN I = 1; I < sizeof (Bytes); I++) { Any |= Bytes[I]; All &= Bytes[I]; }
+  if (Any == 0 || All == 0xff) { return EFI_DEVICE_ERROR; }
+  CopyMem (Id, Bytes + 1, 8);
+  return EFI_SUCCESS;
+}
+
 STATIC EFI_STATUS
 MapPage (UINTN Address, BOOLEAN Runtime)
 {
