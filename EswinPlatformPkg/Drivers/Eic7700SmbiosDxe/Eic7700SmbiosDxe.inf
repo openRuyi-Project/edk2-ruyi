@@ -1,10 +1,10 @@
 ## SPDX-License-Identifier: BSD-2-Clause-Patent
 [Defines]
   INF_VERSION = 0x0001001B
-  BASE_NAME = PremierP550SmbiosDxe
+  BASE_NAME = Eic7700SmbiosDxe
   FILE_GUID = 589dc71a-3389-468c-bc84-44fdabd1a7b9
   MODULE_TYPE = DXE_DRIVER
-  ENTRY_POINT = PublishPremierP550Info
+  ENTRY_POINT = PublishEic7700Info
 [Sources]
   Smbios.c
 [Packages]
@@ -16,6 +16,7 @@
   UefiDriverEntryPoint
   BaseLib
   BaseMemoryLib
+  Eic7700BoardProfileLib
   Eic7700InfoLib
   Eic7700SpiNorLib
   HobLib

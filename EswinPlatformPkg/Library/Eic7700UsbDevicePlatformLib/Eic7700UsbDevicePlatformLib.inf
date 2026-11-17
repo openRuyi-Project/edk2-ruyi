@@ -1,7 +1,7 @@
 ## SPDX-License-Identifier: BSD-2-Clause-Patent
 [Defines]
   INF_VERSION = 0x0001001B
-  BASE_NAME = PremierP550UsbDevicePlatformLib
+  BASE_NAME = Eic7700UsbDevicePlatformLib
   FILE_GUID = 56a82f81-5b8b-476b-9c57-f64879dbcc09
   MODULE_TYPE = DXE_DRIVER
   LIBRARY_CLASS = UsbDevicePlatformLib
@@ -16,7 +16,9 @@
   BaseLib
   BaseMemoryLib
   DebugLib
+  Eic7700BoardProfileLib
   Eic7700UsbLib
+  UefiLib
   FdtBoardInfoLib
   FdtHardwareLib
   FdtLib

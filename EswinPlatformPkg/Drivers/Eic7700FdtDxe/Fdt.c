@@ -26,7 +26,7 @@ Publish (EFI_EVENT Event, VOID *Context)
   gBS->CloseEvent (Event);
   Status = EfiGetSystemConfigurationTable (&gFdtTableGuid, &Original);
   if (EFI_ERROR (Status) || FdtCheckHeader (Original) || FdtTotalSize (Original) > SIZE_1MB) {
-    DEBUG ((DEBUG_ERROR, "P550 OS device tree unavailable\n"));
+    DEBUG ((DEBUG_ERROR, "EIC7700 OS device tree unavailable\n"));
     return;
   }
   Pages = EFI_SIZE_TO_PAGES (FdtTotalSize (Original) + EFI_PAGE_SIZE);
@@ -48,15 +48,15 @@ Publish (EFI_EVENT Event, VOID *Context)
   }
   Status = gBS->InstallConfigurationTable (&gFdtTableGuid, Copy);
   if (EFI_ERROR (Status)) { goto Failed; }
-  DEBUG ((DEBUG_INFO, "P550 OS device tree preserves factory Ethernet addresses\n"));
+  DEBUG ((DEBUG_INFO, "EIC7700 OS device tree publishes Ethernet addresses\n"));
   return;
 Failed:
-  DEBUG ((DEBUG_ERROR, "P550 OS device tree update failed\n"));
+  DEBUG ((DEBUG_ERROR, "EIC7700 OS device tree update failed\n"));
   gBS->FreePages (Address, Pages);
 }
 
 EFI_STATUS EFIAPI
-PremierP550FdtEntry (EFI_HANDLE Image, EFI_SYSTEM_TABLE *SystemTable)
+Eic7700FdtEntry (EFI_HANDLE Image, EFI_SYSTEM_TABLE *SystemTable)
 {
   EFI_EVENT Event;
   return gBS->CreateEventEx (EVT_NOTIFY_SIGNAL, TPL_CALLBACK, Publish, NULL,

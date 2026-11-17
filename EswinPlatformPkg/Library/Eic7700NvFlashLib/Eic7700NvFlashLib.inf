@@ -1,15 +1,16 @@
 ## SPDX-License-Identifier: BSD-2-Clause-Patent
 [Defines]
   INF_VERSION = 0x0001001B
-  BASE_NAME = P550SettingsStorageLib
-  FILE_GUID = 787f2430-0ae0-487f-852b-92286a172c7f
+  BASE_NAME = Eic7700NvFlashLib
+  FILE_GUID = d470e76b-691e-4a6f-9bb3-6dbdb18619ed
   MODULE_TYPE = BASE
-  LIBRARY_CLASS = PlatformSettingsStorageLib
+  LIBRARY_CLASS = Eic7700NvFlashLib
 [Sources]
-  Defaults.c
+  Flash.c
 [Packages]
+  EswinPlatformPkg/EswinPlatformPkg.dec
   MdePkg/MdePkg.dec
   RuyiPlatformPkg/RuyiPlatformPkg.dec
-  EswinPlatformPkg/EswinPlatformPkg.dec
 [LibraryClasses]
+  BaseLib
   Eic7700SpiNorLib

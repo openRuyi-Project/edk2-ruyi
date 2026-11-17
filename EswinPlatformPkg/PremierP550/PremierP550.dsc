@@ -26,25 +26,26 @@
 !include RuyiPlatformPkg/Console.dsc.inc
 
 [LibraryClasses]
+  Eic7700BoardProfileLib|EswinPlatformPkg/Library/PremierP550ProfileLib/PremierP550ProfileLib.inf
   Eic7700BoardGpioLib|EswinPlatformPkg/Library/PremierP550GpioLib/PremierP550GpioLib.inf
   PlatformBootPolicyLib|RuyiPlatformPkg/Library/DefaultBootPolicyLib/DefaultBootPolicyLib.inf
   PlatformSettingsLib|RuyiPlatformPkg/Library/PlatformSettingsLib/PlatformSettingsLib.inf
-  PlatformSettingsStorageLib|EswinPlatformPkg/Library/P550SettingsStorageLib/P550SettingsStorageLib.inf
+  PlatformSettingsStorageLib|EswinPlatformPkg/Library/Eic7700SettingsStorageLib/Eic7700SettingsStorageLib.inf
   CpuConfigLib|RuyiPlatformPkg/Library/CpuConfigLibNull/CpuConfigLibNull.inf
   DwcPcieTrainingLib|RuyiPlatformPkg/Library/DwcPcieTrainingLib/DwcPcieTrainingLib.inf
   MemoryConfigLib|EswinPlatformPkg/Library/Eic7700MemoryConfigLib/Eic7700MemoryConfigLib.inf
   ExtractGuidedSectionLib|MdePkg/Library/DxeExtractGuidedSectionLib/DxeExtractGuidedSectionLib.inf
   CorebootImageLib|RuyiPlatformPkg/Library/CorebootImageLib/CorebootImageLib.inf
   FirmwareUpdateLib|RuyiPlatformPkg/Library/FirmwareUpdateLib/FirmwareUpdateLib.inf
-  PlatformFirmwareUpdateLib|EswinPlatformPkg/Library/PremierP550FirmwareUpdateLib/PremierP550FirmwareUpdateLib.inf
+  PlatformFirmwareUpdateLib|EswinPlatformPkg/Library/Eic7700FirmwareUpdateLib/Eic7700FirmwareUpdateLib.inf
   NvFvbLib|RuyiPlatformPkg/Library/NvFvbLib/NvFvbLib.inf
   NvStorageLib|RuyiPlatformPkg/Library/NvStorageLib/NvStorageLib.inf
   Eic7700SpiNorLib|EswinPlatformPkg/Library/Eic7700SpiNorLib/Eic7700SpiNorLib.inf
-  PremierP550NvFlashLib|EswinPlatformPkg/Library/PremierP550NvFlashLib/PremierP550NvFlashLib.inf
+  Eic7700NvFlashLib|EswinPlatformPkg/Library/Eic7700NvFlashLib/Eic7700NvFlashLib.inf
   FastbootTransportLib|RuyiPlatformPkg/Library/Dwc3FastbootLib/Dwc3FastbootLib.inf
   FastbootStorageLib|RuyiPlatformPkg/Library/FastbootStorageLib/FastbootStorageLib.inf
   FastbootPlatformLib|EswinPlatformPkg/Library/Eic7700FastbootPlatformLib/Eic7700FastbootPlatformLib.inf
-  UsbDevicePlatformLib|EswinPlatformPkg/Library/PremierP550UsbDevicePlatformLib/PremierP550UsbDevicePlatformLib.inf
+  UsbDevicePlatformLib|EswinPlatformPkg/Library/Eic7700UsbDevicePlatformLib/Eic7700UsbDevicePlatformLib.inf
   Eic7700UsbLib|EswinPlatformPkg/Library/Eic7700UsbLib/Eic7700UsbLib.inf
   EqosLib|RuyiPlatformPkg/Library/EqosLib/EqosLib.inf
   EqosPlatformLib|EswinPlatformPkg/Library/Eic7700EqosPlatformLib/Eic7700EqosPlatformLib.inf
@@ -149,7 +150,7 @@
     <LibraryClasses>
       NULL|MdeModulePkg/Library/LzmaCustomDecompressLib/LzmaCustomDecompressLib.inf
   }
-  EswinPlatformPkg/Drivers/PremierP550FdtDxe/PremierP550FdtDxe.inf
+  EswinPlatformPkg/Drivers/Eic7700FdtDxe/Eic7700FdtDxe.inf
   RuyiPlatformPkg/Drivers/EqosSnpDxe/EqosSnpDxe.inf
   EswinPlatformPkg/Drivers/Eic7700IoMmuDxe/Eic7700IoMmuDxe.inf
   EswinPlatformPkg/Drivers/Eic7700PciControllerDxe/Eic7700PciControllerDxe.inf
@@ -172,7 +173,7 @@
   MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
   MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
   MdeModulePkg/Universal/Disk/UdfDxe/UdfDxe.inf
-  EswinPlatformPkg/Drivers/PremierP550SmbiosDxe/PremierP550SmbiosDxe.inf
+  EswinPlatformPkg/Drivers/Eic7700SmbiosDxe/Eic7700SmbiosDxe.inf
   RuyiPlatformPkg/Drivers/SystemInfoDxe/SystemInfoDxe.inf
   SecurityPkg/Hash2DxeCrypto/Hash2DxeCrypto.inf
   MdeModulePkg/Application/BootManagerMenuApp/BootManagerMenuApp.inf
@@ -182,7 +183,7 @@
 !include RuyiPlatformPkg/Network.dsc.inc
 
 [Components]
-  EswinPlatformPkg/Drivers/PremierP550NvStorageDxe/PremierP550NvStorageDxe.inf
+  EswinPlatformPkg/Drivers/Eic7700NvStorageDxe/Eic7700NvStorageDxe.inf
   MdeModulePkg/Universal/FaultTolerantWriteDxe/FaultTolerantWriteDxe.inf {
     <LibraryClasses>
       NULL|RuyiPlatformPkg/Library/NvReadyLib/FtwReadyLib.inf

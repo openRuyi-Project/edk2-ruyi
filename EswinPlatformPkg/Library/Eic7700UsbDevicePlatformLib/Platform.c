@@ -5,7 +5,9 @@
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
+#include <Library/Eic7700BoardProfileLib.h>
 #include <Library/Eic7700UsbLib.h>
+#include <Library/UefiLib.h>
 #include <Library/FdtBoardInfoLib.h>
 #include <Library/FdtHardwareLib.h>
 #include <Library/FdtLib.h>
@@ -99,6 +101,11 @@ UsbDevicePlatformInit (
     return EFI_UNSUPPORTED;
   }
   mRestoreHost = AsciiStrCmp (Mode, "host") == 0;
+  if (mRestoreHost && !Eic7700GetBoardProfile ()->FastbootCanSwitchHostPort) {
+    Print (L"USB Fastboot requires Recovery mode and the debug USB-C cable.\r\n");
+    return EFI_UNSUPPORTED;
+  }
+
   Status = FdtGetMmio (mFdt, mNode, 0, SIZE_64KB, Base, NULL);
   if (EFI_ERROR (Status)) {
     return Status;
@@ -153,7 +160,7 @@ UsbDevicePlatformStop (
     }
   }
   Status = gBS->ConnectController (mHost, NULL, NULL, TRUE);
-  DEBUG ((DEBUG_INFO, "P550 USB0 host reconnect: %r\n", Status));
+  DEBUG ((DEBUG_INFO, "EIC7700 USB0 host reconnect: %r\n", Status));
   return Status;
 }
 

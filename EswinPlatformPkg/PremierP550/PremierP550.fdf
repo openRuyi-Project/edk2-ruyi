@@ -59,11 +59,11 @@ INF  MdeModulePkg/Universal/PrintDxe/PrintDxe.inf
 INF  MdeModulePkg/Universal/ResetSystemRuntimeDxe/ResetSystemRuntimeDxe.inf
 INF  MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf
 INF  MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
-INF  EswinPlatformPkg/Drivers/PremierP550SmbiosDxe/PremierP550SmbiosDxe.inf
+INF  EswinPlatformPkg/Drivers/Eic7700SmbiosDxe/Eic7700SmbiosDxe.inf
 INF  RuyiPlatformPkg/Drivers/SystemInfoDxe/SystemInfoDxe.inf
 INF  MdeModulePkg/Universal/WatchdogTimerDxe/WatchdogTimer.inf
 INF  MdeModulePkg/Universal/Variable/RuntimeDxe/VariableRuntimeDxe.inf
-INF  EswinPlatformPkg/Drivers/PremierP550NvStorageDxe/PremierP550NvStorageDxe.inf
+INF  EswinPlatformPkg/Drivers/Eic7700NvStorageDxe/Eic7700NvStorageDxe.inf
 INF  MdeModulePkg/Universal/FaultTolerantWriteDxe/FaultTolerantWriteDxe.inf
 INF  MdeModulePkg/Universal/Console/ConPlatformDxe/ConPlatformDxe.inf
 INF  MdeModulePkg/Universal/Console/ConSplitterDxe/ConSplitterDxe.inf
@@ -110,7 +110,7 @@ INF MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
 INF MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
 INF MdeModulePkg/Universal/Disk/UdfDxe/UdfDxe.inf
 
-INF EswinPlatformPkg/Drivers/PremierP550FdtDxe/PremierP550FdtDxe.inf
+INF EswinPlatformPkg/Drivers/Eic7700FdtDxe/Eic7700FdtDxe.inf
 INF RuyiPlatformPkg/Drivers/EqosSnpDxe/EqosSnpDxe.inf
 INF EswinPlatformPkg/Drivers/Eic7700IoMmuDxe/Eic7700IoMmuDxe.inf
 INF EswinPlatformPkg/Drivers/Eic7700PciControllerDxe/Eic7700PciControllerDxe.inf

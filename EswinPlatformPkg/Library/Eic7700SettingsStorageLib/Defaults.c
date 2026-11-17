@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: BSD-2-Clause-Patent */
-#include <IndustryStandard/P550FirmwareDefaults.h>
+#include <IndustryStandard/Eic7700FirmwareDefaults.h>
 #include <Library/PlatformSettingsLib.h>
 #include <Library/Eic7700SpiNorLib.h>
 
@@ -8,12 +8,12 @@ Access (UINTN Slot, UINTN Offset, UINTN Size, VOID *Data, BOOLEAN Write, BOOLEAN
 {
   UINT32 Address;
   EFI_STATUS Status;
-  if (Slot >= SETTINGS_SLOT_COUNT || Offset > P550_DEFAULTS_STRIDE ||
-      Size > P550_DEFAULTS_STRIDE - Offset || (Size && Data == NULL)) { return EFI_INVALID_PARAMETER; }
-  Address = P550_DEFAULTS_OFFSET + (UINT32)Slot * P550_DEFAULTS_STRIDE + (UINT32)Offset;
+  if (Slot >= SETTINGS_SLOT_COUNT || Offset > EIC7700_DEFAULTS_STRIDE ||
+      Size > EIC7700_DEFAULTS_STRIDE - Offset || (Size && Data == NULL)) { return EFI_INVALID_PARAMETER; }
+  Address = EIC7700_DEFAULTS_OFFSET + (UINT32)Slot * EIC7700_DEFAULTS_STRIDE + (UINT32)Offset;
   Status = Eic7700SpiNorInit (FALSE);
   if (EFI_ERROR (Status)) { return Status; }
-  if (Erase) { return Eic7700SpiNorErase (Address, P550_DEFAULTS_STRIDE); }
+  if (Erase) { return Eic7700SpiNorErase (Address, EIC7700_DEFAULTS_STRIDE); }
   return Write ? Eic7700SpiNorWrite (Address, Size, Data) : Eic7700SpiNorRead (Address, Size, Data);
 }
 EFI_STATUS PlatformSettingsStorageRead (UINTN Slot, UINTN Offset, UINTN Size, VOID *Data)

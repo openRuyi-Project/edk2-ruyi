@@ -2,9 +2,10 @@
 #include <IndustryStandard/Eic7700BootConfig.h>
 #include <Library/PlatformFirmwareUpdateLib.h>
 #include <Library/PlatformSettingsLib.h>
-#include <IndustryStandard/P550FirmwareDefaults.h>
+#include <IndustryStandard/Eic7700FirmwareDefaults.h>
 #include <Library/Eic7700SpiNorLib.h>
-#include <Library/PremierP550NvFlashLib.h>
+#include <Library/Eic7700NvFlashLib.h>
+#include <Library/Eic7700BoardProfileLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -15,7 +16,7 @@ PlatformFirmwareUpdateGetInfo (
   PLATFORM_FIRMWARE_UPDATE_INFO  *Info
   )
 {
-  Info->ImageSize          = P550_SPI_IMAGE_BYTES;
+  Info->ImageSize          = EIC7700_SPI_IMAGE_BYTES;
   Info->PreservationNotice = L"UEFI variables and DDR ECC settings are preserved.";
 }
 
@@ -39,22 +40,32 @@ PlatformFirmwareUpdateValidate (
   UINTN       Size
   )
 {
-  EFI_STATUS Status = PremierP550FirmwareImageValid (Image, Size);
+  CONST EIC7700_BOARD_PROFILE *Profile = Eic7700GetBoardProfile ();
+  EFI_STATUS Status;
+  if (Profile->FactoryOffset > Size || Profile->FactoryBytes > Size - Profile->FactoryOffset ||
+      Profile->FactoryOffset % SIZE_64KB || Profile->FactoryBytes % SIZE_64KB) {
+    return EFI_INVALID_PARAMETER;
+  }
+  Status = Eic7700FirmwareImageValid (Image, Size);
   if (!EFI_ERROR (Status)) { Status = Eic7700SpiNorInit (FALSE); }
-  if (!EFI_ERROR (Status) && Eic7700SpiNorSize () < P550_SPI_IMAGE_BYTES) { Status = EFI_UNSUPPORTED; }
+  if (!EFI_ERROR (Status) && Eic7700SpiNorSize () < EIC7700_SPI_IMAGE_BYTES) { Status = EFI_UNSUPPORTED; }
   return Status;
 }
 
 STATIC BOOLEAN mPreserveDefaults;
+
 
 STATIC BOOLEAN
 Preserved (
   UINT32  Offset
   )
 {
-  return (mPreserveDefaults && Offset >= P550_DEFAULTS_OFFSET &&
-          Offset < P550_DEFAULTS_OFFSET + SETTINGS_SLOT_COUNT * P550_DEFAULTS_STRIDE) ||
-         (Offset >= P550_NV_OFFSET && Offset < P550_NV_OFFSET + NV_TOTAL_SIZE) ||
+  CONST EIC7700_BOARD_PROFILE *Profile = Eic7700GetBoardProfile ();
+  return (Profile->FactoryBytes && Offset >= Profile->FactoryOffset &&
+          Offset - Profile->FactoryOffset < Profile->FactoryBytes) ||
+         (mPreserveDefaults && Offset >= EIC7700_DEFAULTS_OFFSET &&
+          Offset < EIC7700_DEFAULTS_OFFSET + SETTINGS_SLOT_COUNT * EIC7700_DEFAULTS_STRIDE) ||
+         (Offset >= EIC7700_NV_OFFSET && Offset < EIC7700_NV_OFFSET + NV_TOTAL_SIZE) ||
          (Offset >= EIC7700_BOOT_CONFIG_OFFSET &&
           Offset < EIC7700_BOOT_CONFIG_OFFSET +
                    EIC7700_BOOT_CONFIG_SLOT_COUNT * EIC7700_BOOT_CONFIG_SLOT_SIZE);
@@ -84,7 +95,7 @@ PlatformFirmwareUpdate (
   EFI_FIRMWARE_VOLUME_BLOCK_PROTOCOL  *Fvb   = NULL;
   EFI_FVB_ATTRIBUTES_2                Attributes;
   UINT8                               *Saved = NULL, *Scratch = NULL;
-  UINTN                               Done = 0, Total = P550_SPI_IMAGE_BYTES - NV_TOTAL_SIZE -
+  UINTN                               Done = 0, Total = EIC7700_SPI_IMAGE_BYTES - NV_TOTAL_SIZE -
       EIC7700_BOOT_CONFIG_SLOT_COUNT * EIC7700_BOOT_CONFIG_SLOT_SIZE;
   EFI_STATUS                          Status = PlatformFirmwareUpdateValidate (Image, Size);
 
@@ -92,6 +103,7 @@ PlatformFirmwareUpdate (
     return Status;
   }
 
+  Total -= Eic7700GetBoardProfile ()->FactoryBytes;
   Saved   = AllocatePool (NV_TOTAL_SIZE);
   Scratch = AllocatePool (SIZE_64KB);
   if (!Saved || !Scratch) {
@@ -105,7 +117,7 @@ PlatformFirmwareUpdate (
   gBS->RestoreTPL (DefaultsTpl);
   mPreserveDefaults = !EFI_ERROR (Status);
   if (EFI_ERROR (Status) && Status != EFI_NOT_FOUND) { goto Out; }
-  if (mPreserveDefaults) { Total -= SETTINGS_SLOT_COUNT * P550_DEFAULTS_STRIDE; }
+  if (mPreserveDefaults) { Total -= SETTINGS_SLOT_COUNT * EIC7700_DEFAULTS_STRIDE; }
   Status = FirmwareUpdateFreezeNv (&Fvb, &Attributes);
   if (EFI_ERROR (Status)) {
     goto Out;
@@ -117,7 +129,7 @@ PlatformFirmwareUpdate (
   }
 
   for (UINT32 Pos = 0; Pos < NV_TOTAL_SIZE; Pos += SIZE_64KB) {
-    UINT32  Offset = P550_NV_OFFSET + Pos;
+    UINT32  Offset = EIC7700_NV_OFFSET + Pos;
     Status = ReadFlash (Offset, SIZE_64KB, Saved + Pos);
     if (EFI_ERROR (Status)) {
       goto Out;
@@ -126,8 +138,8 @@ PlatformFirmwareUpdate (
 
   // Update the first-stage boot block last. Every changed sector is verified
   // before moving on; unchanged sectors and the variable region are kept.
-  for (UINT32 Index = 1; Index <= P550_SPI_IMAGE_BYTES / SIZE_64KB; Index++) {
-    UINT32  Offset = Index == P550_SPI_IMAGE_BYTES / SIZE_64KB ? 0 : Index * SIZE_64KB;
+  for (UINT32 Index = 1; Index <= EIC7700_SPI_IMAGE_BYTES / SIZE_64KB; Index++) {
+    UINT32  Offset = Index == EIC7700_SPI_IMAGE_BYTES / SIZE_64KB ? 0 : Index * SIZE_64KB;
     if (Preserved (Offset)) {
       continue;
     }
@@ -198,7 +210,7 @@ PlatformFirmwareUpdate (
   }
 
   for (UINT32 Pos = 0; Pos < NV_TOTAL_SIZE; Pos += SIZE_64KB) {
-    UINT32  Offset = P550_NV_OFFSET + Pos;
+    UINT32  Offset = EIC7700_NV_OFFSET + Pos;
     Status = ReadFlash (Offset, SIZE_64KB, Scratch);
     if (!EFI_ERROR (Status) && CompareMem (Scratch, Saved + Pos, SIZE_64KB)) {
       Status = EFI_CRC_ERROR;

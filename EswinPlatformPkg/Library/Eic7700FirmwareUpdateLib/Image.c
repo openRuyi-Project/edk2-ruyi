@@ -2,10 +2,11 @@
 #include <PiDxe.h>
 #include <Library/BaseLib.h>
 #include <Library/PlatformSettingsLib.h>
-#include <IndustryStandard/P550FirmwareDefaults.h>
+#include <IndustryStandard/Eic7700FirmwareDefaults.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/CorebootImageLib.h>
-#include <Library/PremierP550NvFlashLib.h>
+#include <Library/Eic7700BoardProfileLib.h>
+#include <Library/Eic7700NvFlashLib.h>
 #include "Internal.h"
 
 #define FHT_MAGIC        0x42575345U
@@ -17,7 +18,6 @@
 #define CBFS_OFFSET      0x21000U
 #define CBFS_BYTES       (ROM_BYTES - CBFS_OFFSET)
 #define SCPU_ADDRESS     0x59000000ULL
-#define MCPU_ADDRESS     0x90000000ULL
 
 STATIC BOOLEAN
 MapValid (CONST UINT8 *Map)
@@ -45,18 +45,15 @@ MapValid (CONST UINT8 *Map)
 }
 
 EFI_STATUS
-PremierP550FirmwareImageValid (CONST VOID *Buffer, UINTN Size)
+Eic7700FirmwareImageValid (CONST VOID *Buffer, UINTN Size)
 {
   CONST UINT8 *Image = Buffer, *Entry, *Header, *Rom = NULL;
   STATIC CONST UINT8 Kinds[] = {0x70, 0x10, 0x30};
-  CONST COREBOOT_IMAGE_LAYOUT Layout = {
-    "sifive,hifive-premier-p550", "CONFIG_BOARD_SIFIVE_HIFIVE_PREMIER_P550=y",
-    NULL, 0x82200000, SIZE_4MB
-  };
+  CONST COREBOOT_IMAGE_LAYOUT *Layout = &Eic7700GetBoardProfile ()->Image;
   UINT64 Offset, Bytes, Address, End = 8 + ARRAY_SIZE (Kinds) * ENTRY_BYTES;
   UINTN Index;
 
-  if (!Image || Size != P550_SPI_IMAGE_BYTES) { return EFI_BAD_BUFFER_SIZE; }
+  if (!Image || Size != EIC7700_SPI_IMAGE_BYTES) { return EFI_BAD_BUFFER_SIZE; }
   if (ReadUnaligned32 ((CONST UINT32 *)Image) != FHT_MAGIC ||
       ReadUnaligned32 ((CONST UINT32 *)(Image + 4)) != ARRAY_SIZE (Kinds)) {
     return EFI_COMPROMISED_DATA;
@@ -69,13 +66,13 @@ PremierP550FirmwareImageValid (CONST VOID *Buffer, UINTN Size)
         Entry[22] != Kinds[Index] || Entry[23] != (Index == 2) ||
         ReadUnaligned32 ((CONST UINT32 *)(Entry + 24)) ||
         ReadUnaligned64 ((CONST UINT64 *)(Entry + 28)) ||
-        Offset < End || (Offset % 32) || Offset >= P550_FIRMWARE_BYTES ||
-        Bytes > P550_FIRMWARE_BYTES - Offset ||
-        SIGNATURE_BYTES > P550_FIRMWARE_BYTES - Offset - Bytes || !Bytes) {
+        Offset < End || (Offset % 32) || Offset >= EIC7700_FIRMWARE_BYTES ||
+        Bytes > EIC7700_FIRMWARE_BYTES - Offset ||
+        SIGNATURE_BYTES > EIC7700_FIRMWARE_BYTES - Offset - Bytes || !Bytes) {
       return EFI_COMPROMISED_DATA;
     }
     Header = Image + Offset;
-    Address = Index == 2 ? MCPU_ADDRESS : SCPU_ADDRESS;
+    Address = Index == 2 ? Eic7700GetBoardProfile ()->RomAddress : SCPU_ADDRESS;
     if (ReadUnaligned32 ((CONST UINT32 *)Header) != SIGNATURE_MAGIC ||
         ReadUnaligned64 ((CONST UINT64 *)(Header + 16)) != Offset ||
         ReadUnaligned64 ((CONST UINT64 *)(Header + 24)) != Bytes ||
@@ -90,8 +87,8 @@ PremierP550FirmwareImageValid (CONST VOID *Buffer, UINTN Size)
     End = Offset + SIGNATURE_BYTES + Bytes;
   }
   if (!MapValid (Rom + FMAP_OFFSET)) { return EFI_COMPROMISED_DATA; }
-  if (EFI_ERROR (PlatformSettingsImageValid (Image, Size, P550_DEFAULTS_OFFSET, P550_DEFAULTS_STRIDE))) {
+  if (EFI_ERROR (PlatformSettingsImageValid (Image, Size, EIC7700_DEFAULTS_OFFSET, EIC7700_DEFAULTS_STRIDE))) {
     return EFI_COMPROMISED_DATA;
   }
-  return CorebootImageValidate (Rom + CBFS_OFFSET, CBFS_BYTES, &Layout);
+  return CorebootImageValidate (Rom + CBFS_OFFSET, CBFS_BYTES, Layout);
 }

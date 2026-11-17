@@ -3,11 +3,11 @@
 #include <Protocol/FdtClient.h>
 #include <Library/Eic7700SpiNorLib.h>
 #include <Library/NvStorageLib.h>
-#include <Library/PremierP550NvFlashLib.h>
+#include <Library/Eic7700NvFlashLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 
 EFI_STATUS EFIAPI
-PremierP550NvStorageEntry (EFI_HANDLE Image, EFI_SYSTEM_TABLE *SystemTable)
+Eic7700NvStorageEntry (EFI_HANDLE Image, EFI_SYSTEM_TABLE *SystemTable)
 {
   NV_FLASH_OPS Ops;
   EFI_STATUS Status;
@@ -23,7 +23,7 @@ PremierP550NvStorageEntry (EFI_HANDLE Image, EFI_SYSTEM_TABLE *SystemTable)
       return EFI_DEVICE_ERROR;
     }
   }
-  Status = PremierP550NvFlashInitialize (TRUE, &Ops);
+  Status = Eic7700NvFlashInitialize (TRUE, &Ops);
   if (EFI_ERROR (Status)) { return Status; }
-  return NvStorageInstall (&Ops, P550_NV_OFFSET, Eic7700SpiNorVirtualAddressChange);
+  return NvStorageInstall (&Ops, EIC7700_NV_OFFSET, Eic7700SpiNorVirtualAddressChange);
 }

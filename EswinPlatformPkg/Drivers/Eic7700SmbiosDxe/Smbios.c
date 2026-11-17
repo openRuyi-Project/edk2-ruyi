@@ -5,6 +5,7 @@
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/Eic7700InfoLib.h>
+#include <Library/Eic7700BoardProfileLib.h>
 #include <Library/Eic7700SpiNorLib.h>
 #include <Library/HobLib.h>
 #include <Library/MemoryAllocationLib.h>
@@ -50,7 +51,7 @@ AddRecord (
 }
 
 EFI_STATUS EFIAPI
-PublishPremierP550Info (
+PublishEic7700Info (
   EFI_HANDLE        Image,
   EFI_SYSTEM_TABLE  *SystemTable
   )
@@ -66,8 +67,8 @@ PublishPremierP550Info (
   SMBIOS_TABLE_TYPE19     Range  = { 0 };
   EFI_HOB_GENERIC_HEADER  *Hob;
   CONST CHAR8             *BiosStrings[]   = { "openRuyi", "EDK II stable202608" };
-  CONST CHAR8             *SystemStrings[] = { "SiFive", NULL };
-  CONST CHAR8             *CpuStrings[]    = { "SoC", "SiFive", "SiFive P550" };
+  CONST CHAR8             *SystemStrings[] = { Eic7700GetBoardProfile ()->Manufacturer, NULL };
+  CONST CHAR8             *CpuStrings[]    = { "SoC", "ESWIN", "ESWIN EIC7700" };
   CONST CHAR8             *MemoryStrings[] = { "Onboard LPDDR5" };
   EFI_STATUS              Status;
   UINT64                  MiB;

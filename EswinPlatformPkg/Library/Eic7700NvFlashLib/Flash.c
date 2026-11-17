@@ -2,14 +2,14 @@
 #include <IndustryStandard/SpiNorFlashJedecSfdp.h>
 #include <Library/BaseLib.h>
 #include <Library/Eic7700SpiNorLib.h>
-#include <Library/PremierP550NvFlashLib.h>
+#include <Library/Eic7700NvFlashLib.h>
 
 STATIC BOOLEAN
 Range (UINT32 Offset, UINTN Bytes)
 {
-  return Bytes && Offset >= P550_NV_OFFSET &&
-         Offset < P550_NV_OFFSET + NV_TOTAL_SIZE &&
-         Bytes <= P550_NV_OFFSET + NV_TOTAL_SIZE - Offset;
+  return Bytes && Offset >= EIC7700_NV_OFFSET &&
+         Offset < EIC7700_NV_OFFSET + NV_TOTAL_SIZE &&
+         Bytes <= EIC7700_NV_OFFSET + NV_TOTAL_SIZE - Offset;
 }
 
 STATIC EFI_STATUS
@@ -47,14 +47,14 @@ Erase (VOID *Context, UINT32 Offset)
 }
 
 EFI_STATUS
-PremierP550NvFlashInitialize (BOOLEAN Runtime, NV_FLASH_OPS *Ops)
+Eic7700NvFlashInitialize (BOOLEAN Runtime, NV_FLASH_OPS *Ops)
 {
   EFI_STATUS Status;
 
   if (!Ops) { return EFI_INVALID_PARAMETER; }
   Status = Eic7700SpiNorInit (Runtime);
   if (EFI_ERROR (Status)) { return Status; }
-  if (Eic7700SpiNorSize () < P550_NV_OFFSET + NV_TOTAL_SIZE) {
+  if (Eic7700SpiNorSize () < EIC7700_NV_OFFSET + NV_TOTAL_SIZE) {
     return EFI_UNSUPPORTED;
   }
   *Ops = (NV_FLASH_OPS) { Read, Program, Erase, NULL };
