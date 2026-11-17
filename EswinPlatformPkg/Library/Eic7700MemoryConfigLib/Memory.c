@@ -45,7 +45,8 @@ CheckDispatcher (VOID)
   Status = Eic7700SpiNorRead ((UINT32)Offset + 256, sizeof (Header), Header);
   if (EFI_ERROR (Status)) { return Status; }
   if (CompareMem (Header + 4, "RUYIDDR", 8) ||
-      ReadUnaligned32 ((UINT32 *)(Header + 12)) != 1) { return EFI_UNSUPPORTED; }
+      (ReadUnaligned32 ((UINT32 *)(Header + 12)) != 1 &&
+       ReadUnaligned32 ((UINT32 *)(Header + 12)) != 2)) { return EFI_UNSUPPORTED; }
   return EFI_SUCCESS;
 }
 
