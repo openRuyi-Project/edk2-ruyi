@@ -83,6 +83,7 @@ typedef struct {
   UINT32      ResetMask, MaxClock, Drive;
   UINT8       Width, Delay;
   BOOLEAN     Emmc, Hs400, ActiveLow, Ready;
+  EDKII_SD_MMC_SLOT_CONFIG SlotConfig;
 } EIC_MMC_PORT;
 
 extern EIC_MMC_PORT  mPorts[2];

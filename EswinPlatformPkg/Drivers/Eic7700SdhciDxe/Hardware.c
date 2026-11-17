@@ -131,6 +131,11 @@ ParsePort (CONST VOID *Fdt, INT32 Node, EIC_MMC_PORT *Port)
   Status = Cell (Fdt, Node, "bus-width", &Width);
   if (EFI_ERROR (Status) || Width != (Port->Emmc ? 8 : 4)) { return EFI_UNSUPPORTED; }
   Port->Width = Width;
+  Port->SlotConfig.NoMmc  = FdtGetProp (Fdt, Node, "no-mmc", &Length) != NULL;
+  Port->SlotConfig.NoSd   = FdtGetProp (Fdt, Node, "no-sd", &Length) != NULL;
+  Port->SlotConfig.NoSdio = FdtGetProp (Fdt, Node, "no-sdio", &Length) != NULL;
+  // DDR52, HS200 and HS400 at 1.2 V cannot be used on this 1.8 V eMMC bus.
+  Port->SlotConfig.ExcludedEmmcDeviceTypes = BIT3 | BIT5 | BIT7;
   Status = Cell (Fdt, Node, "max-frequency", &Rate);
   if (EFI_ERROR (Status) || Rate < 400000 || Rate > (Port->Emmc ? 200000000U : 208000000U)) {
     return EFI_UNSUPPORTED;

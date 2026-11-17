@@ -53,6 +53,10 @@ Notify (EFI_HANDLE Handle, UINT8 Slot, EDKII_SD_MMC_PHASE_TYPE Phase, VOID *Data
 
   if (!Port) { return EFI_NOT_FOUND; }
   switch (Phase) {
+    case EdkiiSdMmcGetSlotConfig:
+      if (Data == NULL) { return EFI_INVALID_PARAMETER; }
+      *(EDKII_SD_MMC_SLOT_CONFIG *)Data = Port->SlotConfig;
+      return EFI_SUCCESS;
     case EdkiiSdMmcGetOperatingParam:
       if (!Data) { return EFI_INVALID_PARAMETER; }
       Parameters = Data;
