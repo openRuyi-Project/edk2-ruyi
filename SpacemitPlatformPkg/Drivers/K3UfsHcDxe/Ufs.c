@@ -728,7 +728,7 @@ Resources (
 
   Status = mClock->Resolve (Fdt, Node, "axi", FALSE, &mAxiClock);
   if (!EFI_ERROR (Status)) {
-    Status = mClock->Resolve (Fdt, Node, "ref", FALSE, &mRefClock);
+    Status = mClock->Resolve (Fdt, Node, "ref_clk", FALSE, &mRefClock);
   }
 
   if (!EFI_ERROR (Status)) {
