@@ -2,13 +2,13 @@
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/BaseCryptLib.h>
+#include <Library/Eic7700BoardProfileLib.h>
 #include <Library/Eic7700SpiNorLib.h>
 #include <Library/FdtBoardInfoLib.h>
 #include <Library/FdtLib.h>
 #include <Library/PlatformMacAddressLib.h>
 #include <Library/PrintLib.h>
 
-#define BOARD_INFO_BASE   0x780000U
 #define BOARD_INFO_STRIDE 0x40000U
 #define BOARD_INFO_BYTES  0x1000U
 #define BOARD_INFO_MAGIC  0x05454943U
@@ -86,7 +86,7 @@ PlatformGetMacAddress (UINTN Index, UINT8 Mac[6])
   Status = Eic7700SpiNorInit (FALSE);
   if (EFI_ERROR (Status)) { return Status; }
   for (UINTN I = 0; I < 2; I++) {
-    Status = Eic7700SpiNorRead (BOARD_INFO_BASE + I * BOARD_INFO_STRIDE,
+    Status = Eic7700SpiNorRead (Eic7700GetBoardProfile ()->FactoryOffset + I * BOARD_INFO_STRIDE,
                               BOARD_INFO_BYTES, Records[I]);
     if (EFI_ERROR (Status)) { return Status; }
     Valid[I] = ValidRecord (Records[I]);

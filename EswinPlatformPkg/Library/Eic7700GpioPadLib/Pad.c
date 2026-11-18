@@ -3,7 +3,7 @@
 #include <Library/FdtLib.h>
 #include <IndustryStandard/Eic7700PinControl.h>
 
-// Megrez wiring: SD detect on A13, Ethernet PHY reset on C30 and A16.
+// Match each DT GPIO specifier to the physical pad used by that function.
 STATIC CONST struct {
   EIC7700_GPIO_USE Use;
   UINT32 Bank, Pin;

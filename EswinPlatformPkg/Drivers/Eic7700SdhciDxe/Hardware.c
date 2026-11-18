@@ -182,7 +182,8 @@ ParsePort (CONST VOID *Fdt, INT32 Node, EIC_MMC_PORT *Port)
   }
   Port->ResetMask = (BIT0 << (23 - Id)) | (BIT0 << (3 + Id)) |
                     (BIT0 << (19 - Id)) | (BIT0 << (6 + Id));
-  if (!Port->Emmc) {
+  Port->BrokenCd = FdtGetProp (Fdt, Node, "broken-cd", &Length) != NULL;
+  if (!Port->Emmc && !Port->BrokenCd) {
     Status = CardDetectPins (Fdt, Node, Port);
     if (EFI_ERROR (Status)) { return Status; }
   }
@@ -252,7 +253,12 @@ ConfigurePhy (EIC_MMC_PORT *Port)
   SetDelay (Port, Port->Delay);
   MmioWrite8 (Port->Base + PHY_DLL_CONTROL, 0);
   MmioAnd16 (Port->Base + HC_HOST_CTRL2, (UINT16)~HC_PRESET_ENABLE);
-  RefreshCardDetect (Port);
+  if (Port->BrokenCd) {
+    // There is no CD contact. Probe the SD bus at controller startup.
+    MmioOr8 (Port->Base + HC_HOST_CTRL, HC_CD_TEST_SELECT | HC_CD_TEST_PRESENT);
+  } else {
+    RefreshCardDetect (Port);
+  }
   return EFI_SUCCESS;
 }
 

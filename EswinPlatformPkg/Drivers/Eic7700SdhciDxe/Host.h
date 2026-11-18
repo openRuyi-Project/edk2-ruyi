@@ -82,7 +82,7 @@ typedef struct {
   UINTN       GpioBase, GpioBank, GpioBit;
   UINT32      ResetMask, MaxClock, Drive;
   UINT8       Width, Delay;
-  BOOLEAN     Emmc, Hs400, ActiveLow, Ready;
+  BOOLEAN     Emmc, Hs400, BrokenCd, ActiveLow, Ready;
   EDKII_SD_MMC_SLOT_CONFIG SlotConfig;
 } EIC_MMC_PORT;
 

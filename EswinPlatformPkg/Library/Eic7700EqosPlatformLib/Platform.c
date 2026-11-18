@@ -155,7 +155,9 @@ Parse (CONST VOID *Fdt, INT32 Node, EIC_EQOS_PORT *Hw)
   if (EFI_ERROR (Status)) { return Status; }
   Phy = FdtNodeOffsetByPhandle (Fdt, Value);
   if (!FdtNodeEnabled (Fdt, Phy) || FdtParentOffset (Fdt, FdtParentOffset (Fdt, Phy)) != Node ||
-      FdtStringListSearch (Fdt, Phy, "compatible", "ethernet-phy-id001c.c916") < 0) { return EFI_UNSUPPORTED; }
+      (FdtGetProp (Fdt, Phy, "compatible", &Len) != NULL &&
+       FdtStringListSearch (Fdt, Phy, "compatible", "ethernet-phy-ieee802.3-c22") < 0 &&
+       FdtStringListSearch (Fdt, Phy, "compatible", "ethernet-phy-id001c.c916") < 0)) { return EFI_UNSUPPORTED; }
   P->PhyNode = Phy;
   Status = Cell (Fdt, Phy, "reg", &P->PhyAddress);
   if (EFI_ERROR (Status) || P->PhyAddress > 31) { return EFI_UNSUPPORTED; }

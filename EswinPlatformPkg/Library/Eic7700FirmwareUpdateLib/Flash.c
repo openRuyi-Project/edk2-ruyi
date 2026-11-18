@@ -42,13 +42,16 @@ PlatformFirmwareUpdateValidate (
 {
   CONST EIC7700_BOARD_PROFILE *Profile = Eic7700GetBoardProfile ();
   EFI_STATUS Status;
-  if (Profile->FactoryOffset > Size || Profile->FactoryBytes > Size - Profile->FactoryOffset ||
-      Profile->FactoryOffset % SIZE_64KB || Profile->FactoryBytes % SIZE_64KB) {
+  if (Profile->FactoryOffset % SIZE_64KB || Profile->FactoryBytes % SIZE_64KB) {
     return EFI_INVALID_PARAMETER;
   }
   Status = Eic7700FirmwareImageValid (Image, Size);
   if (!EFI_ERROR (Status)) { Status = Eic7700SpiNorInit (FALSE); }
   if (!EFI_ERROR (Status) && Eic7700SpiNorSize () < EIC7700_SPI_IMAGE_BYTES) { Status = EFI_UNSUPPORTED; }
+  if (!EFI_ERROR (Status) && (Profile->FactoryOffset > Eic7700SpiNorSize () ||
+      Profile->FactoryBytes > Eic7700SpiNorSize () - Profile->FactoryOffset)) {
+    return EFI_UNSUPPORTED;
+  }
   return Status;
 }
 
@@ -103,7 +106,10 @@ PlatformFirmwareUpdate (
     return Status;
   }
 
-  Total -= Eic7700GetBoardProfile ()->FactoryBytes;
+  CONST EIC7700_BOARD_PROFILE *Profile = Eic7700GetBoardProfile ();
+  if (Profile->FactoryOffset < Size) {
+    Total -= MIN (Profile->FactoryBytes, Size - Profile->FactoryOffset);
+  }
   Saved   = AllocatePool (NV_TOTAL_SIZE);
   Scratch = AllocatePool (SIZE_64KB);
   if (!Saved || !Scratch) {

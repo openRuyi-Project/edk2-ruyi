@@ -1,14 +1,13 @@
 ## SPDX-License-Identifier: BSD-2-Clause-Patent
 [Defines]
   INF_VERSION = 0x0001001B
-  BASE_NAME = MegrezGpioLib
-  FILE_GUID = 96203253-e7f3-4ba9-973e-49cf15103f66
+  BASE_NAME = StarPro64ProfileLib
+  FILE_GUID = 79f52376-6584-4300-a8f5-c6a05bd5ea16
   MODULE_TYPE = BASE
-  LIBRARY_CLASS = Eic7700BoardGpioLib
+  LIBRARY_CLASS = Eic7700BoardProfileLib
 [Sources]
-  Pad.c
+  Profile.c
 [Packages]
   MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
   EswinPlatformPkg/EswinPlatformPkg.dec
-[LibraryClasses]
-  FdtLib

@@ -1,7 +1,7 @@
 ## SPDX-License-Identifier: BSD-2-Clause-Patent
 [Defines]
   INF_VERSION = 0x0001001B
-  BASE_NAME = MegrezMacLib
+  BASE_NAME = Eic7700FactoryMacLib
   FILE_GUID = 198dcf73-c7c5-480a-bc73-3780d2a3f848
   MODULE_TYPE = BASE
   LIBRARY_CLASS = PlatformMacAddressLib
@@ -16,6 +16,7 @@
   BaseLib
   BaseMemoryLib
   BaseCryptLib
+  Eic7700BoardProfileLib
   Eic7700SpiNorLib
   FdtBoardInfoLib
   FdtLib
