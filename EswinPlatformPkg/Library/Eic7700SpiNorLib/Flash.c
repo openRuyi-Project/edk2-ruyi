@@ -60,6 +60,7 @@ typedef enum {
 
 STATIC UINTN   mSpi = BOOT_SPI_BASE, mData = BOOT_SPI_DATA, mClock = SYSCRG_BASE;
 STATIC UINT32  mSize;
+STATIC BOOLEAN mGd25Lq128;
 STATIC BOOLEAN mReady, mFaulted, mBusy, mAtRuntime;
 STATIC EFI_EVENT mExitEvent;
 STATIC CONST UINT32 mRegisters[] = {
@@ -272,13 +273,16 @@ Unlock (UINT32 Offset, BOOLEAN *Relock)
   UINT8 Sr1, Sr2, Sr3, Value;
 
   *Relock = FALSE;
-  Status = Execute (0x15, ReadStatus, 0, 1, NULL, &Sr3);
-  if (EFI_ERROR (Status)) { return Status; }
-  if (Sr3 & BIT2) {
-    Status = Execute (0x3d, ReadData, Offset, 1, NULL, &Value);
+  // GD25LQ128 uses SR1/SR2 block protection, not Winbond individual locks.
+  if (!mGd25Lq128) {
+    Status = Execute (0x15, ReadStatus, 0, 1, NULL, &Sr3);
     if (EFI_ERROR (Status)) { return Status; }
-    *Relock = !!(Value & BIT0);
-    return *Relock ? BlockLock (Offset, FALSE) : EFI_SUCCESS;
+    if (Sr3 & BIT2) {
+      Status = Execute (0x3d, ReadData, Offset, 1, NULL, &Value);
+      if (EFI_ERROR (Status)) { return Status; }
+      *Relock = !!(Value & BIT0);
+      return *Relock ? BlockLock (Offset, FALSE) : EFI_SUCCESS;
+    }
   }
   Status = Execute (SPI_FLASH_RDSR, ReadStatus, 0, 1, NULL, &Sr1);
   if (!EFI_ERROR (Status)) { Status = Execute (0x35, ReadStatus, 0, 1, NULL, &Sr2); }
@@ -393,24 +397,31 @@ Eic7700SpiNorErase (UINT32 Offset, UINTN Size)
 }
 
 EFI_STATUS
-Eic7700SpiNorReadUniqueId (UINT8 Id[8])
+Eic7700SpiNorReadUniqueId (UINT8 *Id, UINTN *Size)
 {
   SPI_ACCESS Access;
   EFI_STATUS Status;
-  UINT8 Bytes[9];
+  UINT8 Bytes[1 + EIC7700_SPI_NOR_MAX_UID_SIZE];
   UINT8 Any = 0, All = 0xff;
+  UINTN Length = mGd25Lq128 ? 16 : 8;
 
-  if (Id == NULL) { return EFI_INVALID_PARAMETER; }
+  if (Id == NULL || Size == NULL) { return EFI_INVALID_PARAMETER; }
+  if (!mReady) { return EFI_NOT_READY; }
+  if (*Size < Length) {
+    *Size = Length;
+    return EFI_BUFFER_TOO_SMALL;
+  }
   Status = BeginAccess (&Access);
   if (EFI_ERROR (Status)) { return Status; }
-  // Winbond 4Bh uses four dummy bytes. ReadData supplies three through
-  // its address field. Discard the first received byte for the fourth.
-  Status = Execute (0x4b, ReadData, 0, sizeof (Bytes), NULL, Bytes);
+  // 4Bh takes four bytes before the UID. The read framing sends three
+  // zero address bytes. Discard the received byte from the dummy cycle.
+  Status = Execute (0x4b, ReadData, 0, 1 + Length, NULL, Bytes);
   EndAccess (&Access);
   if (EFI_ERROR (Status)) { return Status; }
-  for (UINTN I = 1; I < sizeof (Bytes); I++) { Any |= Bytes[I]; All &= Bytes[I]; }
+  for (UINTN I = 1; I <= Length; I++) { Any |= Bytes[I]; All &= Bytes[I]; }
   if (Any == 0 || All == 0xff) { return EFI_DEVICE_ERROR; }
-  CopyMem (Id, Bytes + 1, 8);
+  CopyMem (Id, Bytes + 1, Length);
+  *Size = Length;
   return EFI_SUCCESS;
 }
 
@@ -481,11 +492,13 @@ Eic7700SpiNorInit (BOOLEAN Runtime)
   if (!EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "EIC7700 Boot SPI ID: %02x %02x %02x\n", Id[0], Id[1], Id[2]));
   }
-  // Winbond W25Q64JW/W25Q128JW share three-byte addressing and lock commands.
-  if (!EFI_ERROR (Status) &&
-      ((Id[0] != 0xef) || (Id[1] != 0x60) || ((Id[2] != 0x17) && (Id[2] != 0x18))))
-  {
-    Status = EFI_UNSUPPORTED;
+  if (!EFI_ERROR (Status)) {
+    mGd25Lq128 = Id[0] == 0xc8 && Id[1] == 0x60 && Id[2] == 0x18;
+    if (!mGd25Lq128 &&
+        ((Id[0] != 0xef) || (Id[1] != 0x60) || ((Id[2] != 0x17) && (Id[2] != 0x18)))) {
+      DEBUG ((DEBUG_ERROR, "Unsupported EIC7700 boot SPI ID: %02x %02x %02x\n", Id[0], Id[1], Id[2]));
+      Status = EFI_UNSUPPORTED;
+    }
   }
   if (!EFI_ERROR (Status) && Runtime && (mExitEvent == NULL)) {
     Status = gBS->CreateEventEx (EVT_NOTIFY_SIGNAL, TPL_NOTIFY, ExitBootServices,

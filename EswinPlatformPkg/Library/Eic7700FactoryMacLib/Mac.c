@@ -15,7 +15,7 @@
 #define BOARD_INFO_MAC    36U
 
 STATIC UINT8 mMac[2][6];
-STATIC BOOLEAN mValid[2];
+STATIC BOOLEAN mPairReady;
 
 STATIC BOOLEAN
 ValidMac (CONST UINT8 Mac[6])
@@ -71,43 +71,71 @@ FromDeviceTree (UINTN Index, UINT8 Mac[6])
   return EFI_SUCCESS;
 }
 
+STATIC EFI_STATUS
+GeneratePair (VOID)
+{
+  UINT8 Seed[EIC7700_SPI_NOR_MAX_UID_SIZE + 1], Hash[SHA256_DIGEST_SIZE];
+  UINTN Size = sizeof (Seed) - 1;
+  EFI_STATUS Status;
+
+  Status = Eic7700SpiNorReadUniqueId (Seed, &Size);
+  if (EFI_ERROR (Status)) { return Status; }
+  for (UINTN Port = 0; Port < ARRAY_SIZE (mMac); Port++) {
+    Seed[Size] = (UINT8)Port;
+    if (!Sha256HashAll (Seed, Size + 1, Hash)) { return EFI_DEVICE_ERROR; }
+    mMac[Port][0] = 0x02;
+    CopyMem (mMac[Port] + 1, Hash, 5);
+  }
+  if (CompareMem (mMac[0], mMac[1], 6) == 0) {
+    mMac[1][5] ^= 1;
+  }
+  return EFI_SUCCESS;
+}
+
+STATIC EFI_STATUS
+ReadPair (VOID)
+{
+  UINT8 Record[BOARD_INFO_BYTES];
+  BOOLEAN Found = FALSE;
+  UINT16 Generation = 0;
+  EFI_STATUS Status;
+
+  Status = FromDeviceTree (0, mMac[0]);
+  if (!EFI_ERROR (Status)) {
+    Status = FromDeviceTree (1, mMac[1]);
+    if (!EFI_ERROR (Status) && CompareMem (mMac[0], mMac[1], 6) != 0) {
+      return EFI_SUCCESS;
+    }
+  }
+  if (EFI_ERROR (Status) && Status != EFI_NOT_FOUND) { return Status; }
+  Status = Eic7700SpiNorInit (FALSE);
+  if (EFI_ERROR (Status)) { return Status; }
+  for (UINTN Slot = 0; Slot < 2; Slot++) {
+    UINT32 Offset = Eic7700GetBoardProfile ()->FactoryOffset + Slot * BOARD_INFO_STRIDE;
+    Status = Eic7700SpiNorRead (Offset, sizeof (Record), Record);
+    if (EFI_ERROR (Status)) { return Status; }
+    if (!ValidRecord (Record)) { continue; }
+    UINT16 Next = ReadUnaligned16 ((CONST UINT16 *)(Record + 4));
+    if (!Found || (INT16)(Next - Generation) > 0) {
+      CopyMem (mMac, Record + BOARD_INFO_MAC, sizeof (mMac));
+      Generation = Next;
+      Found = TRUE;
+    }
+  }
+  return Found ? EFI_SUCCESS : GeneratePair ();
+}
+
 EFI_STATUS
 PlatformGetMacAddress (UINTN Index, UINT8 Mac[6])
 {
-  UINT8 Records[2][BOARD_INFO_BYTES], Seed[9], Hash[SHA256_DIGEST_SIZE];
-  BOOLEAN Valid[2];
-  UINTN Selected;
   EFI_STATUS Status;
+
   if (!Mac || Index >= ARRAY_SIZE (mMac)) { return EFI_INVALID_PARAMETER; }
-  if (mValid[Index]) { CopyMem (Mac, mMac[Index], 6); return EFI_SUCCESS; }
-  Status = FromDeviceTree (Index, mMac[Index]);
-  if (!EFI_ERROR (Status)) { goto Done; }
-  if (Status != EFI_NOT_FOUND) { return Status; }
-  Status = Eic7700SpiNorInit (FALSE);
-  if (EFI_ERROR (Status)) { return Status; }
-  for (UINTN I = 0; I < 2; I++) {
-    Status = Eic7700SpiNorRead (Eic7700GetBoardProfile ()->FactoryOffset + I * BOARD_INFO_STRIDE,
-                              BOARD_INFO_BYTES, Records[I]);
+  if (!mPairReady) {
+    Status = ReadPair ();
     if (EFI_ERROR (Status)) { return Status; }
-    Valid[I] = ValidRecord (Records[I]);
+    mPairReady = TRUE;
   }
-  if (Valid[0] || Valid[1]) {
-    Selected = !Valid[0] ? 1 : 0;
-    if (Valid[0] && Valid[1] &&
-        (INT16)(ReadUnaligned16 ((UINT16 *)(Records[1] + 4)) -
-                ReadUnaligned16 ((UINT16 *)(Records[0] + 4))) > 0) { Selected = 1; }
-    CopyMem (mMac[Index], Records[Selected] + BOARD_INFO_MAC + Index * 6, 6);
-  } else {
-    Status = Eic7700SpiNorReadUniqueId (Seed);
-    if (EFI_ERROR (Status)) { return Status; }
-    Seed[8] = (UINT8)Index;
-    if (!Sha256HashAll (Seed, sizeof (Seed), Hash)) { return EFI_DEVICE_ERROR; }
-    // A stable local address is used only when no valid board address exists.
-    mMac[Index][0] = 0x02;
-    CopyMem (mMac[Index] + 1, Hash, 5);
-  }
-Done:
-  mValid[Index] = TRUE;
   CopyMem (Mac, mMac[Index], 6);
   return EFI_SUCCESS;
 }
