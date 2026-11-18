@@ -11,6 +11,15 @@
 
 #include "Registers.h"
 
+#define RTL8211F_ID             0x001cc916U
+#define YT8531_ID               0x4f51e91bU
+#define YT8531_EXT_INDEX        0x1e
+#define YT8531_EXT_DATA         0x1f
+#define YT8531_CHIP_CONFIG      0xa001
+#define YT8531_RGMII_CONFIG     0xa003
+#define YT8531_DELAY_1950_PS    13U
+#define YT8531_STATUS           0x11
+
 STATIC EFI_STATUS
 WaitIdle (
   EQOS_PORT  *P
@@ -115,8 +124,9 @@ Modify (
 }
 
 STATIC EFI_STATUS
-RestorePage (
+RestoreSelector (
   EQOS_PORT  *P,
+  UINT32        Register,
   UINT16        Saved,
   EFI_STATUS    Original
   )
@@ -128,7 +138,7 @@ RestorePage (
     return Original;
   }
 
-  EFI_STATUS  Status = EqosMdioWrite (P, 31, Saved);
+  EFI_STATUS  Status = EqosMdioWrite (P, Register, Saved);
 
   if (EFI_ERROR (Status)) {
     P->RestoreError = Status;
@@ -160,7 +170,7 @@ PagedModify (
     Status = Modify (P, Register, Mask, Set);
   }
 
-  return RestorePage (P, Saved, Status);
+  return RestoreSelector (P, 31, Saved, Status);
 }
 
 STATIC EFI_STATUS
@@ -196,6 +206,56 @@ SoftReset (
   return EFI_TIMEOUT;
 }
 
+STATIC EFI_STATUS
+ConfigureRtl8211f (EQOS_PORT *P)
+{
+  EFI_STATUS Status = SoftReset (P);
+  if (!EFI_ERROR (Status)) {
+    Status = PagedModify (P, 0xd08, 0x11, BIT8, (P->DelayFlags & 1) ? BIT8 : 0);
+  }
+
+  if (!EFI_ERROR (Status)) {
+    Status = PagedModify (P, 0xd08, 0x15, BIT3, (P->DelayFlags & 2) ? BIT3 : 0);
+  }
+
+  // PHYCR1/2 are the default-page RTL8211F controls, independent of delay page.
+  if (!EFI_ERROR (Status) && P->Aldps) {
+    Status = PagedModify (P, 0, 0x18, BIT1 | BIT2 | BIT12, BIT1 | BIT2 | BIT12);
+  }
+
+  if (!EFI_ERROR (Status) && P->DisableClkout) {
+    Status = PagedModify (P, 0, 0x19, BIT0, 0);
+    if (!EFI_ERROR (Status)) {
+      Status = SoftReset (P);
+    }
+  }
+  return Status;
+}
+
+STATIC EFI_STATUS
+ConfigureYt8531 (EQOS_PORT *P)
+{
+  UINT16 Saved, Delay;
+  EFI_STATUS Status = SoftReset (P);
+
+  if (EFI_ERROR (Status)) { return Status; }
+  Status = EqosMdioRead (P, YT8531_EXT_INDEX, &Saved);
+  if (EFI_ERROR (Status)) { return Status; }
+
+  // Use the PHY's 150 ps delay taps. Clear its extra 1.9 ns RX delay.
+  Status = EqosMdioWrite (P, YT8531_EXT_INDEX, YT8531_CHIP_CONFIG);
+  if (!EFI_ERROR (Status)) { Status = Modify (P, YT8531_EXT_DATA, BIT8, 0); }
+  if (!EFI_ERROR (Status)) {
+    Status = EqosMdioWrite (P, YT8531_EXT_INDEX, YT8531_RGMII_CONFIG);
+  }
+  if (!EFI_ERROR (Status)) {
+    Delay = (P->DelayFlags & BIT0) ? YT8531_DELAY_1950_PS : 0;
+    if (P->DelayFlags & BIT1) { Delay |= YT8531_DELAY_1950_PS << 10; }
+    Status = Modify (P, YT8531_EXT_DATA, (0xfU << 10) | 0xfU, Delay);
+  }
+  return RestoreSelector (P, YT8531_EXT_INDEX, Saved, Status);
+}
+
 EFI_STATUS
 EqosPhyConfigure (
   EQOS_PORT  *P
@@ -218,29 +278,12 @@ EqosPhyConfigure (
   }
 
   P->PhyId = ((UINT32)Id1 << 16) | Id2;
-  if (P->PhyId != 0x001cc916) {
+  if (P->PhyId == YT8531_ID) {
+    Status = ConfigureYt8531 (P);
+  } else if (P->PhyId == RTL8211F_ID) {
+    Status = ConfigureRtl8211f (P);
+  } else {
     return EFI_UNSUPPORTED;
-  }
-
-  Status = SoftReset (P);
-  if (!EFI_ERROR (Status)) {
-    Status = PagedModify (P, 0xd08, 0x11, BIT8, (P->DelayFlags & 1) ? BIT8 : 0);
-  }
-
-  if (!EFI_ERROR (Status)) {
-    Status = PagedModify (P, 0xd08, 0x15, BIT3, (P->DelayFlags & 2) ? BIT3 : 0);
-  }
-
-  // PHYCR1/2 are the default-page RTL8211F controls, independent of delay page.
-  if (!EFI_ERROR (Status) && P->Aldps) {
-    Status = PagedModify (P, 0, 0x18, BIT1 | BIT2 | BIT12, BIT1 | BIT2 | BIT12);
-  }
-
-  if (!EFI_ERROR (Status) && P->DisableClkout) {
-    Status = PagedModify (P, 0, 0x19, BIT0, 0);
-    if (!EFI_ERROR (Status)) {
-      Status = SoftReset (P);
-    }
   }
 
   if (EFI_ERROR (Status)) {
@@ -294,26 +337,24 @@ EqosLink (
     return Status;
   }
 
-  Status = EqosMdioRead (P, 31, &Saved);
-  if (EFI_ERROR (Status)) {
-    return Status;
+  UINT16 SpeedCode;
+  BOOLEAN Duplex;
+  if (P->PhyId == YT8531_ID) {
+    Status = EqosMdioRead (P, YT8531_STATUS, &PhyStatus);
+    if (EFI_ERROR (Status) || !(PhyStatus & BIT10)) { return Status; }
+    SpeedCode = (PhyStatus >> 14) & 3;
+    Duplex = (PhyStatus & BIT13) != 0;
+  } else {
+    Status = EqosMdioRead (P, 31, &Saved);
+    if (EFI_ERROR (Status)) { return Status; }
+    Status = EqosMdioWrite (P, 31, 0xa43);
+    if (!EFI_ERROR (Status)) { Status = EqosMdioRead (P, 0x1a, &PhyStatus); }
+    Status = RestoreSelector (P, 31, Saved, Status);
+    if (EFI_ERROR (Status) || !(PhyStatus & BIT2)) { return Status; }
+    SpeedCode = (PhyStatus >> 4) & 3;
+    Duplex = (PhyStatus & BIT3) != 0;
   }
-
-  Status = EqosMdioWrite (P, 31, 0xa43);
-  if (!EFI_ERROR (Status)) {
-    Status = EqosMdioRead (P, 0x1a, &PhyStatus);
-  }
-
-  Status = RestorePage (P, Saved, Status);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  if (!(PhyStatus & BIT2)) {
-    return EFI_SUCCESS;
-  }
-
-  switch ((PhyStatus >> 4) & 3) {
+  switch (SpeedCode) {
     case 0: *Speed = 10;
       break;
     case 1: *Speed = 100;
@@ -323,7 +364,7 @@ EqosLink (
     default: return EFI_DEVICE_ERROR;
   }
 
-  *FullDuplex = (PhyStatus & BIT3) != 0;
+  *FullDuplex = Duplex;
   *Up         = TRUE;
   return EFI_SUCCESS;
 }
