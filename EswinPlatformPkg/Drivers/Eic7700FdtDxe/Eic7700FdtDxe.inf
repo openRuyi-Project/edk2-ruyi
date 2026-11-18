@@ -10,9 +10,11 @@
 [Packages]
   MdePkg/MdePkg.dec
   RuyiPlatformPkg/RuyiPlatformPkg.dec
+  EswinPlatformPkg/EswinPlatformPkg.dec
 [LibraryClasses]
   BaseLib
   BaseMemoryLib
+  CpuConfigLib
   DebugLib
   FdtLib
   PlatformMacAddressLib

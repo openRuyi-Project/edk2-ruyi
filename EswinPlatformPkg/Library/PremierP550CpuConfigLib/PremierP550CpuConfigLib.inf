@@ -1,0 +1,17 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = PremierP550CpuConfigLib
+  FILE_GUID = efbd308a-3e57-4558-9227-d905907ddd42
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = CpuConfigLib
+[Sources]
+  Config.c
+[Packages]
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+  EswinPlatformPkg/EswinPlatformPkg.dec
+[LibraryClasses]
+  UefiRuntimeServicesTableLib
+[Guids]
+  gPremierP550CpuConfigGuid

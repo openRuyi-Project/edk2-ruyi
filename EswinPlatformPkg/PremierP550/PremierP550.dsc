@@ -31,7 +31,7 @@
   PlatformBootPolicyLib|RuyiPlatformPkg/Library/DefaultBootPolicyLib/DefaultBootPolicyLib.inf
   PlatformSettingsLib|RuyiPlatformPkg/Library/PlatformSettingsLib/PlatformSettingsLib.inf
   PlatformSettingsStorageLib|EswinPlatformPkg/Library/Eic7700SettingsStorageLib/Eic7700SettingsStorageLib.inf
-  CpuConfigLib|RuyiPlatformPkg/Library/CpuConfigLibNull/CpuConfigLibNull.inf
+  CpuConfigLib|EswinPlatformPkg/Library/PremierP550CpuConfigLib/PremierP550CpuConfigLib.inf
   DwcPcieTrainingLib|RuyiPlatformPkg/Library/DwcPcieTrainingLib/DwcPcieTrainingLib.inf
   MemoryConfigLib|EswinPlatformPkg/Library/Eic7700MemoryConfigLib/Eic7700MemoryConfigLib.inf
   ExtractGuidedSectionLib|MdePkg/Library/DxeExtractGuidedSectionLib/DxeExtractGuidedSectionLib.inf

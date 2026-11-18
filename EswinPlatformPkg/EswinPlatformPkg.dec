@@ -14,3 +14,5 @@
   Eic7700SpiNorLib|Include/Library/Eic7700SpiNorLib.h
   Eic7700UsbLib|Include/Library/Eic7700UsbLib.h
   Eic7700InfoLib|Include/Library/Eic7700InfoLib.h
+[Guids]
+  gPremierP550CpuConfigGuid = { 0x7f7a571a, 0x9b7d, 0x4d00, { 0xbb, 0x2c, 0xcc, 0x9c, 0x25, 0x51, 0x44, 0x9d } }
