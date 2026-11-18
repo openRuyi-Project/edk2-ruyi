@@ -2,6 +2,7 @@
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
+#include <Library/Eic7700LocalMacLib.h>
 #include <Library/FdtBoardInfoLib.h>
 #include <Library/FdtHardwareLib.h>
 #include <Library/FdtLib.h>
@@ -216,9 +217,12 @@ LoadAddresses (VOID)
     Status = ReadRecord (Base, BOARD_INFO_BACKUP, Record);
     if (EFI_ERROR (Status)) { goto Done; }
   }
-  if (!ValidRecord (Record)) { Status = EFI_COMPROMISED_DATA; goto Done; }
-  CopyMem (mMac, Record + BOARD_INFO_MAC, sizeof (mMac));
-  mValid = TRUE;
+  if (ValidRecord (Record)) {
+    CopyMem (mMac, Record + BOARD_INFO_MAC, sizeof (mMac));
+  } else {
+    Status = Eic7700GenerateMacPair (mMac);
+  }
+  mValid = !EFI_ERROR (Status);
 Done:
   // No DMA is used. A failed transaction is held in reset before gating.
   if (EFI_ERROR (Status)) { MmioAnd32 (Reset + SYS_I2C0_RESET, ~((UINT32)BIT0)); }

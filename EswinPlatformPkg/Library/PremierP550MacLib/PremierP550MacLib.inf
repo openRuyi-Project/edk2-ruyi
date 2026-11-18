@@ -9,11 +9,13 @@
   Mac.c
 [Packages]
   MdePkg/MdePkg.dec
+  EswinPlatformPkg/EswinPlatformPkg.dec
   RuyiPlatformPkg/RuyiPlatformPkg.dec
 [LibraryClasses]
   BaseLib
   BaseMemoryLib
   DebugLib
+  Eic7700LocalMacLib
   FdtBoardInfoLib
   FdtHardwareLib
   FdtLib

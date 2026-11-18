@@ -1,0 +1,17 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Eic7700LocalMacLib
+  FILE_GUID = f37a476b-1ea9-4b6d-98ba-75d52aaa0394
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = Eic7700LocalMacLib
+[Sources]
+  LocalMac.c
+[Packages]
+  MdePkg/MdePkg.dec
+  CryptoPkg/CryptoPkg.dec
+  EswinPlatformPkg/EswinPlatformPkg.dec
+[LibraryClasses]
+  BaseCryptLib
+  BaseMemoryLib
+  Eic7700SpiNorLib

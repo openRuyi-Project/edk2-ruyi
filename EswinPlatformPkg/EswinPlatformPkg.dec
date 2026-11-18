@@ -10,6 +10,7 @@
   Eic7700BoardProfileLib|Include/Library/Eic7700BoardProfileLib.h
   Eic7700BoardGpioLib|Include/Library/Eic7700BoardGpioLib.h
   Eic7700NvFlashLib|Include/Library/Eic7700NvFlashLib.h
+  Eic7700LocalMacLib|Include/Library/Eic7700LocalMacLib.h
   Eic7700SpiNorLib|Include/Library/Eic7700SpiNorLib.h
   Eic7700UsbLib|Include/Library/Eic7700UsbLib.h
   Eic7700InfoLib|Include/Library/Eic7700InfoLib.h

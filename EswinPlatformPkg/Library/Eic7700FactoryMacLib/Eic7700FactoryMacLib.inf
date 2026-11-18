@@ -9,13 +9,12 @@
   Mac.c
 [Packages]
   MdePkg/MdePkg.dec
-  CryptoPkg/CryptoPkg.dec
   RuyiPlatformPkg/RuyiPlatformPkg.dec
   EswinPlatformPkg/EswinPlatformPkg.dec
 [LibraryClasses]
   BaseLib
   BaseMemoryLib
-  BaseCryptLib
+  Eic7700LocalMacLib
   Eic7700BoardProfileLib
   Eic7700SpiNorLib
   FdtBoardInfoLib

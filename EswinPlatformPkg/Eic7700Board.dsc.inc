@@ -24,6 +24,7 @@
   PlatformFirmwareUpdateLib|EswinPlatformPkg/Library/Eic7700FirmwareUpdateLib/Eic7700FirmwareUpdateLib.inf
   NvFvbLib|RuyiPlatformPkg/Library/NvFvbLib/NvFvbLib.inf
   NvStorageLib|RuyiPlatformPkg/Library/NvStorageLib/NvStorageLib.inf
+  Eic7700LocalMacLib|EswinPlatformPkg/Library/Eic7700LocalMacLib/Eic7700LocalMacLib.inf
   Eic7700SpiNorLib|EswinPlatformPkg/Library/Eic7700SpiNorLib/Eic7700SpiNorLib.inf
   Eic7700NvFlashLib|EswinPlatformPkg/Library/Eic7700NvFlashLib/Eic7700NvFlashLib.inf
   FastbootTransportLib|RuyiPlatformPkg/Library/Dwc3FastbootLib/Dwc3FastbootLib.inf
