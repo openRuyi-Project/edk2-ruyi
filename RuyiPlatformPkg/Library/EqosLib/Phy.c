@@ -15,6 +15,10 @@
 #define YT8531_ID               0x4f51e91bU
 #define YT8531_EXT_INDEX        0x1e
 #define YT8531_EXT_DATA         0x1f
+#define YT8531_CLOCK_GATING     0x0c
+#define YT8531_GATE_RXC_LINK_DOWN  BIT12
+#define YT8531_SLEEP_CONTROL    0x27
+#define YT8531_AUTO_SLEEP       BIT15
 #define YT8531_CHIP_CONFIG      0xa001
 #define YT8531_RGMII_CONFIG     0xa003
 #define YT8531_DELAY_1950_PS    13U
@@ -242,8 +246,21 @@ ConfigureYt8531 (EQOS_PORT *P)
   Status = EqosMdioRead (P, YT8531_EXT_INDEX, &Saved);
   if (EFI_ERROR (Status)) { return Status; }
 
+  // EQoS needs RGMII RXC to finish a DMA reset even with no link.
+  Status = EqosMdioWrite (P, YT8531_EXT_INDEX, YT8531_SLEEP_CONTROL);
+  if (!EFI_ERROR (Status)) {
+    Status = Modify (P, YT8531_EXT_DATA, YT8531_AUTO_SLEEP, 0);
+  }
+  if (!EFI_ERROR (Status)) {
+    Status = EqosMdioWrite (P, YT8531_EXT_INDEX, YT8531_CLOCK_GATING);
+  }
+  if (!EFI_ERROR (Status)) {
+    Status = Modify (P, YT8531_EXT_DATA, YT8531_GATE_RXC_LINK_DOWN, 0);
+  }
   // Use the PHY's 150 ps delay taps. Clear its extra 1.9 ns RX delay.
-  Status = EqosMdioWrite (P, YT8531_EXT_INDEX, YT8531_CHIP_CONFIG);
+  if (!EFI_ERROR (Status)) {
+    Status = EqosMdioWrite (P, YT8531_EXT_INDEX, YT8531_CHIP_CONFIG);
+  }
   if (!EFI_ERROR (Status)) { Status = Modify (P, YT8531_EXT_DATA, BIT8, 0); }
   if (!EFI_ERROR (Status)) {
     Status = EqosMdioWrite (P, YT8531_EXT_INDEX, YT8531_RGMII_CONFIG);
