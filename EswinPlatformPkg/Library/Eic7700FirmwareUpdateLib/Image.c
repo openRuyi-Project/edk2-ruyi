@@ -18,6 +18,7 @@
 #define CBFS_OFFSET      0x21000U
 #define CBFS_BYTES       (ROM_BYTES - CBFS_OFFSET)
 #define SCPU_ADDRESS     0x59000000ULL
+#define MCPU_ADDRESS     0x80000000ULL
 
 STATIC BOOLEAN
 MapValid (CONST UINT8 *Map)
@@ -72,7 +73,7 @@ Eic7700FirmwareImageValid (CONST VOID *Buffer, UINTN Size)
       return EFI_COMPROMISED_DATA;
     }
     Header = Image + Offset;
-    Address = Index == 2 ? Eic7700GetBoardProfile ()->RomAddress : SCPU_ADDRESS;
+    Address = Index == 2 ? MCPU_ADDRESS : SCPU_ADDRESS;
     if (ReadUnaligned32 ((CONST UINT32 *)Header) != SIGNATURE_MAGIC ||
         ReadUnaligned64 ((CONST UINT64 *)(Header + 16)) != Offset ||
         ReadUnaligned64 ((CONST UINT64 *)(Header + 24)) != Bytes ||

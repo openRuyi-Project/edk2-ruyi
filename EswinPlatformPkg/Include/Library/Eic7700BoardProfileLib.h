@@ -5,7 +5,6 @@
 typedef struct {
   COREBOOT_IMAGE_LAYOUT Image;
   CONST CHAR8 *Manufacturer;
-  UINT32 RomAddress;
   UINT32 FactoryOffset;
   UINT32 FactoryBytes;
   BOOLEAN FastbootCanSwitchHostPort;
