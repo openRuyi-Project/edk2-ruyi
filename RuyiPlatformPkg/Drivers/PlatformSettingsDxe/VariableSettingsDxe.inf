@@ -1,0 +1,37 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = VariableSettingsDxe
+  FILE_GUID = 45858ce4-d22e-41df-a8e2-d4a0805d56b6
+  MODULE_TYPE = DXE_DRIVER
+  ENTRY_POINT = PlatformSettingsEntry
+[Sources]
+  Config.c
+  VariableDefaults.c
+  Defaults.h
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MultiArchUefiPkg/MultiArchUefiPkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  UefiDriverEntryPoint
+  DebugLib
+  BaseLib
+  BaseMemoryLib
+  PcdLib
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+[Protocols]
+  gRuyiPlatformSettingsProtocolGuid
+  gEfiVariableArchProtocolGuid
+  gEfiVariableWriteArchProtocolGuid
+  gEfiCpuArchProtocolGuid
+[Pcd]
+  gMauPkgTokenSpaceGuid.PcdMauEmulationEnabled
+[FixedPcd]
+  gRuyiPlatformTokenSpaceGuid.PcdDriverEmulationAvailable
+[Guids]
+  gEfiEndOfDxeEventGroupGuid
+[Depex]
+  gEfiCpuArchProtocolGuid

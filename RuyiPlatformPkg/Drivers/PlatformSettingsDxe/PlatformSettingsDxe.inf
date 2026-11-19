@@ -7,6 +7,8 @@
   ENTRY_POINT = PlatformSettingsEntry
 [Sources]
   Config.c
+  Records.c
+  Defaults.h
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
