@@ -1,11 +1,23 @@
 /* SPDX-License-Identifier: BSD-2-Clause-Patent */
 
-#ifndef RTL8127_PACKETS_INTERNAL_H
-#define RTL8127_PACKETS_INTERNAL_H
-#include <Library/Rtl8127PacketsLib.h>
+#ifndef RTL812X_HW_LIB_H
+#define RTL812X_HW_LIB_H
+#include <Uefi.h>
+#include <Protocol/PciIo.h>
+
+typedef struct {
+  UINT32 PciId;
+  UINT32 Revision;
+  UINT32 BarSize;
+  EFI_PCI_IO_PROTOCOL_WIDTH DoorbellWidth;
+} RTL_CHIP;
+
+extern CONST RTL_CHIP gRtlChip;
+EFI_STATUS RtlReadStationAddress (EFI_PCI_IO_PROTOCOL *Pci, UINT8 Mac[6]);
+EFI_STATUS RtlSetRxTxConfig (EFI_PCI_IO_PROTOCOL *Pci);
 
 EFI_STATUS
-R27Read (
+RtlRead (
   EFI_PCI_IO_PROTOCOL        *Pci,
   EFI_PCI_IO_PROTOCOL_WIDTH  Width,
   UINT32                     Register,
@@ -13,7 +25,7 @@ R27Read (
   );
 
 EFI_STATUS
-R27Write (
+RtlWrite (
   EFI_PCI_IO_PROTOCOL        *Pci,
   EFI_PCI_IO_PROTOCOL_WIDTH  Width,
   UINT32                     Register,
@@ -21,18 +33,18 @@ R27Write (
   );
 
 EFI_STATUS
-R27Reset (
+RtlReset (
   EFI_PCI_IO_PROTOCOL  *Pci
   );
 
 EFI_STATUS
-R27PrepareMac (
+RtlPrepareMac (
   EFI_PCI_IO_PROTOCOL  *Pci,
   CONST UINT8          Mac[6]
   );
 
 EFI_STATUS
-R27Drain (
+RtlDrain (
   EFI_PCI_IO_PROTOCOL  *Pci
   );
 

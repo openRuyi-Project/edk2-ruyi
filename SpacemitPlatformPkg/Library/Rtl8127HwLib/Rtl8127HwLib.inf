@@ -1,0 +1,20 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Rtl8127HwLib
+  FILE_GUID = 67935c53-5f03-4592-9726-d66e8e490cb0
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = Rtl812xHwLib
+[Sources]
+  Mac.c
+[Packages]
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+[LibraryClasses]
+  TimerLib
+  Rtl8127Lib
+  PcdLib
+  PlatformMacAddressLib
+[FixedPcd]
+  gSpacemitPlatformTokenSpaceGuid.PcdRtl8127MacAddressIndex

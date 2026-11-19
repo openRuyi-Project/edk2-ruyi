@@ -7,6 +7,10 @@
 [Includes]
   Include
 [LibraryClasses]
+  Rtl812xPacketsLib|Include/Library/Rtl812xPacketsLib.h
+  Rtl812xSnpLib|Include/Library/Rtl812xSnpLib.h
+  Rtl812xHwLib|Include/Library/Rtl812xHwLib.h
+
   PlatformBootPolicyLib|Include/Library/PlatformBootPolicyLib.h
   PlatformSettingsStorageLib|Include/Library/PlatformSettingsLib.h
   PlatformSettingsLib|Include/Library/PlatformSettingsLib.h

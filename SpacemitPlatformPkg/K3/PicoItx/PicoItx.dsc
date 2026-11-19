@@ -45,12 +45,13 @@
   BootLogoLib|MdeModulePkg/Library/BootLogoLib/BootLogoLib.inf
   BmpSupportLib|MdeModulePkg/Library/BaseBmpSupportLib/BaseBmpSupportLib.inf
   SnpAdapterInfoLib|RuyiPlatformPkg/Library/SnpAdapterInfoLib/SnpAdapterInfoLib.inf
-  Rtl8127SnpLib|SpacemitPlatformPkg/Library/Rtl8127SnpLib/Rtl8127SnpLib.inf
+  Rtl812xSnpLib|RuyiPlatformPkg/Library/Rtl812xSnpLib/Rtl812xSnpLib.inf
   PlatformMacAddressLib|SpacemitPlatformPkg/Library/K3BoardMacLib/K3BoardMacLib.inf
   SpacemitTlvLib|SpacemitPlatformPkg/Library/SpacemitTlvLib/SpacemitTlvLib.inf
   K3BoardEepromLib|SpacemitPlatformPkg/Library/K3BoardEepromLib/K3BoardEepromLib.inf
   Rtl8127Lib|SpacemitPlatformPkg/Library/Rtl8127Lib/Rtl8127Lib.inf
-  Rtl8127PacketsLib|SpacemitPlatformPkg/Library/Rtl8127PacketsLib/Rtl8127PacketsLib.inf
+  Rtl812xHwLib|SpacemitPlatformPkg/Library/Rtl8127HwLib/Rtl8127HwLib.inf
+  Rtl812xPacketsLib|RuyiPlatformPkg/Library/Rtl812xPacketsLib/Rtl812xPacketsLib.inf
   K3SpiNorLib|SpacemitPlatformPkg/Library/K3SpiNorLib/K3SpiNorLib.inf
   K3CpuConfigLib|SpacemitPlatformPkg/Library/K3CpuConfigLib/K3CpuConfigLib.inf
   K3FirmwareUpdateLib|SpacemitPlatformPkg/Library/K3FirmwareUpdateLib/K3FirmwareUpdateLib.inf
@@ -244,7 +245,7 @@
   SpacemitPlatformPkg/Drivers/K3ClockDxe/K3ClockDxe.inf
 !if $(NETWORK_ENABLE) == TRUE
   RuyiPlatformPkg/Drivers/EqosSnpDxe/EqosSnpDxe.inf
-  SpacemitPlatformPkg/Drivers/Rtl8127SnpDxe/Rtl8127SnpDxe.inf
+  RuyiPlatformPkg/Drivers/Rtl812xSnpDxe/Rtl812xSnpDxe.inf
 !endif
 !if $(K3_PCIE_ENABLE) == TRUE || $(K3_USB_HOST_ENABLE) == TRUE
   SpacemitPlatformPkg/Drivers/K3ComboPhyDxe/K3ComboPhyDxe.inf

@@ -1,12 +1,12 @@
 /* SPDX-License-Identifier: BSD-2-Clause-Patent */
 
-#ifndef RTL8127_SNP_LIB_H
-#define RTL8127_SNP_LIB_H
+#ifndef RTL812X_SNP_LIB_H
+#define RTL812X_SNP_LIB_H
 #include <Uefi.h>
 #include <Protocol/PciIo.h>
 #include <Protocol/SimpleNetwork.h>
 EFI_STATUS
-Rtl8127SnpCreate (
+Rtl812xSnpCreate (
   EFI_PCI_IO_PROTOCOL          *Pci,
   CONST UINT8                  Mac[6],
   EFI_SIMPLE_NETWORK_PROTOCOL  **Snp
@@ -14,12 +14,12 @@ Rtl8127SnpCreate (
 
 /* Destruction succeeds only after packet DMA and its mappings are stopped. */
 EFI_STATUS
-Rtl8127SnpDestroy (
+Rtl812xSnpDestroy (
   EFI_SIMPLE_NETWORK_PROTOCOL  **Snp
   );
 
 EFI_STATUS
-Rtl8127SnpExit (
+Rtl812xSnpExit (
   EFI_SIMPLE_NETWORK_PROTOCOL  *Snp
   );
 

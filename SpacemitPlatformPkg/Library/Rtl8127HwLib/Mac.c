@@ -6,31 +6,11 @@
    Copyright (c) 2003-2007 Francois Romieu <romieu@fr.zoreil.com>
    Additional contributions by the Linux r8169 authors.
    Only version 80 is implemented. Polling keeps interrupts and ASPM off. */
-#include "Internal.h"
+#include <Library/Rtl812xHwLib.h>
 #include <Library/Rtl8127Lib.h>
 #include <Library/TimerLib.h>
-
-EFI_STATUS
-R27Read (
-  EFI_PCI_IO_PROTOCOL        *Pci,
-  EFI_PCI_IO_PROTOCOL_WIDTH  Width,
-  UINT32                     Register,
-  VOID                       *Value
-  )
-{
-  return Pci->Mem.Read (Pci, Width, 2, Register, 1, Value);
-}
-
-EFI_STATUS
-R27Write (
-  EFI_PCI_IO_PROTOCOL        *Pci,
-  EFI_PCI_IO_PROTOCOL_WIDTH  Width,
-  UINT32                     Register,
-  UINT32                     Value
-  )
-{
-  return Pci->Mem.Write (Pci, Width, 2, Register, 1, &Value);
-}
+#include <Library/PcdLib.h>
+#include <Library/PlatformMacAddressLib.h>
 
 STATIC EFI_STATUS
 Modify (
@@ -42,10 +22,10 @@ Modify (
   )
 {
   UINT32      Value  = 0;
-  EFI_STATUS  Status = R27Read (Pci, Width, Register, &Value);
+  EFI_STATUS  Status = RtlRead (Pci, Width, Register, &Value);
 
   return EFI_ERROR (Status) ? Status :
-         R27Write (Pci, Width, Register, (Value & ~Clear) | Set);
+         RtlWrite (Pci, Width, Register, (Value & ~Clear) | Set);
 }
 
 STATIC EFI_STATUS
@@ -57,7 +37,7 @@ Ocp (
   )
 {
   UINT32      Value;
-  EFI_STATUS  Status = R27Write (
+  EFI_STATUS  Status = RtlWrite (
                          Pci,
                          EfiPciIoWidthUint32,
                          0xb0,
@@ -65,10 +45,10 @@ Ocp (
                          );
 
   if (!EFI_ERROR (Status)) {
-    Status = R27Read (Pci, EfiPciIoWidthUint32, 0xb0, &Value);
+    Status = RtlRead (Pci, EfiPciIoWidthUint32, 0xb0, &Value);
   }
 
-  return EFI_ERROR (Status) ? Status : R27Write (
+  return EFI_ERROR (Status) ? Status : RtlWrite (
                                          Pci,
                                          EfiPciIoWidthUint32,
                                          0xb0,
@@ -78,36 +58,7 @@ Ocp (
 }
 
 EFI_STATUS
-R27Reset (
-  EFI_PCI_IO_PROTOCOL  *Pci
-  )
-{
-  EFI_STATUS  Status = R27Write (Pci, EfiPciIoWidthUint8, 0x37, BIT4);
-
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  for (UINTN Us = 0; Us < 10000; Us += 100) {
-    UINT8  Command;
-
-    Status = R27Read (Pci, EfiPciIoWidthUint8, 0x37, &Command);
-    if (EFI_ERROR (Status)) {
-      return Status;
-    }
-
-    if (!(Command & (BIT4 | BIT3 | BIT2))) {
-      return EFI_SUCCESS;
-    }
-
-    MicroSecondDelay (100);
-  }
-
-  return EFI_TIMEOUT;
-}
-
-EFI_STATUS
-R27PrepareMac (
+RtlPrepareMac (
   EFI_PCI_IO_PROTOCOL  *Pci,
   CONST UINT8          Mac[6]
   )
@@ -136,14 +87,14 @@ R27PrepareMac (
     { 0xd430, 0x0fff, 0x047f },
     { 0xea84, 0,      3      }
   };
-  EFI_STATUS  Status = R27Reset (Pci);
+  EFI_STATUS  Status = RtlReset (Pci);
 
   if (!EFI_ERROR (Status)) {
     Status = Rtl8127InitializeSfp (Pci);
   }
 
   if (!EFI_ERROR (Status)) {
-    Status = R27Write (Pci, EfiPciIoWidthUint8, 0x50, 0xc0);
+    Status = RtlWrite (Pci, EfiPciIoWidthUint8, 0x50, 0xc0);
   }
 
   if (!EFI_ERROR (Status)) {
@@ -155,7 +106,7 @@ R27PrepareMac (
   }
 
   if (!EFI_ERROR (Status)) {
-    Status = R27Write (Pci, EfiPciIoWidthUint8, 0x34, 0);
+    Status = RtlWrite (Pci, EfiPciIoWidthUint8, 0x34, 0);
   }
 
   for (UINTN I = 0; !EFI_ERROR (Status) && I < ARRAY_SIZE (Settings); I++) {
@@ -168,15 +119,15 @@ R27PrepareMac (
   }
 
   if (!EFI_ERROR (Status)) {
-    Status = R27Write (Pci, EfiPciIoWidthUint16, 0x382, 0x221b);
+    Status = RtlWrite (Pci, EfiPciIoWidthUint16, 0x382, 0x221b);
   }
 
   if (!EFI_ERROR (Status)) {
-    Status = R27Write (Pci, EfiPciIoWidthUint32, 0x4500, 0);
+    Status = RtlWrite (Pci, EfiPciIoWidthUint32, 0x4500, 0);
   }
 
   if (!EFI_ERROR (Status)) {
-    Status = R27Write (Pci, EfiPciIoWidthUint16, 0x4800, 0);
+    Status = RtlWrite (Pci, EfiPciIoWidthUint16, 0x4800, 0);
   }
 
   if (!EFI_ERROR (Status)) {
@@ -190,11 +141,11 @@ R27PrepareMac (
   for (UINTN Offset = 0xa00; !EFI_ERROR (Status) && Offset < 0xb00;
        Offset += 4)
   {
-    Status = R27Write (Pci, EfiPciIoWidthUint32, Offset, 0);
+    Status = RtlWrite (Pci, EfiPciIoWidthUint32, Offset, 0);
   }
 
   if (!EFI_ERROR (Status)) {
-    Status = R27Write (Pci, EfiPciIoWidthUint16, 0x7a, 0);
+    Status = RtlWrite (Pci, EfiPciIoWidthUint16, 0x7a, 0);
   }
 
   if (!EFI_ERROR (Status)) {
@@ -223,14 +174,14 @@ R27PrepareMac (
     for (UINTN Attempt = 0; Attempt < 10; Attempt++) {
       UINT32  Value;
 
-      EFI_STATUS  ReadStatus = R27Write (
+      EFI_STATUS  ReadStatus = RtlWrite (
                                  Pci,
                                  EfiPciIoWidthUint32,
                                  0xb0,
                                  0xe00eU << 15
                                  );
       if (!EFI_ERROR (ReadStatus)) {
-        ReadStatus = R27Read (Pci, EfiPciIoWidthUint32, 0xb0, &Value);
+        ReadStatus = RtlRead (Pci, EfiPciIoWidthUint32, 0xb0, &Value);
       }
 
       if (EFI_ERROR (ReadStatus)) {
@@ -258,7 +209,7 @@ R27PrepareMac (
   }
 
   if (!EFI_ERROR (Status)) {
-    Status = R27Write (
+    Status = RtlWrite (
                Pci,
                EfiPciIoWidthUint16,
                4,
@@ -267,7 +218,7 @@ R27PrepareMac (
   }
 
   if (!EFI_ERROR (Status)) {
-    Status = R27Write (
+    Status = RtlWrite (
                Pci,
                EfiPciIoWidthUint32,
                0,
@@ -276,17 +227,17 @@ R27PrepareMac (
                );
   }
 
-  EFI_STATUS  Lock = R27Write (Pci, EfiPciIoWidthUint8, 0x50, 0);
+  EFI_STATUS  Lock = RtlWrite (Pci, EfiPciIoWidthUint8, 0x50, 0);
 
   return EFI_ERROR (Status) ? Status : Lock;
 }
 
 EFI_STATUS
-R27Drain (
+RtlDrain (
   EFI_PCI_IO_PROTOCOL  *Pci
   )
 {
-  EFI_STATUS  Status = R27Write (Pci, EfiPciIoWidthUint32, 0x38, 0);
+  EFI_STATUS  Status = RtlWrite (Pci, EfiPciIoWidthUint32, 0x38, 0);
 
   if (!EFI_ERROR (Status)) {
     Status = Modify (Pci, EfiPciIoWidthUint32, 0x44, 0x3f, 0);
@@ -308,9 +259,9 @@ R27Drain (
     UINT8   Mcu;
     UINT16  Empty;
 
-    Status = R27Read (Pci, EfiPciIoWidthUint8, 0xd3, &Mcu);
+    Status = RtlRead (Pci, EfiPciIoWidthUint8, 0xd3, &Mcu);
     if (!EFI_ERROR (Status)) {
-      Status = R27Read (Pci, EfiPciIoWidthUint16, 0xe2, &Empty);
+      Status = RtlRead (Pci, EfiPciIoWidthUint16, 0xe2, &Empty);
     }
 
     if (EFI_ERROR (Status)) {
@@ -318,11 +269,28 @@ R27Drain (
     }
 
     if (((Mcu & 0x30) == 0x30) && ((Empty & 0x103) == 0x103)) {
-      return R27Reset (Pci);
+      return RtlReset (Pci);
     }
 
     MicroSecondDelay (100);
   }
 
   return EFI_TIMEOUT;
+}
+
+CONST RTL_CHIP gRtlChip = { 0x812710ec, 0x6c900000, 0x604a, EfiPciIoWidthUint16 };
+
+EFI_STATUS
+RtlReadStationAddress (EFI_PCI_IO_PROTOCOL *Pci, UINT8 Mac[6])
+{
+  return PlatformGetMacAddress (FixedPcdGet16 (PcdRtl8127MacAddressIndex), Mac);
+}
+
+EFI_STATUS
+RtlSetRxTxConfig (EFI_PCI_IO_PROTOCOL *Pci)
+{
+  EFI_STATUS Status = RtlWrite (Pci, EfiPciIoWidthUint32, 0x44,
+                                (8U << 27) | (7U << 8) | BIT11 | BIT3 | BIT1);
+  return EFI_ERROR (Status) ? Status :
+         RtlWrite (Pci, EfiPciIoWidthUint32, 0x40, (3U << 24) | (7U << 8) | BIT7);
 }

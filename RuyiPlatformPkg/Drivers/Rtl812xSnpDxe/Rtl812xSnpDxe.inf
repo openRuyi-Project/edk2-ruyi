@@ -1,24 +1,22 @@
 ## SPDX-License-Identifier: BSD-2-Clause-Patent
 [Defines]
   INF_VERSION = 0x0001001B
-  BASE_NAME = Rtl8127SnpDxe
+  BASE_NAME = Rtl812xSnpDxe
   FILE_GUID = d31c4189-bc71-4388-9593-df40867264b9
   MODULE_TYPE = DXE_DRIVER
-  ENTRY_POINT = Rtl8127SnpEntry
+  ENTRY_POINT = Rtl812xSnpEntry
 [Sources]
   Driver.c
 [Packages]
-  RuyiPlatformPkg/RuyiPlatformPkg.dec
   MdePkg/MdePkg.dec
-  SpacemitPlatformPkg/SpacemitPlatformPkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
 [LibraryClasses]
   BaseMemoryLib
   DebugLib
   DevicePathLib
   MemoryAllocationLib
-  PcdLib
-  PlatformMacAddressLib
-  Rtl8127SnpLib
+  Rtl812xHwLib
+  Rtl812xSnpLib
   SnpAdapterInfoLib
   UefiBootServicesTableLib
   UefiDriverEntryPoint
@@ -31,7 +29,5 @@
   gEfiDevicePathProtocolGuid
 [Guids]
   gEfiEventBeforeExitBootServicesGuid
-[FixedPcd]
-  gSpacemitPlatformTokenSpaceGuid.PcdRtl8127MacAddressIndex
 [Depex]
   gEfiCpuArchProtocolGuid

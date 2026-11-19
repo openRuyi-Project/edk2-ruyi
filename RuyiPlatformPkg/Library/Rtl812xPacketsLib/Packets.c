@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: BSD-2-Clause-Patent */
-#include "Internal.h"
+#include <Library/Rtl812xHwLib.h>
+#include <Library/Rtl812xPacketsLib.h>
 #include <IndustryStandard/Acpi.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -28,7 +29,7 @@ typedef struct {
   UINTN                   Pages;
 } COMMON;
 
-struct RTL8127_PACKETS {
+struct RTL812X_PACKETS {
   EFI_PCI_IO_PROTOCOL    *Pci;
   UINT64                 OriginalAttributes;
   COMMON                 Rings;
@@ -123,7 +124,7 @@ Release (
 
 STATIC VOID
 Rearm (
-  RTL8127_PACKETS  *P
+  RTL812X_PACKETS  *P
   )
 {
   DESCRIPTOR  *D = &P->Rx[P->RxIndex];
@@ -138,10 +139,10 @@ Rearm (
 }
 
 EFI_STATUS
-Rtl8127PacketsOpen (
+Rtl812xPacketsOpen (
   EFI_PCI_IO_PROTOCOL  *Pci,
   CONST UINT8          Mac[6],
-  RTL8127_PACKETS      **Packets
+  RTL812X_PACKETS      **Packets
   )
 {
   EFI_STATUS  Status;
@@ -164,7 +165,7 @@ Rtl8127PacketsOpen (
   }
 
   Status = Pci->Pci.Read (Pci, EfiPciIoWidthUint32, 0, 1, &Id);
-  if (EFI_ERROR (Status) || (Id != 0x812710ec)) {
+  if (EFI_ERROR (Status) || (Id != gRtlChip.PciId)) {
     return EFI_ERROR (Status) ? Status : EFI_UNSUPPORTED;
   }
 
@@ -177,7 +178,7 @@ Rtl8127PacketsOpen (
   BOOLEAN                            Valid = Bar && Bar->Desc == ACPI_ADDRESS_SPACE_DESCRIPTOR &&
                                              Bar->Len >= sizeof (*Bar) - 3 &&
                                              Bar->ResType == ACPI_ADDRESS_SPACE_TYPE_MEM &&
-                                             Bar->AddrLen >= 0x604a;
+                                             Bar->AddrLen >= gRtlChip.BarSize;
 
   if (Resources) {
     FreePool (Resources);
@@ -187,7 +188,7 @@ Rtl8127PacketsOpen (
     return EFI_UNSUPPORTED;
   }
 
-  RTL8127_PACKETS  *P = AllocateZeroPool (sizeof (*P));
+  RTL812X_PACKETS  *P = AllocateZeroPool (sizeof (*P));
 
   if (!P) {
     return EFI_OUT_OF_RESOURCES;
@@ -220,16 +221,16 @@ Rtl8127PacketsOpen (
   }
 
   P->Registers = TRUE;
-  Status       = R27Read (Pci, EfiPciIoWidthUint32, 0x40, &Revision);
+  Status       = RtlRead (Pci, EfiPciIoWidthUint32, 0x40, &Revision);
   if (!EFI_ERROR (Status)) {
-    Status = R27Read (Pci, EfiPciIoWidthUint8, 0x37, &Command);
+    Status = RtlRead (Pci, EfiPciIoWidthUint8, 0x37, &Command);
   }
 
   if (EFI_ERROR (Status)) {
     return Status;
   }
 
-  if (((Revision & 0x7cf00000) != 0x6c900000) ||
+  if (((Revision & 0x7cf00000) != gRtlChip.Revision) ||
       (Command & (ACTIVE | BIT4)))
   {
     return EFI_UNSUPPORTED;
@@ -272,9 +273,9 @@ Rtl8127PacketsOpen (
   }
 
   P->RxIndex = 0;
-  Status     = R27PrepareMac (Pci, Mac);
+  Status     = RtlPrepareMac (Pci, Mac);
   if (!EFI_ERROR (Status)) {
-    Status = R27Write (Pci, EfiPciIoWidthUint32, 0x38, 0);
+    Status = RtlWrite (Pci, EfiPciIoWidthUint32, 0x38, 0);
   }
 
   STATIC CONST UINT32  Registers[] = { 0x24, 0x20, 0xe8, 0xe4 };
@@ -286,31 +287,15 @@ Rtl8127PacketsOpen (
 
   for (UINTN I = 0; !EFI_ERROR (Status) && I < ARRAY_SIZE (Registers); I++) {
     P->DescriptorsInstalled = TRUE;
-    Status                  = R27Write (Pci, EfiPciIoWidthUint32, Registers[I], Values[I]);
+    Status                  = RtlWrite (Pci, EfiPciIoWidthUint32, Registers[I], Values[I]);
   }
 
   if (!EFI_ERROR (Status)) {
-    Status = R27Write (Pci, EfiPciIoWidthUint16, 0xda, SLOT_BYTES);
+    Status = RtlWrite (Pci, EfiPciIoWidthUint16, 0xda, SLOT_BYTES);
   }
 
   if (!EFI_ERROR (Status)) {
-    /* Version-80 defaults, no VLAN stripping or checksum offload.
-       Accept the current address and broadcast frames. */
-    Status = R27Write (
-               Pci,
-               EfiPciIoWidthUint32,
-               0x44,
-               (8U << 27) | (7U << 8) | BIT11 | BIT3 | BIT1
-               );
-  }
-
-  if (!EFI_ERROR (Status)) {
-    Status = R27Write (
-               Pci,
-               EfiPciIoWidthUint32,
-               0x40,
-               (3U << 24) | (7U << 8) | BIT7
-               );
+    Status = RtlSetRxTxConfig (Pci);
   }
 
   if (EFI_ERROR (Status)) {
@@ -326,7 +311,7 @@ Rtl8127PacketsOpen (
                      NULL
                      );
   if (!EFI_ERROR (Status)) {
-    Status = R27Write (Pci, EfiPciIoWidthUint8, 0x37, ACTIVE);
+    Status = RtlWrite (Pci, EfiPciIoWidthUint8, 0x37, ACTIVE);
   }
 
   if (!EFI_ERROR (Status)) {
@@ -337,8 +322,8 @@ Rtl8127PacketsOpen (
 }
 
 EFI_STATUS
-Rtl8127PacketsTransmit (
-  RTL8127_PACKETS  *P,
+Rtl812xPacketsTransmit (
+  RTL812X_PACKETS  *P,
   CONST VOID       *Buffer,
   UINTN            Bytes
   )
@@ -361,7 +346,7 @@ Rtl8127PacketsTransmit (
   P->TxPending = TRUE;
   P->Tx->Flags = OWN | END_RING | FIRST | LAST | (UINT32)WireBytes;
   MemoryFence ();
-  EFI_STATUS  Status = R27Write (P->Pci, EfiPciIoWidthUint16, 0x90, 1);
+  EFI_STATUS  Status = RtlWrite (P->Pci, gRtlChip.DoorbellWidth, 0x90, 1);
 
   if (EFI_ERROR (Status)) {
     P->Ready = FALSE;
@@ -371,8 +356,8 @@ Rtl8127PacketsTransmit (
 }
 
 EFI_STATUS
-Rtl8127PacketsTxDone (
-  RTL8127_PACKETS  *P
+Rtl812xPacketsTxDone (
+  RTL812X_PACKETS  *P
   )
 {
   if (!P || !P->Ready || !P->TxPending) {
@@ -390,8 +375,8 @@ Rtl8127PacketsTxDone (
 }
 
 EFI_STATUS
-Rtl8127PacketsReceive (
-  RTL8127_PACKETS  *P,
+Rtl812xPacketsReceive (
+  RTL812X_PACKETS  *P,
   VOID             *Buffer,
   UINTN            *Bytes
   )
@@ -407,7 +392,7 @@ Rtl8127PacketsReceive (
   // Even with IMR masked, service W1C status like the rge interrupt path.
   // Descriptor starvation stops RX until its pending status is acknowledged.
   UINT32      Pending;
-  EFI_STATUS  Status = R27Read (
+  EFI_STATUS  Status = RtlRead (
                          P->Pci,
                          EfiPciIoWidthUint32,
                          0x3c,
@@ -419,7 +404,7 @@ Rtl8127PacketsReceive (
   }
 
   if (!EFI_ERROR (Status) && Pending) {
-    Status = R27Write (P->Pci, EfiPciIoWidthUint32, 0x3c, Pending);
+    Status = RtlWrite (P->Pci, EfiPciIoWidthUint32, 0x3c, Pending);
   }
 
   if (EFI_ERROR (Status)) {
@@ -456,8 +441,8 @@ Rtl8127PacketsReceive (
 }
 
 EFI_STATUS
-Rtl8127PacketsFilters (
-  RTL8127_PACKETS  *P,
+Rtl812xPacketsFilters (
+  RTL812X_PACKETS  *P,
   BOOLEAN          Unicast,
   BOOLEAN          Broadcast,
   BOOLEAN          Multicast,
@@ -473,7 +458,7 @@ Rtl8127PacketsFilters (
   }
 
   UINT32      Config;
-  EFI_STATUS  Status = R27Read (
+  EFI_STATUS  Status = RtlRead (
                          P->Pci,
                          EfiPciIoWidthUint32,
                          0x44,
@@ -489,7 +474,7 @@ Rtl8127PacketsFilters (
 
   if (!EFI_ERROR (Status)) {
     /* Accept all multicast hashes; the SNP layer checks its exact list. */
-    Status = R27Write (
+    Status = RtlWrite (
                P->Pci,
                EfiPciIoWidthUint32,
                0x08,
@@ -498,7 +483,7 @@ Rtl8127PacketsFilters (
   }
 
   if (!EFI_ERROR (Status)) {
-    Status = R27Write (
+    Status = RtlWrite (
                P->Pci,
                EfiPciIoWidthUint32,
                0x0c,
@@ -507,7 +492,7 @@ Rtl8127PacketsFilters (
   }
 
   if (!EFI_ERROR (Status)) {
-    Status = R27Write (
+    Status = RtlWrite (
                P->Pci,
                EfiPciIoWidthUint32,
                0x44,
@@ -523,8 +508,8 @@ Rtl8127PacketsFilters (
 }
 
 EFI_STATUS
-Rtl8127PacketsAddress (
-  RTL8127_PACKETS  *P,
+Rtl812xPacketsAddress (
+  RTL812X_PACKETS  *P,
   CONST UINT8      Mac[6]
   )
 {
@@ -546,7 +531,7 @@ Rtl8127PacketsAddress (
     return EFI_INVALID_PARAMETER;
   }
 
-  EFI_STATUS  Status = R27Write (P->Pci, EfiPciIoWidthUint8, 0x50, 0xc0);
+  EFI_STATUS  Status = RtlWrite (P->Pci, EfiPciIoWidthUint8, 0x50, 0xc0);
 
   if (!EFI_ERROR (Status)) {
     Status = P->Pci->Mem.Write (
@@ -559,7 +544,7 @@ Rtl8127PacketsAddress (
                            );
   }
 
-  EFI_STATUS  Lock = R27Write (P->Pci, EfiPciIoWidthUint8, 0x50, 0);
+  EFI_STATUS  Lock = RtlWrite (P->Pci, EfiPciIoWidthUint8, 0x50, 0);
 
   if (!EFI_ERROR (Status)) {
     Status = Lock;
@@ -589,8 +574,8 @@ Rtl8127PacketsAddress (
 }
 
 EFI_STATUS
-Rtl8127PacketsLink (
-  RTL8127_PACKETS  *P,
+Rtl812xPacketsLink (
+  RTL812X_PACKETS  *P,
   BOOLEAN          *Present
   )
 {
@@ -604,7 +589,7 @@ Rtl8127PacketsLink (
   }
 
   UINT16      Phy;
-  EFI_STATUS  Status = R27Read (P->Pci, EfiPciIoWidthUint16, 0x6c, &Phy);
+  EFI_STATUS  Status = RtlRead (P->Pci, EfiPciIoWidthUint16, 0x6c, &Phy);
 
   if (!EFI_ERROR (Status)) {
     *Present = (Phy & BIT1) != 0;
@@ -614,15 +599,15 @@ Rtl8127PacketsLink (
 }
 
 EFI_STATUS
-Rtl8127PacketsClose (
-  RTL8127_PACKETS  **Packets
+Rtl812xPacketsClose (
+  RTL812X_PACKETS  **Packets
   )
 {
   if (!Packets) {
     return EFI_INVALID_PARAMETER;
   }
 
-  RTL8127_PACKETS  *P = *Packets;
+  RTL812X_PACKETS  *P = *Packets;
 
   if (!P) {
     return EFI_SUCCESS;
@@ -632,7 +617,7 @@ Rtl8127PacketsClose (
 
   P->Ready = FALSE;
   if (P->MayDma) {
-    Status = R27Drain (P->Pci);
+    Status = RtlDrain (P->Pci);
     if (EFI_ERROR (Status)) {
       return Status;
     }
@@ -673,7 +658,7 @@ Rtl8127PacketsClose (
     STATIC CONST UINT32  Registers[] = { 0x24, 0x20, 0xe8, 0xe4 };
 
     for (UINTN I = 0; I < ARRAY_SIZE (Registers); I++) {
-      Status = R27Write (P->Pci, EfiPciIoWidthUint32, Registers[I], 0);
+      Status = RtlWrite (P->Pci, EfiPciIoWidthUint32, Registers[I], 0);
       if (EFI_ERROR (Status)) {
         return Status;
       }
@@ -683,7 +668,7 @@ Rtl8127PacketsClose (
   }
 
   if (P->Registers && P->MacSaved) {
-    Status = R27Write (P->Pci, EfiPciIoWidthUint8, 0x50, 0xc0);
+    Status = RtlWrite (P->Pci, EfiPciIoWidthUint8, 0x50, 0xc0);
     if (!EFI_ERROR (Status)) {
       Status = P->Pci->Mem.Write (
                              P->Pci,
@@ -695,7 +680,7 @@ Rtl8127PacketsClose (
                              );
     }
 
-    EFI_STATUS  Lock = R27Write (P->Pci, EfiPciIoWidthUint8, 0x50, 0);
+    EFI_STATUS  Lock = RtlWrite (P->Pci, EfiPciIoWidthUint8, 0x50, 0);
 
     if (EFI_ERROR (Status) || EFI_ERROR (Lock)) {
       return EFI_ERROR (Status) ? Status : Lock;

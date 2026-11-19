@@ -14,11 +14,9 @@
   K3QspiLib|Include/Library/K3QspiLib.h
   K3PowerDomainLib|Include/Library/K3PowerDomainLib.h
   K3FirmwareUpdateLib|Include/Library/K3FirmwareUpdateLib.h
-  Rtl8127SnpLib|Include/Library/Rtl8127SnpLib.h
   SpacemitTlvLib|Include/Library/SpacemitTlvLib.h
   K3BoardEepromLib|Include/Library/K3BoardEepromLib.h
   Rtl8127Lib|Include/Library/Rtl8127Lib.h
-  Rtl8127PacketsLib|Include/Library/Rtl8127PacketsLib.h
   UfsStorageLib|Include/Library/UfsStorageLib.h
   K3DisplayModeLib|Include/Library/K3DisplayModeLib.h
   K3GopLib|Include/Library/K3GopLib.h

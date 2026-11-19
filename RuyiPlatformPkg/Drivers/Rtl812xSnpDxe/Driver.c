@@ -8,9 +8,8 @@
 #include <Library/DebugLib.h>
 #include <Library/DevicePathLib.h>
 #include <Library/MemoryAllocationLib.h>
-#include <Library/PcdLib.h>
-#include <Library/PlatformMacAddressLib.h>
-#include <Library/Rtl8127SnpLib.h>
+#include <Library/Rtl812xHwLib.h>
+#include <Library/Rtl812xSnpLib.h>
 #include <Library/SnpAdapterInfoLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
@@ -94,14 +93,12 @@ MatchChildPath (
 
 STATIC EFI_STATUS
 GetChildMac (
+  EFI_PCI_IO_PROTOCOL *Pci,
   EFI_DEVICE_PATH_PROTOCOL  *Remaining,
   UINT8                     Mac[6]
   )
 {
-  EFI_STATUS  Status = PlatformGetMacAddress (
-                         FixedPcdGet16 (PcdRtl8127MacAddressIndex),
-                         Mac
-                         );
+  EFI_STATUS  Status = RtlReadStationAddress (Pci, Mac);
 
   return EFI_ERROR (Status) ? Status : MatchChildPath (Remaining, Mac);
 }
@@ -114,7 +111,7 @@ CheckController (
   UINT32      Id;
   EFI_STATUS  Status = Pci->Pci.Read (Pci, EfiPciIoWidthUint32, 0, 1, &Id);
 
-  if (!EFI_ERROR (Status) && (Id != 0x812710ec)) {
+  if (!EFI_ERROR (Status) && (Id != gRtlChip.PciId)) {
     Status = EFI_UNSUPPORTED;
   }
 
@@ -159,15 +156,9 @@ Supported (
     }
   }
 
-  if ((Remaining != NULL) && !IsDevicePathEnd (Remaining)) {
-    Status = GetChildMac (Remaining, Mac);
-    if (EFI_ERROR (Status)) {
-      return Status;
-    }
-  }
-
   if (Adapter != NULL) {
-    return EFI_SUCCESS;
+    return (Remaining && !IsDevicePathEnd (Remaining)) ?
+           GetChildMac (Adapter->Pci, Remaining, Mac) : EFI_SUCCESS;
   }
 
   Status = gBS->OpenProtocol (
@@ -183,6 +174,9 @@ Supported (
   }
 
   Status  = CheckController (Pci);
+  if (!EFI_ERROR (Status) && Remaining && !IsDevicePathEnd (Remaining)) {
+    Status = GetChildMac (Pci, Remaining, Mac);
+  }
   Cleanup = gBS->CloseProtocol (
                    Controller,
                    &gEfiPciIoProtocolGuid,
@@ -202,9 +196,9 @@ Exit (
   EFI_STATUS  Status;
 
   Adapter->Ended = TRUE;
-  Status         = Rtl8127SnpExit (Adapter->Snp);
+  Status         = Rtl812xSnpExit (Adapter->Snp);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "RTL8127 SNP DMA stop failed: %r; ownership retained\n", Status));
+    DEBUG ((DEBUG_ERROR, "RTL%04x SNP DMA stop failed: %r; ownership retained\n", gRtlChip.PciId >> 16, Status));
   }
 }
 
@@ -259,7 +253,7 @@ RemoveChild (
     Adapter->ChildOpened = FALSE;
   }
 
-  Status = Rtl8127SnpDestroy (&Adapter->Snp);
+  Status = Rtl812xSnpDestroy (&Adapter->Snp);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -330,11 +324,11 @@ CreateChild (
 
   Status = CheckController (Adapter->Pci);
   if (!EFI_ERROR (Status)) {
-    Status = GetChildMac (Remaining, Mac);
+    Status = GetChildMac (Adapter->Pci, Remaining, Mac);
   }
 
   if (!EFI_ERROR (Status)) {
-    Status = Rtl8127SnpCreate (Adapter->Pci, Mac, &Adapter->Snp);
+    Status = Rtl812xSnpCreate (Adapter->Pci, Mac, &Adapter->Snp);
   }
 
   if (!EFI_ERROR (Status)) {
@@ -395,7 +389,8 @@ CreateChild (
   if (!EFI_ERROR (Status)) {
     DEBUG ((
       DEBUG_INFO,
-      "RTL8127 SNP published: %02x:%02x:%02x:%02x:%02x:%02x\n",
+      "RTL%04x SNP published: %02x:%02x:%02x:%02x:%02x:%02x\n",
+      gRtlChip.PciId >> 16,
       Mac[0],
       Mac[1],
       Mac[2],
@@ -467,7 +462,7 @@ Start (
   if (EFI_ERROR (Status)) {
     Cleanup = NewController ? RemoveController (This, Adapter) : RemoveChild (This, Adapter);
     if (EFI_ERROR (Cleanup)) {
-      DEBUG ((DEBUG_ERROR, "RTL8127 SNP startup cleanup failed: %r; owner retained\n", Cleanup));
+      DEBUG ((DEBUG_ERROR, "RTL%04x SNP startup cleanup failed: %r; owner retained\n", gRtlChip.PciId >> 16, Cleanup));
       return Cleanup;
     }
   }
@@ -511,7 +506,7 @@ STATIC EFI_DRIVER_BINDING_PROTOCOL  mBinding = {
 };
 
 EFI_STATUS EFIAPI
-Rtl8127SnpEntry (
+Rtl812xSnpEntry (
   EFI_HANDLE        Image,
   EFI_SYSTEM_TABLE  *SystemTable
   )

@@ -3,8 +3,8 @@
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
-#include <Library/Rtl8127PacketsLib.h>
-#include <Library/Rtl8127SnpLib.h>
+#include <Library/Rtl812xPacketsLib.h>
+#include <Library/Rtl812xSnpLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 
 #define SIGNATURE  SIGNATURE_32('R','2','7','N')
@@ -17,7 +17,7 @@
 typedef struct {
   UINT32                         Signature;
   EFI_PCI_IO_PROTOCOL            *Pci;
-  RTL8127_PACKETS                *Packets;
+  RTL812X_PACKETS                *Packets;
   EFI_SIMPLE_NETWORK_PROTOCOL    Snp;
   EFI_SIMPLE_NETWORK_MODE        Mode;
   EFI_NETWORK_STATISTICS         Stats;
@@ -84,7 +84,7 @@ Link (
   NIC  *N
   )
 {
-  EFI_STATUS  Status = Rtl8127PacketsLink (
+  EFI_STATUS  Status = Rtl812xPacketsLink (
                          N->Packets,
                          &N->Mode.MediaPresent
                          );
@@ -152,7 +152,7 @@ ProgramFilters (
   UINT32  Filters
   )
 {
-  EFI_STATUS  Status = Rtl8127PacketsFilters (
+  EFI_STATUS  Status = Rtl812xPacketsFilters (
                          N->Packets,
                          (Filters & EFI_SIMPLE_NETWORK_RECEIVE_UNICAST) != 0,
                          (Filters & EFI_SIMPLE_NETWORK_RECEIVE_BROADCAST) != 0,
@@ -179,7 +179,7 @@ PollRx (
 
   for (UINTN I = 0; I < 16; I++) {
     UINTN       Bytes  = sizeof (N->RxBuffer);
-    EFI_STATUS  Status = Rtl8127PacketsReceive (
+    EFI_STATUS  Status = Rtl812xPacketsReceive (
                            N->Packets,
                            N->RxBuffer,
                            &Bytes
@@ -225,7 +225,7 @@ PollTx (
     return EFI_SUCCESS;
   }
 
-  EFI_STATUS  Status = Rtl8127PacketsTxDone (N->Packets);
+  EFI_STATUS  Status = Rtl812xPacketsTxDone (N->Packets);
 
   if (Status == EFI_NOT_READY) {
     return EFI_SUCCESS;
@@ -324,7 +324,7 @@ Initialize (
   }
 
   EFI_TPL     Old    = gBS->RaiseTPL (TPL_NOTIFY);
-  EFI_STATUS  Status = Rtl8127PacketsOpen (
+  EFI_STATUS  Status = Rtl812xPacketsOpen (
                          N->Pci,
                          N->Mode.CurrentAddress.Addr,
                          &N->Packets
@@ -341,7 +341,7 @@ Initialize (
   if (!EFI_ERROR (Status)) {
     N->Mode.State = EfiSimpleNetworkInitialized;
   } else {
-    EFI_STATUS  Cleanup = Rtl8127PacketsClose (&N->Packets);
+    EFI_STATUS  Cleanup = Rtl812xPacketsClose (&N->Packets);
     if (EFI_ERROR (Cleanup)) {
       N->Faulted = TRUE;
       Status     = Cleanup;
@@ -359,7 +359,7 @@ Close (
   NIC  *N
   )
 {
-  EFI_STATUS  Status = Rtl8127PacketsClose (&N->Packets);
+  EFI_STATUS  Status = Rtl812xPacketsClose (&N->Packets);
 
   if (!EFI_ERROR (Status)) {
     N->Mode.State        = EfiSimpleNetworkStarted;
@@ -503,7 +503,7 @@ StationAddress (
       Mac->Addr,
       6
       );
-    Status = Rtl8127PacketsAddress (N->Packets, Address.Addr);
+    Status = Rtl812xPacketsAddress (N->Packets, Address.Addr);
     if (!EFI_ERROR (Status)) {
       N->Mode.CurrentAddress = Address;
       if (N->RxBytes && !Accept (N, N->RxBuffer)) {
@@ -725,7 +725,7 @@ Transmit (
         Packet[13] = (UINT8)*Protocol;
       }
 
-      Status = Rtl8127PacketsTransmit (N->Packets, Buffer, Bytes);
+      Status = Rtl812xPacketsTransmit (N->Packets, Buffer, Bytes);
       if (!EFI_ERROR (Status)) {
         N->TxBuffer    = Buffer;
         N->TxCompleted = FALSE;
@@ -820,7 +820,7 @@ WaitPacket (
 }
 
 EFI_STATUS
-Rtl8127SnpCreate (
+Rtl812xSnpCreate (
   EFI_PCI_IO_PROTOCOL          *Pci,
   CONST UINT8                  Mac[6],
   EFI_SIMPLE_NETWORK_PROTOCOL  **Snp
@@ -876,7 +876,7 @@ Rtl8127SnpCreate (
 }
 
 EFI_STATUS
-Rtl8127SnpDestroy (
+Rtl812xSnpDestroy (
   EFI_SIMPLE_NETWORK_PROTOCOL  **Snp
   )
 {
@@ -895,7 +895,7 @@ Rtl8127SnpDestroy (
   }
 
   EFI_TPL     Old    = gBS->RaiseTPL (TPL_NOTIFY);
-  EFI_STATUS  Status = Rtl8127PacketsClose (&N->Packets);
+  EFI_STATUS  Status = Rtl812xPacketsClose (&N->Packets);
 
   if (EFI_ERROR (Status)) {
     gBS->RestoreTPL (Old);
@@ -916,7 +916,7 @@ Rtl8127SnpDestroy (
 }
 
 EFI_STATUS
-Rtl8127SnpExit (
+Rtl812xSnpExit (
   EFI_SIMPLE_NETWORK_PROTOCOL  *Snp
   )
 {
@@ -929,7 +929,7 @@ Rtl8127SnpExit (
   EFI_TPL  Old = gBS->RaiseTPL (TPL_NOTIFY);
 
   N->Ended = TRUE;
-  EFI_STATUS  Status = Rtl8127PacketsClose (&N->Packets);
+  EFI_STATUS  Status = Rtl812xPacketsClose (&N->Packets);
 
   gBS->RestoreTPL (Old);
   return Status;
