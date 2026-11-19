@@ -1,0 +1,18 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Sg2042ClockLib
+  FILE_GUID = 1f549907-7547-460d-ac68-7c359d0037bb
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = Sg2042ClockLib
+[Sources]
+  Clock.c
+[Packages]
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+  SophgoPlatformPkg/SophgoPlatformPkg.dec
+[LibraryClasses]
+  CpuMmioAddressLib
+  FdtHardwareLib
+  FdtLib
+  IoLib

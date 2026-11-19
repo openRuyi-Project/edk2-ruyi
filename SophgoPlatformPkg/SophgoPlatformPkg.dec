@@ -1,0 +1,10 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  DEC_SPECIFICATION = 0x0001001B
+  PACKAGE_NAME = SophgoPlatformPkg
+  PACKAGE_GUID = c7e3bfbe-edb5-4aa5-a76c-6c20c38973d8
+  PACKAGE_VERSION = 0.1
+[Includes]
+  Include
+[LibraryClasses]
+  Sg2042ClockLib|Include/Library/Sg2042ClockLib.h

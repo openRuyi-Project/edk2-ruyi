@@ -1,0 +1,17 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Sg2042MmioAddressLib
+  FILE_GUID = d24a2816-a08f-4ca4-a2be-aeb93bc632c5
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = CpuMmioAddressLib
+
+[Sources]
+  Address.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+
+[LibraryClasses]
+  BaseLib

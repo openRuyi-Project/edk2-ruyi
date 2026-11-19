@@ -1,0 +1,33 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Sg2042SmbiosDxe
+  FILE_GUID = df598bdb-26ba-45f4-9486-3994ff2fa8ce
+  MODULE_TYPE = DXE_DRIVER
+  ENTRY_POINT = PublishSg2042Info
+[Sources]
+  Smbios.c
+[Packages]
+  SophgoPlatformPkg/SophgoPlatformPkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+[LibraryClasses]
+  CpuMmioAddressLib
+  Sg2042ClockLib
+  UefiDriverEntryPoint
+  BaseLib
+  BaseMemoryLib
+  FdtBoardInfoLib
+  IoLib
+  PrintLib
+  FdtHardwareLib
+  FdtLib
+  HobLib
+  MemoryAllocationLib
+  UefiBootServicesTableLib
+[Protocols]
+  gEfiSmbiosProtocolGuid
+  gEfiCpuArchProtocolGuid
+[Depex]
+  gEfiSmbiosProtocolGuid AND gEfiCpuArchProtocolGuid

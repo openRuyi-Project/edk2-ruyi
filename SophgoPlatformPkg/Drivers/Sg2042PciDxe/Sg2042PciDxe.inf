@@ -1,0 +1,30 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Sg2042PciDxe
+  FILE_GUID = 267d171a-249d-4ca7-adf5-d6c1a25fbbc0
+  MODULE_TYPE = DXE_DRIVER
+  ENTRY_POINT = Sg2042PciEntry
+[Sources]
+  Pci.c
+  Cadence.h
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  CpuMmioAddressLib
+  BaseLib
+  DevicePathLib
+  FdtBoardInfoLib
+  FdtHardwareLib
+  FdtLib
+  TimerLib
+  IoLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+[Protocols]
+  gRuyiPciControllerProtocolGuid
+  gEfiCpuArchProtocolGuid
+[Depex]
+  gEfiCpuArchProtocolGuid

@@ -1,0 +1,17 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Sg2042CpuInfoLib
+  FILE_GUID = 50432627-a18a-41b7-937d-69bfded6ef4a
+  MODULE_TYPE = DXE_DRIVER
+  LIBRARY_CLASS = PlatformCpuInfoLib|DXE_DRIVER
+[Sources]
+  Cpu.c
+[Packages]
+  SophgoPlatformPkg/SophgoPlatformPkg.dec
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  Sg2042ClockLib
+  FdtBoardInfoLib
+  PrintLib

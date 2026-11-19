@@ -1,0 +1,31 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Sg2042MmcDxe
+  FILE_GUID = 30a22710-aefd-4849-92e9-7b4daa16f994
+  MODULE_TYPE = DXE_DRIVER
+  ENTRY_POINT = Sg2042MmcEntry
+[Sources]
+  Host.c
+[Packages]
+  SophgoPlatformPkg/SophgoPlatformPkg.dec
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  CpuMmioAddressLib
+  Sg2042ClockLib
+  TimerLib
+  BaseLib
+  IoLib
+  FdtBoardInfoLib
+  FdtHardwareLib
+  FdtLib
+  NonDiscoverableDeviceRegistrationLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+[Protocols]
+  gEdkiiSdMmcOverrideProtocolGuid
+  gEfiCpuArchProtocolGuid
+[Depex]
+  gEfiCpuArchProtocolGuid
