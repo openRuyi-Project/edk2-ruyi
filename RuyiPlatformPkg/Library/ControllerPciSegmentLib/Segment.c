@@ -34,7 +34,7 @@ ControllerNotify (
                                                  (VOID **)&Controller
                                                  );
 
-  if (!EFI_ERROR (Status) && Controller && (Controller->Revision == 1) && Controller->Config) {
+  if (!EFI_ERROR (Status) && Controller && ((Controller->Revision == 1) || (Controller->Revision == 2)) && Controller->Config) {
     mController = Controller;
   }
 }

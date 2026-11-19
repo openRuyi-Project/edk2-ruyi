@@ -13,5 +13,27 @@ typedef struct {
                               BOOLEAN Write, UINT32 *Value);
 } RUYI_PCI_CONTROLLER_PROTOCOL;
 
+// Revision 2 publishes all root bridges together before PCI enumeration.
+// Revision 1 exposes one embedded RootBridge.
+typedef struct {
+  RUYI_PCI_CONTROLLER_PROTOCOL    Controller;
+  UINTN                           Count;
+  CONST PCI_ROOT_BRIDGE           *Bridges;
+  // Physical MMIO bases corresponding to the GCD I/O port apertures.
+  CONST UINT64                    *IoMmioBases;
+} RUYI_MULTI_ROOT_PCI_CONTROLLER;
+
+STATIC inline CONST PCI_ROOT_BRIDGE *
+PlatformPciRoots (CONST RUYI_PCI_CONTROLLER_PROTOCOL *Controller, UINTN *Count)
+{
+  CONST RUYI_MULTI_ROOT_PCI_CONTROLLER *Multi = (CONST VOID *)Controller;
+  if (Controller->Revision == 2) {
+    *Count = Multi->Count;
+    return Multi->Bridges;
+  }
+  *Count = (Controller->Revision == 1) ? 1 : 0;
+  return &Controller->RootBridge;
+}
+
 extern EFI_GUID  gRuyiPciControllerProtocolGuid;
 #endif

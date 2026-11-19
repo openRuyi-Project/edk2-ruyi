@@ -55,9 +55,24 @@ Transfer (
   }
 
   if (Io) {
-    Base  = mController->RootBridge.Io.Base - mController->RootBridge.Io.Translation;
-    Limit = mController->RootBridge.Io.Limit - mController->RootBridge.Io.Translation;
-    if ((Base > Limit) || (Address < Base) || (Address + Span - 1 > Limit)) {
+    UINTN Entries;
+    CONST PCI_ROOT_BRIDGE *Roots = PlatformPciRoots (mController, &Entries);
+    UINTN Index;
+    for (Index = 0; Index < Entries; Index++) {
+      if (Roots[Index].Io.Base > Roots[Index].Io.Limit) {
+        continue;
+      }
+      Base  = Roots[Index].Io.Base - Roots[Index].Io.Translation;
+      Limit = Roots[Index].Io.Limit - Roots[Index].Io.Translation;
+      if (Address >= Base && Address + Span - 1 <= Limit) {
+        if (mController->Revision == 2) {
+          CONST RUYI_MULTI_ROOT_PCI_CONTROLLER *Multi = (CONST VOID *)mController;
+          Address = Multi->IoMmioBases[Index] + (Address - Base);
+        }
+        break;
+      }
+    }
+    if (Index == Entries) {
       return EFI_UNSUPPORTED;
     }
   }

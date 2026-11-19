@@ -31,22 +31,23 @@ PciHostBridgeGetRootBridges (
     return NULL;
   }
 
-  if (Controller->Revision != 1) {
+  UINTN Entries;
+  CONST PCI_ROOT_BRIDGE *Roots = PlatformPciRoots (Controller, &Entries);
+  if (!Roots || !Entries || Entries > MAX_UINTN / sizeof (*Bridge)) {
     return NULL;
   }
-
-  Bridge = AllocateCopyPool (sizeof (*Bridge), &Controller->RootBridge);
+  Bridge = AllocateCopyPool (Entries * sizeof (*Bridge), Roots);
   if (Bridge == NULL) {
     return NULL;
   }
-
-  Bridge->DevicePath = DuplicateDevicePath (Controller->RootBridge.DevicePath);
-  if (Bridge->DevicePath == NULL) {
-    FreePool (Bridge);
-    return NULL;
+  for (UINTN Index = 0; Index < Entries; Index++) {
+    Bridge[Index].DevicePath = DuplicateDevicePath (Roots[Index].DevicePath);
+    if (!Bridge[Index].DevicePath) {
+      PciHostBridgeFreeRootBridges (Bridge, Index);
+      return NULL;
+    }
   }
-
-  *Count = 1;
+  *Count = Entries;
   return Bridge;
 }
 
