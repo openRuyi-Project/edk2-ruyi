@@ -36,6 +36,7 @@
   gEdkiiNvVarStoreFormattedGuid
   gRuyiNvFvbReadyGuid
 [Pcd]
+  gSg2042PlatformTokenSpaceGuid.PcdSg2042FlashUid
   gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable
 [Depex]
   gEfiCpuArchProtocolGuid

@@ -93,12 +93,14 @@ MatchChildPath (
 
 STATIC EFI_STATUS
 GetChildMac (
+  EFI_HANDLE Controller,
   EFI_PCI_IO_PROTOCOL *Pci,
+  BOOLEAN Create,
   EFI_DEVICE_PATH_PROTOCOL  *Remaining,
   UINT8                     Mac[6]
   )
 {
-  EFI_STATUS  Status = RtlReadStationAddress (Pci, Mac);
+  EFI_STATUS  Status = RtlReadStationAddress (Controller, Pci, Create, Mac);
 
   return EFI_ERROR (Status) ? Status : MatchChildPath (Remaining, Mac);
 }
@@ -158,7 +160,7 @@ Supported (
 
   if (Adapter != NULL) {
     return (Remaining && !IsDevicePathEnd (Remaining)) ?
-           GetChildMac (Adapter->Pci, Remaining, Mac) : EFI_SUCCESS;
+           GetChildMac (Controller, Adapter->Pci, FALSE, Remaining, Mac) : EFI_SUCCESS;
   }
 
   Status = gBS->OpenProtocol (
@@ -175,7 +177,7 @@ Supported (
 
   Status  = CheckController (Pci);
   if (!EFI_ERROR (Status) && Remaining && !IsDevicePathEnd (Remaining)) {
-    Status = GetChildMac (Pci, Remaining, Mac);
+    Status = GetChildMac (Controller, Pci, FALSE, Remaining, Mac);
   }
   Cleanup = gBS->CloseProtocol (
                    Controller,
@@ -324,7 +326,7 @@ CreateChild (
 
   Status = CheckController (Adapter->Pci);
   if (!EFI_ERROR (Status)) {
-    Status = GetChildMac (Adapter->Pci, Remaining, Mac);
+    Status = GetChildMac (Adapter->Controller, Adapter->Pci, TRUE, Remaining, Mac);
   }
 
   if (!EFI_ERROR (Status)) {

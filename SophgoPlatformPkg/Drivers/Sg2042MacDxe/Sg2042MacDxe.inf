@@ -1,0 +1,36 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Sg2042MacDxe
+  FILE_GUID = 62e6bbcb-7330-4e2a-ada4-1c00ac0dcadd
+  MODULE_TYPE = DXE_DRIVER
+  ENTRY_POINT = Sg2042MacEntry
+[Sources]
+  Handoff.c
+[Packages]
+  MdePkg/MdePkg.dec
+  EmbeddedPkg/EmbeddedPkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+  SophgoPlatformPkg/SophgoPlatformPkg.dec
+[LibraryClasses]
+  CpuMmioAddressLib
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  DevicePathLib
+  FdtHardwareLib
+  FdtLib
+  IoLib
+  PrintLib
+  Sg2042MacLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiLib
+[Protocols]
+  gEfiPciIoProtocolGuid
+  gEfiVariableWriteArchProtocolGuid
+[Guids]
+  gFdtTableGuid
+  gEfiEventReadyToBootGuid
+[Depex]
+  gEfiVariableWriteArchProtocolGuid

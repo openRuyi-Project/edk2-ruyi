@@ -1,0 +1,30 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Sg2042MacLib
+  FILE_GUID = b8dfa315-751d-49cd-89be-d87758a72256
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = Sg2042MacLib
+[Sources]
+  Mac.c
+  Pci.c
+[Packages]
+  CryptoPkg/CryptoPkg.dec
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  SophgoPlatformPkg/SophgoPlatformPkg.dec
+[LibraryClasses]
+  BaseCryptLib
+  DevicePathLib
+  BaseMemoryLib
+  PcdLib
+  PrintLib
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+[Protocols]
+  gEfiRngProtocolGuid
+[Guids]
+  gSg2042MacVariableGuid
+[Pcd]
+  gSg2042PlatformTokenSpaceGuid.PcdSg2042FlashUid
+  gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable

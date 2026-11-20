@@ -13,7 +13,7 @@ typedef struct {
 } RTL_CHIP;
 
 extern CONST RTL_CHIP gRtlChip;
-EFI_STATUS RtlReadStationAddress (EFI_PCI_IO_PROTOCOL *Pci, UINT8 Mac[6]);
+EFI_STATUS RtlReadStationAddress (EFI_HANDLE Controller, EFI_PCI_IO_PROTOCOL *Pci, BOOLEAN Create, UINT8 Mac[6]);
 EFI_STATUS RtlSetRxTxConfig (EFI_PCI_IO_PROTOCOL *Pci);
 
 EFI_STATUS

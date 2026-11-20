@@ -159,3 +159,16 @@ Sg2042SpiReadId (CONST SG2042_SPI_NOR *Nor, UINT8 Id[3])
                          (Id[0] == 0xc2 && Id[1] == 0x20))) { return EFI_SUCCESS; }
   return EFI_UNSUPPORTED;
 }
+
+EFI_STATUS
+Sg2042SpiReadUid (CONST SG2042_SPI_NOR *Nor, UINT8 Uid[16])
+{
+  UINT8 Flags, Data[17];
+  EFI_STATUS Status = Command (Nor, 0x70, FALSE, 0, &Flags, 1, TRUE);
+  if (EFI_ERROR (Status)) { return Status; }
+  // RUID needs one more dummy byte when the chip is in four-byte address mode.
+  UINTN Skip = Flags & BIT0;
+  Status = Command (Nor, 0x4b, TRUE, 0, Data, 16 + Skip, TRUE);
+  if (!EFI_ERROR (Status)) { CopyMem (Uid, Data + Skip, 16); }
+  return Status;
+}

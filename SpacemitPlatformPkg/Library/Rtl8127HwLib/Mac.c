@@ -281,7 +281,7 @@ RtlDrain (
 CONST RTL_CHIP gRtlChip = { 0x812710ec, 0x6c900000, 0x604a, EfiPciIoWidthUint16 };
 
 EFI_STATUS
-RtlReadStationAddress (EFI_PCI_IO_PROTOCOL *Pci, UINT8 Mac[6])
+RtlReadStationAddress (EFI_HANDLE Controller, EFI_PCI_IO_PROTOCOL *Pci, BOOLEAN Create, UINT8 Mac[6])
 {
   return PlatformGetMacAddress (FixedPcdGet16 (PcdRtl8127MacAddressIndex), Mac);
 }

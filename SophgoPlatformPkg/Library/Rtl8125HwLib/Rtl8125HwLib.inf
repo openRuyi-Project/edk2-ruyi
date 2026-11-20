@@ -1,0 +1,15 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Rtl8125HwLib
+  FILE_GUID = f42ff015-4da8-470e-9e4b-7e3cc0f86407
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = Rtl812xHwLib
+[Sources]
+  Mac.c
+[Packages]
+  SophgoPlatformPkg/SophgoPlatformPkg.dec
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  Sg2042MacLib

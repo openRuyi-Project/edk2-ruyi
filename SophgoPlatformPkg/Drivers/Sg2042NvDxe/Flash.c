@@ -66,6 +66,17 @@ MapFlashPage (UINTN Address)
 }
 
 STATIC
+VOID
+ReadGdFlashUid (VOID)
+{
+  UINT8 Uid[16], Any = 0, All = 0xff;
+  UINTN Size = sizeof (Uid);
+  if (EFI_ERROR (Sg2042SpiReadUid (&mNor, Uid))) { return; }
+  for (UINTN I = 0; I < Size; I++) { Any |= Uid[I]; All &= Uid[I]; }
+  if (Any != 0 && All != 0xff) { PcdSetPtrS (PcdSg2042FlashUid, &Size, Uid); }
+}
+
+STATIC
 BOOLEAN
 HasVariablePartition (VOID)
 {
@@ -114,6 +125,7 @@ Sg2042NvEntry (EFI_HANDLE Image, EFI_SYSTEM_TABLE *SystemTable)
         EFI_ERROR (MapFlashPage (mNor.Base))) { continue; }
     Status = Sg2042SpiReadId (&mNor, Id);
     if (EFI_ERROR (Status)) { continue; }
+    if (Id[0] == 0xc8 && Node == FirmwareNode) { ReadGdFlashUid (); }
     if (HasVariablePartition () && (BootFlash < 0 || mNor.Base == SG2042_FIRMWARE_SPI)) {
       BootFlash = Node;
       StoreBase = mNor.Base;

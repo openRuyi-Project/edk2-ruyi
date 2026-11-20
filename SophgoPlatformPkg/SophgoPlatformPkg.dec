@@ -8,4 +8,12 @@
   Include
 [LibraryClasses]
   Sg2042SpiNorLib|Include/Library/Sg2042SpiNorLib.h
+  Sg2042MacLib|Include/Library/Sg2042MacLib.h
   Sg2042ClockLib|Include/Library/Sg2042ClockLib.h
+
+[Guids]
+  gSg2042PlatformTokenSpaceGuid = { 0x1a193bbb, 0xc21d, 0x4738, { 0x9e, 0x1a, 0x4c, 0x10, 0x99, 0xe5, 0xc8, 0x7a } }
+  gSg2042MacVariableGuid = { 0xa43cd556, 0x39bc, 0x411a, { 0xad, 0xc5, 0x36, 0x1a, 0x30, 0x82, 0xd9, 0x36 } }
+
+[PcdsDynamic]
+  gSg2042PlatformTokenSpaceGuid.PcdSg2042FlashUid|{0}|VOID*|0x1
