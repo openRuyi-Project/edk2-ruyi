@@ -7,4 +7,5 @@
 [Includes]
   Include
 [LibraryClasses]
+  Sg2042SpiNorLib|Include/Library/Sg2042SpiNorLib.h
   Sg2042ClockLib|Include/Library/Sg2042ClockLib.h

@@ -1,0 +1,17 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Sg2042SpiNorLib
+  FILE_GUID = b677aa89-357c-47b1-ae40-3fe0b66cd291
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = Sg2042SpiNorLib
+[Sources]
+  Flash.c
+[Packages]
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+  SophgoPlatformPkg/SophgoPlatformPkg.dec
+[LibraryClasses]
+  BaseMemoryLib
+  CpuMmioAddressLib
+  IoLib

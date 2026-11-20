@@ -1,0 +1,41 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Sg2042NvDxe
+  FILE_GUID = 0aa13e51-f638-4f51-9e24-a77707616171
+  MODULE_TYPE = DXE_RUNTIME_DRIVER
+  ENTRY_POINT = Sg2042NvEntry
+[Sources]
+  Flash.c
+[Packages]
+  SophgoPlatformPkg/SophgoPlatformPkg.dec
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+  EmbeddedPkg/EmbeddedPkg.dec
+[LibraryClasses]
+  Sg2042SpiNorLib
+  CpuMmioAddressLib
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  DxeServicesTableLib
+  FdtLib
+  FdtHardwareLib
+  HobLib
+  IoLib
+  NvStorageLib
+  PcdLib
+  UefiBootServicesTableLib
+  UefiRuntimeLib
+  UefiDriverEntryPoint
+[Protocols]
+  gEfiCpuArchProtocolGuid
+[Guids]
+  gFdtHobGuid
+  gEdkiiNvVarStoreFormattedGuid
+  gRuyiNvFvbReadyGuid
+[Pcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable
+[Depex]
+  gEfiCpuArchProtocolGuid

@@ -1,0 +1,25 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Sg2042FirmwareUpdateLib
+  FILE_GUID = 5fd6cb74-dbc9-4a91-a67d-8b13eb6dd35c
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = PlatformFirmwareUpdateLib
+[Sources]
+  Update.c
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+  SophgoPlatformPkg/SophgoPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  CorebootImageLib
+  FdtBoardInfoLib
+  FdtHardwareLib
+  FdtLib
+  FirmwareUpdateLib
+  MemoryAllocationLib
+  Sg2042SpiNorLib
+  UefiBootServicesTableLib
