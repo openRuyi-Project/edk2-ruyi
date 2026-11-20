@@ -159,16 +159,17 @@ PayloadValid (
 }
 
 EFI_STATUS
-CorebootImageValidate (
+CorebootImageValidateDtb (
   CONST VOID  *Buffer,
   UINTN       Size,
-  CONST COREBOOT_IMAGE_LAYOUT *Layout
+  CONST COREBOOT_IMAGE_LAYOUT  *Layout,
+  CONST CHAR8                  *DtbName
   )
 {
   CONST UINT8  *Image   = Buffer;
   UINT32       Required = 0;
 
-  if (!Image || !Layout || !Layout->BoardConfig || !Layout->Compatible || !Size) {
+  if (!Image || !Layout || !DtbName || !Layout->BoardConfig || !Layout->Compatible || !Size) {
     return EFI_BAD_BUFFER_SIZE;
   }
 
@@ -250,7 +251,7 @@ CorebootImageValidate (
         Bit = BIT2;
       }
 
-      if (!AsciiStrCmp (Name, "fallback/DTB")) {
+      if (!AsciiStrCmp (Name, DtbName)) {
         if ((Type != 0x50) || Compression) {
           return EFI_COMPROMISED_DATA;
         }
@@ -314,4 +315,14 @@ CorebootImageValidate (
   }
 
   return Required == (BIT0 | BIT1 | BIT2 | BIT3 | BIT4) ? EFI_SUCCESS : EFI_COMPROMISED_DATA;
+}
+
+EFI_STATUS
+CorebootImageValidate (
+  CONST VOID                   *Image,
+  UINTN                        Size,
+  CONST COREBOOT_IMAGE_LAYOUT  *Layout
+  )
+{
+  return CorebootImageValidateDtb (Image, Size, Layout, "fallback/DTB");
 }

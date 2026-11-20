@@ -18,3 +18,11 @@ CorebootImageValidate (
   UINTN                       Size,
   CONST COREBOOT_IMAGE_LAYOUT  *Layout
   );
+
+EFI_STATUS
+CorebootImageValidateDtb (
+  CONST VOID                   *Image,
+  UINTN                        Size,
+  CONST COREBOOT_IMAGE_LAYOUT  *Layout,
+  CONST CHAR8                  *DtbName
+  );
