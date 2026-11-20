@@ -1,0 +1,14 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = IdentityMmioAddressLib
+  FILE_GUID = c75a4317-07b2-40ac-a2ed-7949e2e980f1
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = CpuMmioAddressLib
+
+[Sources]
+  Address.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec

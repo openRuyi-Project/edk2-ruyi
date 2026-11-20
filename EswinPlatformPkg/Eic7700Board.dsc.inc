@@ -10,6 +10,7 @@
 !include RuyiPlatformPkg/Console.dsc.inc
 
 [LibraryClasses]
+  CpuMmioAddressLib|RuyiPlatformPkg/Library/IdentityMmioAddressLib/IdentityMmioAddressLib.inf
   Eic7700BoardProfileLib|$(EIC_BOARD_PROFILE_LIB)
   Eic7700BoardGpioLib|EswinPlatformPkg/Library/Eic7700GpioPadLib/Eic7700GpioPadLib.inf
   PlatformBootPolicyLib|RuyiPlatformPkg/Library/DefaultBootPolicyLib/DefaultBootPolicyLib.inf

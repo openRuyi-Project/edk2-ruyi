@@ -26,6 +26,7 @@
 !include RuyiPlatformPkg/Console.dsc.inc
 
 [LibraryClasses]
+  CpuMmioAddressLib|RuyiPlatformPkg/Library/IdentityMmioAddressLib/IdentityMmioAddressLib.inf
   Eic7700BoardProfileLib|EswinPlatformPkg/Library/PremierP550ProfileLib/PremierP550ProfileLib.inf
   Eic7700BoardGpioLib|EswinPlatformPkg/Library/PremierP550GpioLib/PremierP550GpioLib.inf
   PlatformBootPolicyLib|RuyiPlatformPkg/Library/DefaultBootPolicyLib/DefaultBootPolicyLib.inf

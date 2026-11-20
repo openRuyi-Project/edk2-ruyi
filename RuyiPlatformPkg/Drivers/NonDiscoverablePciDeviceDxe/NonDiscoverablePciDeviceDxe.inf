@@ -22,11 +22,13 @@
   NonDiscoverablePciDeviceIo.h
 
 [Packages]
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   EmbeddedPkg/EmbeddedPkg.dec
 
 [LibraryClasses]
+  CpuMmioAddressLib
   DmaLib
   BaseMemoryLib
   DebugLib

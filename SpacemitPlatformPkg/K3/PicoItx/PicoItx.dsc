@@ -23,6 +23,7 @@
 !include RuyiPlatformPkg/Console.dsc.inc
 
 [LibraryClasses]
+  CpuMmioAddressLib|RuyiPlatformPkg/Library/IdentityMmioAddressLib/IdentityMmioAddressLib.inf
   PlatformBootPolicyLib|SpacemitPlatformPkg/Library/K3BootPolicyLib/K3BootPolicyLib.inf
   PlatformSettingsLib|RuyiPlatformPkg/Library/PlatformSettingsLib/PlatformSettingsLib.inf
   PlatformSettingsStorageLib|SpacemitPlatformPkg/Library/K3SettingsStorageLib/K3SettingsStorageLib.inf

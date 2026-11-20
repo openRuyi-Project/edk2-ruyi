@@ -7,6 +7,7 @@
 
 **/
 
+#include <Library/CpuMmioAddressLib.h>
 #include "NonDiscoverablePciDeviceIo.h"
 #include <Library/DmaLib.h>
 
@@ -308,7 +309,7 @@ PciIoMemRead (
     return EFI_UNSUPPORTED;
   }
 
-  Address   = (VOID *)(UINTN)(Desc->AddrRangeMin + Offset);
+  Address   = (VOID *)CpuMmioAddress ((UINTN)(Desc->AddrRangeMin + Offset));
   AlignMask = (1 << (Width & 0x03)) - 1;
   if ((UINTN)Address & AlignMask) {
     return EFI_INVALID_PARAMETER;
@@ -396,7 +397,7 @@ PciIoMemWrite (
     return EFI_UNSUPPORTED;
   }
 
-  Address   = (VOID *)(UINTN)(Desc->AddrRangeMin + Offset);
+  Address   = (VOID *)CpuMmioAddress ((UINTN)(Desc->AddrRangeMin + Offset));
   AlignMask = (1 << (Width & 0x03)) - 1;
   if ((UINTN)Address & AlignMask) {
     return EFI_INVALID_PARAMETER;

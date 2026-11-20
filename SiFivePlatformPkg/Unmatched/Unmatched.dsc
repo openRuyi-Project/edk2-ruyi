@@ -27,6 +27,7 @@
 !include RuyiPlatformPkg/Console.dsc.inc
 
 [LibraryClasses]
+  CpuMmioAddressLib|RuyiPlatformPkg/Library/IdentityMmioAddressLib/IdentityMmioAddressLib.inf
   PlatformBootPolicyLib|RuyiPlatformPkg/Library/DefaultBootPolicyLib/DefaultBootPolicyLib.inf
   PlatformSettingsLib|RuyiPlatformPkg/Library/PlatformSettingsLib/PlatformSettingsLib.inf
   PlatformSettingsStorageLib|SiFivePlatformPkg/Library/UnmatchedSettingsStorageLib/UnmatchedSettingsStorageLib.inf

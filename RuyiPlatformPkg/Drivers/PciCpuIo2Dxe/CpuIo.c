@@ -1,4 +1,5 @@
 /** SPDX-License-Identifier: BSD-2-Clause-Patent */
+#include <Library/CpuMmioAddressLib.h>
 #include <Uefi.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/IoLib.h>
@@ -77,6 +78,7 @@ Transfer (
     }
   }
 
+  Address = CpuMmioAddress (Address);
   while (Count--) {
     if (Write) {
       Value = 0;
