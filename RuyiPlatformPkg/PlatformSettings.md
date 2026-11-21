@@ -5,8 +5,8 @@ UEFI variable overrides. It is a boot-services protocol.
 
 | Method | Operation |
 | --- | --- |
-| `GetDefaults` | Read the selected persistent record. |
-| `SetDefaults` | Save the supplied defaults in the inactive storage slot. |
+| `GetDefaults` | Read the platform defaults. |
+| `SetDefaults` | Save the supplied defaults. |
 | `GetEffective` | Read defaults, then apply a valid UEFI override if one exists. |
 | `ClearOverrides` | Delete the override variable without changing defaults. |
 
@@ -17,14 +17,20 @@ format. Tools and images must come from the same release.
 
 ## Persistent storage
 
+SG2042 saves its defaults in the `PlatformDefaults` UEFI variable. An
+update preserves this variable when the board has a writable Ruyi
+variable partition. With RAM-backed variables, defaults last for the
+current boot.
+
 `PlatformSettingsStorageLib` provides slot reads, partial writes and slot
-preparation. Each platform reserves two independent slots. Preparing a slot
+preparation for platforms that store settings in records. These platforms
+reserve two independent slots. Preparing a slot
 must fill it with `0xff`. Writes must preserve bytes outside the requested
 range. An SPI implementation can erase a sector. An eMMC implementation can
 use block writes in a board-reserved boot area. The interface does not depend
 on UEFI variable storage.
 
-The current K3, Unmatched and P550 adapters use SPI. A new eMMC-only platform
+K3, Unmatched, P550, Megrez and StarPro64 use SPI. A new eMMC-only platform
 must supply its own adapter and reserved layout before enabling the driver.
 
 Each 24-byte record contains the `RYCF` magic, version, size, generation,

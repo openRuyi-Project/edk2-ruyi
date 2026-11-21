@@ -7,7 +7,8 @@ Use ruyifirmware to build firmware images for these boards.
 | --- | --- | --- |
 | `SpacemitPlatformPkg` | SpacemiT K3 Pico ITX | [K3](SpacemitPlatformPkg/README.md) |
 | `SiFivePlatformPkg` | SiFive HiFive Unmatched A00 | [Unmatched](SiFivePlatformPkg/README.md) |
-| `EswinPlatformPkg` | SiFive HiFive Premier P550 | [P550](https://github.com/openRuyi-Project/ruyifirmware/blob/ruyi/docs/p550/README.md) |
+| `EswinPlatformPkg` | SiFive HiFive Premier P550, Milk-V Megrez and PINE64 STARPro64 | [P550](https://github.com/openRuyi-Project/ruyifirmware/blob/ruyi/docs/p550/README.md), [Megrez](https://github.com/openRuyi-Project/ruyifirmware/blob/ruyi/docs/megrez/README.md), [StarPro64](https://github.com/openRuyi-Project/ruyifirmware/blob/ruyi/docs/starpro64/README.md) |
+| `SophgoPlatformPkg` | Milk-V Pioneer, SOPHGO EVB v1 and v2 | [SG2042](https://github.com/openRuyi-Project/ruyifirmware/blob/ruyi/docs/sg2042/README.md) |
 
 In UEFI Setup, System Information displays the active CPU profile and clocks,
 installed memory, PCIe devices and link speeds, and whole-disk information.
@@ -22,12 +23,16 @@ The shared settings protocol stores defaults through a platform backend.
 UEFI variables can optionally override them. See [Platform settings](RuyiPlatformPkg/PlatformSettings.md).
 The updater uses these policies:
 
-| Update through Firmware Update | K3 | Unmatched | P550 |
-| --- | --- | --- | --- |
-| UEFI variables | Preserved | Preserved | Preserved |
-| Platform defaults | Preserved | Preserved | Preserved |
-| CPU mode | Preserved | Not applicable | Not applicable |
-| DDR ECC setting | Not applicable | Not applicable | Preserved |
+| Update through Firmware Update | K3 | Unmatched | P550 | Megrez and StarPro64 | SG2042 |
+| --- | --- | --- | --- | --- | --- |
+| Nonvolatile UEFI variables | Preserved | Preserved | Preserved | Preserved | Preserved when stored in flash |
+| Platform defaults | Preserved | Preserved | Preserved | Preserved | Preserved when stored in flash |
+| CPU mode | Preserved | Not applicable | Preserved | Not applicable | Not applicable |
+| DDR ECC setting | Not applicable | Not applicable | Preserved | Preserved | Not applicable |
+
+On SG2042, Firmware Update preserves the `ruyi-vars` partition, including
+the `PlatformDefaults` UEFI variable. When firmware uses RAM-backed
+variables, changes last only until reset.
 
 Raw programming bypasses the updater's preservation policy. The Unmatched
 8 MiB image excludes UEFI variable storage. A full-chip erase removes it.
