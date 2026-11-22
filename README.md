@@ -25,12 +25,12 @@ The updater uses these policies:
 
 | Update through Firmware Update | K3 | Unmatched | P550 | Megrez and StarPro64 | SG2042 |
 | --- | --- | --- | --- | --- | --- |
-| Nonvolatile UEFI variables | Preserved | Preserved | Preserved | Preserved | Preserved when stored in flash |
-| Platform defaults | Preserved | Preserved | Preserved | Preserved | Preserved when stored in flash |
+| Nonvolatile UEFI variables | Preserved | Preserved | Preserved | Preserved | Preserved on SPI1 |
+| Platform defaults | Preserved | Preserved | Preserved | Preserved | Preserved on SPI1 |
 | CPU mode | Preserved | Not applicable | Preserved | Not applicable | Not applicable |
 | DDR ECC setting | Not applicable | Not applicable | Preserved | Preserved | Not applicable |
 
-On SG2042, Firmware Update preserves the `ruyi-vars` partition, including
+On SG2042, Firmware Update preserves the `ruyi-vars` partition on SPI1, including
 the `PlatformDefaults` UEFI variable. When firmware uses RAM-backed
 variables, changes last only until reset.
 

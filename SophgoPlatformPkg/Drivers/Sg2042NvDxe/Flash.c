@@ -101,47 +101,31 @@ Sg2042NvEntry (EFI_HANDLE Image, EFI_SYSTEM_TABLE *SystemTable)
   VOID *Fdt = (VOID *)(UINTN)ReadUnaligned64 (GET_GUID_HOB_DATA (Hob));
   INT32 FirmwareNode = -1;
   while ((FirmwareNode = FdtNodeOffsetByCompatible (Fdt, FirmwareNode, "sophgo,sg2042-spifmc-nor")) >= 0) {
-    UINTN Address;
     if (FdtNodeEnabled (Fdt, FirmwareNode) &&
-        !EFI_ERROR (FdtGetMmio (Fdt, FirmwareNode, 0, EFI_PAGE_SIZE, &Address, NULL)) &&
-        Address == SG2042_FIRMWARE_SPI) { break; }
+        !EFI_ERROR (FdtGetMmio (Fdt, FirmwareNode, 0, EFI_PAGE_SIZE, &mNor.Base, NULL)) &&
+        mNor.Base == SG2042_FIRMWARE_SPI) { break; }
   }
-  if (FirmwareNode < 0) { return EFI_NOT_FOUND; }
-  // Reserve the boot flash even on an SD boot with the factory partition table.
-  if (FdtSetProp (Fdt, FirmwareNode, "status", "reserved", sizeof ("reserved"))) { return EFI_OUT_OF_RESOURCES; }
+  if (FirmwareNode < 0) { return RamVariables (); }
+  // Keep the boot flash reserved on SD boots and with the factory layout.
+  if (FdtSetProp (Fdt, FirmwareNode, "status", "reserved", sizeof ("reserved"))) {
+    return EFI_OUT_OF_RESOURCES;
+  }
   INT32 Node = FdtNodeOffsetByCompatible (Fdt, -1, "sophgo,sg2042-clkgen");
   if (EFI_ERROR (FdtGetMmio (Fdt, Node, 0, sizeof (UINT32), &mNor.Gate, NULL)) ||
       EFI_ERROR (MapFlashPage (mNor.Gate))) { return RamVariables (); }
-  MmioOr32 (CpuMmioAddress (mNor.Gate), BIT9);
+  MmioOr32 (CpuMmioAddress (mNor.Gate), SG2042_SPIFMC_GATE);
 
-  // The vendor firmware layout uses SPI1. Also accept an existing Ruyi
-  // variable store on SPI0 if SPI1 has none.
-  INT32 BootFlash = -1;
-  UINTN StoreBase = 0;
-  for (Node = -1; (Node = FdtNodeOffsetByCompatible (Fdt, Node, "sophgo,sg2042-spifmc-nor")) >= 0;) {
-    UINT8 Id[3];
-    if ((Node != FirmwareNode && !FdtNodeEnabled (Fdt, Node)) ||
-        EFI_ERROR (FdtGetMmio (Fdt, Node, 0, EFI_PAGE_SIZE, &mNor.Base, NULL)) ||
-        EFI_ERROR (MapFlashPage (mNor.Base))) { continue; }
-    Status = Sg2042SpiReadId (&mNor, Id);
-    if (EFI_ERROR (Status)) { continue; }
-    if (Id[0] == 0xc8 && Node == FirmwareNode) { ReadGdFlashUid (); }
-    if (HasVariablePartition () && (BootFlash < 0 || mNor.Base == SG2042_FIRMWARE_SPI)) {
-      BootFlash = Node;
-      StoreBase = mNor.Base;
-    }
+  UINT8 Id[3];
+  if (EFI_ERROR (MapFlashPage (mNor.Base)) || EFI_ERROR (Sg2042SpiReadId (&mNor, Id))) {
+    return RamVariables ();
   }
-  if (BootFlash < 0) { return RamVariables (); }
-  mNor.Base = StoreBase;
+  if (Id[0] == 0xc8) { ReadGdFlashUid (); }
+  if (!HasVariablePartition ()) { return RamVariables (); }
   UINTN Pages[2] = {mNor.Base, mNor.Gate};
   for (UINTN I = 0; I < ARRAY_SIZE (Pages); I++) {
     Status = gDS->SetMemorySpaceAttributes (Pages[I], EFI_PAGE_SIZE, EFI_MEMORY_UC | EFI_MEMORY_RUNTIME);
     if (EFI_ERROR (Status)) { return RamVariables (); }
   }
-  // Linux must not drive the runtime variable controller concurrently.
-  // "okay" and "fail" both fit in place, but reserved can require FDT growth.
-  Status = FdtSetProp (Fdt, BootFlash, "status", "reserved", sizeof ("reserved")) ? EFI_OUT_OF_RESOURCES : EFI_SUCCESS;
-  if (EFI_ERROR (Status)) { return RamVariables (); }
   Status = NvStorageInstall (&Ops, SG2042_VARIABLE_BASE, VirtualChange);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_WARN, "SG2042: SPI variable store unavailable (%r), using RAM variables\n", Status));

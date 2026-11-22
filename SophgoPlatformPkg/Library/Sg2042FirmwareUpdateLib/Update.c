@@ -3,9 +3,11 @@
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/CorebootImageLib.h>
+#include <Library/CpuMmioAddressLib.h>
 #include <Library/FdtBoardInfoLib.h>
 #include <Library/FdtHardwareLib.h>
 #include <Library/FdtLib.h>
+#include <Library/IoLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/NvFvbLib.h>
 #include <Library/PlatformFirmwareUpdateLib.h>
@@ -98,6 +100,11 @@ GetBootFlash (SG2042_SPI_NOR *Nor)
   Node = FdtNodeOffsetByCompatible (Fdt, -1, "sophgo,sg2042-clkgen");
   Status = FdtGetMmio (Fdt, Node, 0, sizeof (UINT32), &Nor->Gate, NULL);
   if (EFI_ERROR (Status)) { return Status; }
+  Status = FdtMapMmio (Nor->Gate, EFI_PAGE_SIZE);
+  if (EFI_ERROR (Status)) { return Status; }
+  Status = FdtMapMmio (Nor->Base, EFI_PAGE_SIZE);
+  if (EFI_ERROR (Status)) { return Status; }
+  MmioOr32 (CpuMmioAddress (Nor->Gate), SG2042_SPIFMC_GATE);
   return Sg2042SpiReadId (Nor, Id);
 }
 
@@ -105,7 +112,7 @@ VOID
 PlatformFirmwareUpdateGetInfo (PLATFORM_FIRMWARE_UPDATE_INFO *Info)
 {
   Info->ImageSize = SIZE_16MB;
-  Info->PreservationNotice = L"UEFI variables are preserved. The update writes the SCP firmware, coreboot and partition table on SPI1.";
+  Info->PreservationNotice = L"The update writes the SCP firmware, coreboot and partition table on SPI1. It preserves SPI1 variables. Re-enter settings previously stored on SPI0.";
 }
 
 EFI_STATUS

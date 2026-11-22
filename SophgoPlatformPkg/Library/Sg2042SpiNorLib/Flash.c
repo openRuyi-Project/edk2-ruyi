@@ -19,7 +19,6 @@
 
 // Both SPIFMC controllers share the AHB gate. Linux can stop the clock
 // after ExitBootServices. Never poll a controller with its clock off.
-#define SPIFMC_GATE      BIT9
 STATIC UINT64
 Ticks (VOID)
 {
@@ -46,7 +45,7 @@ Command (CONST SG2042_SPI_NOR *Nor, UINT8 Op, BOOLEAN Addressed, UINT32 Address,
   UINTN Length = Bytes;
   EFI_STATUS Status;
   if (Length > MAX_UINT16 || (!Addressed && Bytes > 3)) { return EFI_BAD_BUFFER_SIZE; }
-  if (!(MmioRead32 (CpuMmioAddress (Nor->Gate)) & SPIFMC_GATE)) { return EFI_NOT_READY; }
+  if (!(MmioRead32 (CpuMmioAddress (Nor->Gate)) & SG2042_SPIFMC_GATE)) { return EFI_NOT_READY; }
   // Disable direct memory mapping and let the transfer engine drive chip select.
   MmioWrite32 (Base + 0x0c, 0);
   MmioWrite32 (Base + 0x04, 0);

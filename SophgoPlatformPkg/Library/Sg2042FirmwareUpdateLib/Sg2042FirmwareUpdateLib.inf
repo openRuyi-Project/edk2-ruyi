@@ -16,10 +16,12 @@
   BaseLib
   BaseMemoryLib
   CorebootImageLib
+  CpuMmioAddressLib
   FdtBoardInfoLib
   FdtHardwareLib
   FdtLib
   FirmwareUpdateLib
+  IoLib
   MemoryAllocationLib
   Sg2042SpiNorLib
   UefiBootServicesTableLib
