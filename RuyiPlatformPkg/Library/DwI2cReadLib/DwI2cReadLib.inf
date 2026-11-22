@@ -1,0 +1,15 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = DwI2cReadLib
+  FILE_GUID = 7de88a0c-abac-490f-80e7-ce385683b849
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = DwI2cReadLib
+[Sources]
+  DwI2c.c
+[Packages]
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  IoLib
+  TimerLib
