@@ -33,6 +33,7 @@
   FdtBoardInfoLib|Include/Library/FdtBoardInfoLib.h
   FdtHardwareLib|Include/Library/FdtHardwareLib.h
   FdtRtcSourceLib|Include/Library/FdtRtcSourceLib.h
+  FdtI2cReadLib|Include/Library/FdtI2cReadLib.h
   FirmwareUpdateLib|Include/Library/FirmwareUpdateLib.h
   PlatformFirmwareUpdateLib|Include/Library/PlatformFirmwareUpdateLib.h
   NvFvbLib|Include/Library/NvFvbLib.h

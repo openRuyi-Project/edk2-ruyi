@@ -1,0 +1,19 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = FdtDs1307RtcSourceLib
+  FILE_GUID = cc4a071e-93ff-4c35-9e05-16af55458449
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = FdtRtcSourceLib
+[Sources]
+  Ds1307.c
+[Packages]
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+  EmbeddedPkg/EmbeddedPkg.dec
+[LibraryClasses]
+  BaseLib
+  FdtHardwareLib
+  FdtI2cReadLib
+  FdtLib
+  TimeBaseLib

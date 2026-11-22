@@ -7,6 +7,10 @@ The virtual RTC takes one sample
 from the source during DXE initialization. It accepts the device tree
 from the FDT HOB or the EFI configuration table.
 
+For an enabled `dallas,ds1307` node at address `0x68`, select
+`FdtDs1307RtcSourceLib` and bind `FdtI2cReadLib` to the platform's I2C
+reader. Other RTC types can provide their own `FdtRtcSourceLib`.
+
 The platform's `TimerLib` must keep counting across ExitBootServices.
 The time for a full counter cycle must exceed the longest supported
 interval between initializing or setting the clock and reading it. Both counter directions
