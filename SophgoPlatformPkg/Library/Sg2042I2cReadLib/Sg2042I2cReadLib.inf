@@ -1,0 +1,19 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = Sg2042I2cReadLib
+  FILE_GUID = a07f6fa6-07fd-4402-ba7f-ae2742143cac
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = FdtI2cReadLib
+[Sources]
+  I2c.c
+[Packages]
+  MdePkg/MdePkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  CpuMmioAddressLib
+  FdtHardwareLib
+  FdtLib
+  IoLib
+  DwI2cReadLib
+  UefiBootServicesTableLib
