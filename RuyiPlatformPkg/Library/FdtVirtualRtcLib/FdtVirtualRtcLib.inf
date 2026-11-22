@@ -1,0 +1,34 @@
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  INF_VERSION = 0x0001001B
+  BASE_NAME = FdtVirtualRtcLib
+  FILE_GUID = 2885752b-6ce2-4488-93a5-3b457f3013df
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = RealTimeClockLib|DXE_RUNTIME_DRIVER
+[Sources]
+  Rtc.c
+[Packages]
+  MdePkg/MdePkg.dec
+  EmbeddedPkg/EmbeddedPkg.dec
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  FdtLib
+  FdtRtcSourceLib
+  HobLib
+  MemoryAllocationLib
+  PcdLib
+  TimeBaseLib
+  TimerLib
+  UefiBootServicesTableLib
+  UefiLib
+  UefiRuntimeLib
+[Guids]
+  gEfiRtPropertiesTableGuid
+  gFdtHobGuid
+  gFdtTableGuid
+[FixedPcd]
+  gRuyiPlatformTokenSpaceGuid.PcdVirtualRtcTimeVariableName
+[BuildOptions]
+  *_*_*_CC_FLAGS = -DBUILD_EPOCH=$(SOURCE_DATE_EPOCH)

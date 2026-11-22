@@ -32,6 +32,7 @@
   BootProgressLib|Include/Library/BootProgressLib.h
   FdtBoardInfoLib|Include/Library/FdtBoardInfoLib.h
   FdtHardwareLib|Include/Library/FdtHardwareLib.h
+  FdtRtcSourceLib|Include/Library/FdtRtcSourceLib.h
   FirmwareUpdateLib|Include/Library/FirmwareUpdateLib.h
   PlatformFirmwareUpdateLib|Include/Library/PlatformFirmwareUpdateLib.h
   NvFvbLib|Include/Library/NvFvbLib.h
@@ -56,3 +57,4 @@
 
 [PcdsFixedAtBuild]
   gRuyiPlatformTokenSpaceGuid.PcdDriverEmulationAvailable|TRUE|BOOLEAN|0x1
+  gRuyiPlatformTokenSpaceGuid.PcdVirtualRtcTimeVariableName|L"VirtualRtcTime"|VOID*|0x2
