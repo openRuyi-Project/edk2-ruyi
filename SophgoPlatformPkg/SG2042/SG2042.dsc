@@ -20,6 +20,7 @@
 !include Silicon/RISC-V/RiscV.dsc.inc
 
 [PcdsFeatureFlag]
+  gEmbeddedTokenSpaceGuid.PcdRtcLibStoresTimeSettings|TRUE
   # UEFI option ROMs can use the root bridge's 64-bit MMIO aperture.
   gEfiMdeModulePkgTokenSpaceGuid.PcdPciDegradeResourceForOptionRom|FALSE
 
@@ -68,11 +69,16 @@
   UefiUsbLib|MdePkg/Library/UefiUsbLib/UefiUsbLib.inf
   SynchronizationLib|MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
   OemHookStatusCodeLib|MdeModulePkg/Library/OemHookStatusCodeLibNull/OemHookStatusCodeLibNull.inf
-  RealTimeClockLib|SophgoPlatformPkg/Library/Ds1307RtcLib/Ds1307RtcLib.inf
+  RealTimeClockLib|RuyiPlatformPkg/Library/FdtVirtualRtcLib/FdtVirtualRtcLib.inf
+  FdtRtcSourceLib|RuyiPlatformPkg/Library/FdtDs1307RtcSourceLib/FdtDs1307RtcSourceLib.inf
+  DwI2cReadLib|RuyiPlatformPkg/Library/DwI2cReadLib/DwI2cReadLib.inf
+  FdtI2cReadLib|SophgoPlatformPkg/Library/Sg2042I2cReadLib/Sg2042I2cReadLib.inf
   ResetSystemLib|OvmfPkg/RiscVVirt/Library/ResetSystemLib/BaseResetSystemLib.inf
   RngLib|MdePkg/Library/BaseRngLibNull/BaseRngLibNull.inf
 
 [PcdsFixedAtBuild]
+  # Keep the fallback time saved by previous SG2042 test builds.
+  gRuyiPlatformTokenSpaceGuid.PcdVirtualRtcTimeVariableName|L"Sg2042VirtualTime"
   gEfiMdeModulePkgTokenSpaceGuid.PcdFrontPageLogoEnable|TRUE
   # Match RiscVVirt: avoid walking entire lists on every network/pool operation.
   gEfiMdePkgTokenSpaceGuid.PcdMaximumLinkedListLength|0
