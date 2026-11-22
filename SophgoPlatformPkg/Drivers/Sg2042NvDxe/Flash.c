@@ -91,6 +91,33 @@ HasVariablePartition (VOID)
   return FALSE;
 }
 
+STATIC EFI_STATUS
+ProtectFlashClock (VOID *Fdt, INT32 Node)
+{
+  INT32 Len;
+  CONST UINT32 *Clocks = FdtGetProp (Fdt, Node, "clocks", &Len);
+  if (Clocks == NULL || Len != 2 * sizeof (*Clocks)) { return EFI_COMPROMISED_DATA; }
+
+  INT32 Provider = FdtNodeOffsetByPhandle (Fdt, Fdt32ToCpu (Clocks[0]));
+  if (Provider < 0 || FdtStringListSearch (Fdt, Provider, "compatible", "sophgo,sg2042-clkgen") < 0 ||
+      Fdt32ToCpu (Clocks[1]) != 46) { // GATE_CLK_AHB_SF
+    return EFI_COMPROMISED_DATA;
+  }
+  EFI_STATUS Status = FdtGetMmio (Fdt, Provider, 0, sizeof (UINT32), &mNor.Gate, NULL);
+  if (EFI_ERROR (Status)) { return Status; }
+
+  UINT32 Gate = Clocks[1];
+  CONST UINT32 *List = FdtGetProp (Fdt, Provider, "protected-clocks", &Len);
+  if (List != NULL) {
+    if (Len % sizeof (*List)) { return EFI_COMPROMISED_DATA; }
+    for (UINTN I = 0; I < (UINTN)Len / sizeof (*List); I++) {
+      if (List[I] == Gate) { return EFI_SUCCESS; }
+    }
+  }
+  return FdtAppendProp (Fdt, Provider, "protected-clocks", &Gate, sizeof (Gate)) ?
+         EFI_OUT_OF_RESOURCES : EFI_SUCCESS;
+}
+
 EFI_STATUS EFIAPI
 Sg2042NvEntry (EFI_HANDLE Image, EFI_SYSTEM_TABLE *SystemTable)
 {
@@ -110,9 +137,9 @@ Sg2042NvEntry (EFI_HANDLE Image, EFI_SYSTEM_TABLE *SystemTable)
   if (FdtSetProp (Fdt, FirmwareNode, "status", "reserved", sizeof ("reserved"))) {
     return EFI_OUT_OF_RESOURCES;
   }
-  INT32 Node = FdtNodeOffsetByCompatible (Fdt, -1, "sophgo,sg2042-clkgen");
-  if (EFI_ERROR (FdtGetMmio (Fdt, Node, 0, sizeof (UINT32), &mNor.Gate, NULL)) ||
-      EFI_ERROR (MapFlashPage (mNor.Gate))) { return RamVariables (); }
+  if (EFI_ERROR (ProtectFlashClock (Fdt, FirmwareNode)) || EFI_ERROR (MapFlashPage (mNor.Gate))) {
+    return RamVariables ();
+  }
   MmioOr32 (CpuMmioAddress (mNor.Gate), SG2042_SPIFMC_GATE);
 
   UINT8 Id[3];
