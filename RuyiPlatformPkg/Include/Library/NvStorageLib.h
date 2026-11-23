@@ -5,7 +5,8 @@
 typedef VOID (*NV_FLASH_VIRTUAL_CHANGE)(VOID);
 
 // Call from a runtime driver after reserving the flash controller for UEFI.
-// Flash callbacks and Context must remain valid at runtime.
+// Flash callbacks and Context must remain valid at runtime. Pass NULL for
+// ConvertFlash when the backend keeps no private runtime pointers.
 EFI_STATUS
 NvStorageInstall (
   CONST NV_FLASH_OPS       *Flash,

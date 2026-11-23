@@ -37,7 +37,7 @@ VirtualAddressChange (
   VOID       *Context
   )
 {
-  mConvertFlash ();
+  if (mConvertFlash != NULL) { mConvertFlash (); }
   EfiConvertPointer (EFI_OPTIONAL_PTR, &mFvb.Flash.Context);
   EfiConvertPointer (0, (VOID **)&mFvb.Mirror);
   mFvb.Physical = (UINTN)mFvb.Mirror;
@@ -106,7 +106,7 @@ NvStorageInstall (
   EFI_EVENT VirtualEvent = NULL;
   UINTN Pages = EFI_SIZE_TO_PAGES (NV_TOTAL_SIZE);
 
-  if (!Flash || !Flash->Read || !Flash->Program || !Flash->Erase || !ConvertFlash) {
+  if (!Flash || !Flash->Read || !Flash->Program || !Flash->Erase) {
     return EFI_INVALID_PARAMETER;
   }
   if (mHandle) { return EFI_ALREADY_STARTED; }

@@ -19,7 +19,7 @@
   BaseLib
   BaseMemoryLib
   DebugLib
-  DxeServicesTableLib
+  RiscVSbiLib
   FdtLib
   FdtHardwareLib
   HobLib

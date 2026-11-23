@@ -8,7 +8,7 @@
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
-#include <Library/DxeServicesTableLib.h>
+#include <Library/BaseRiscVSbiLib.h>
 #include <Library/FdtLib.h>
 #include <Library/FdtHardwareLib.h>
 #include <Library/HobLib.h>
@@ -20,32 +20,76 @@
 
 STATIC SG2042_SPI_NOR mNor;
 
+// Private SG2042 SBI interface. Offsets are relative to ruyi-vars.
+#define SG2042_NV_EID  0x08534e56
+#define SG2042_NV_ABI  0x534e5601
+enum { NvProbe, NvRead, NvProgram, NvErase };
+
+STATIC EFI_STATUS
+NvStatus (SBI_RET Ret)
+{
+  switch ((INTN)Ret.Error) {
+    case SBI_SUCCESS:           return EFI_SUCCESS;
+    case SBI_ERR_NOT_SUPPORTED: return EFI_UNSUPPORTED;
+    case SBI_ERR_INVALID_PARAM: return EFI_INVALID_PARAMETER;
+    case SBI_ERR_DENIED:        return EFI_ACCESS_DENIED;
+    case SBI_ERR_INVALID_STATE: return EFI_NOT_READY;
+    case SBI_ERR_TIMEOUT:       return EFI_TIMEOUT;
+    default:                    return EFI_DEVICE_ERROR;
+  }
+}
+
+STATIC BOOLEAN
+InStore (UINT32 Offset, UINTN Bytes)
+{
+  return Offset >= SG2042_VARIABLE_BASE &&
+         Offset - SG2042_VARIABLE_BASE <= NV_TOTAL_SIZE &&
+         Bytes <= NV_TOTAL_SIZE - (Offset - SG2042_VARIABLE_BASE);
+}
+
 STATIC EFI_STATUS
 Read (VOID *Context, UINT32 Offset, UINTN Bytes, VOID *Buffer)
 {
-  return Sg2042SpiRead (&mNor, Offset, Bytes, Buffer);
+  if (!InStore (Offset, Bytes)) { return EFI_INVALID_PARAMETER; }
+  // Initializing the mirror reads the entire partition before ExitBootServices.
+  if (!EfiAtRuntime ()) { return Sg2042SpiRead (&mNor, Offset, Bytes, Buffer); }
+  UINT8 *Out = Buffer;
+  while (Bytes > 0) {
+    UINTN Chunk = MIN (Bytes, sizeof (UINTN));
+    SBI_RET Ret = SbiCall (SG2042_NV_EID, NvRead, 2, (UINTN)(Offset - SG2042_VARIABLE_BASE), Chunk);
+    if (Ret.Error != SBI_SUCCESS) { return NvStatus (Ret); }
+    CopyMem (Out, &Ret.Value, Chunk);
+    Out += Chunk;
+    Offset += (UINT32)Chunk;
+    Bytes -= Chunk;
+  }
+  return EFI_SUCCESS;
 }
 
 STATIC EFI_STATUS
 Program (VOID *Context, UINT32 Offset, UINTN Bytes, CONST VOID *Buffer)
 {
-  if (Offset < SG2042_VARIABLE_BASE || Offset - SG2042_VARIABLE_BASE >= NV_TOTAL_SIZE ||
-      Bytes > NV_TOTAL_SIZE - (Offset - SG2042_VARIABLE_BASE)) { return EFI_INVALID_PARAMETER; }
-  return Sg2042SpiProgram (&mNor, Offset, Bytes, Buffer);
+  CONST UINT8 *In = Buffer;
+  if (!InStore (Offset, Bytes)) { return EFI_INVALID_PARAMETER; }
+  while (Bytes > 0) {
+    UINTN Words[4] = { 0 };
+    UINTN Chunk = MIN (Bytes, MIN (sizeof (Words), 256U - (Offset & 255U)));
+    CopyMem (Words, In, Chunk);
+    SBI_RET Ret = SbiCall (SG2042_NV_EID, NvProgram, 6, (UINTN)(Offset - SG2042_VARIABLE_BASE),
+                           Chunk, Words[0], Words[1], Words[2], Words[3]);
+    if (Ret.Error != SBI_SUCCESS) { return NvStatus (Ret); }
+    In += Chunk;
+    Offset += (UINT32)Chunk;
+    Bytes -= Chunk;
+  }
+  return EFI_SUCCESS;
 }
 
 STATIC EFI_STATUS
 Erase (VOID *Context, UINT32 Offset)
 {
-  if (Offset < SG2042_VARIABLE_BASE || Offset - SG2042_VARIABLE_BASE >= NV_TOTAL_SIZE) { return EFI_INVALID_PARAMETER; }
-  return Sg2042SpiErase (&mNor, Offset);
-}
-
-STATIC VOID
-VirtualChange (VOID)
-{
-  EfiConvertPointer (0, (VOID **)&mNor.Base);
-  EfiConvertPointer (0, (VOID **)&mNor.Gate);
+  if (!InStore (Offset, NV_BLOCK_SIZE) || Offset % NV_BLOCK_SIZE) { return EFI_INVALID_PARAMETER; }
+  return NvStatus (SbiCall (SG2042_NV_EID, NvErase, 1, (UINTN)(Offset - SG2042_VARIABLE_BASE)));
 }
 
 STATIC EFI_STATUS
@@ -74,21 +118,6 @@ ReadGdFlashUid (VOID)
   if (EFI_ERROR (Sg2042SpiReadUid (&mNor, Uid))) { return; }
   for (UINTN I = 0; I < Size; I++) { Any |= Uid[I]; All &= Uid[I]; }
   if (Any != 0 && All != 0xff) { PcdSetPtrS (PcdSg2042FlashUid, &Size, Uid); }
-}
-
-STATIC
-BOOLEAN
-HasVariablePartition (VOID)
-{
-  UINT8 Entry[56];
-  for (UINTN I = 0; I < EFI_PAGE_SIZE / sizeof (Entry); I++) {
-    EFI_STATUS Status = Read (NULL, SG2042_SCP_TABLE + (UINT32)(I * sizeof (Entry)), sizeof (Entry), Entry);
-    if (EFI_ERROR (Status) || ReadUnaligned32 ((VOID *)Entry) != SG2042_SCP_MAGIC) { break; }
-    if (!CompareMem (Entry + 4, "ruyi-vars", sizeof ("ruyi-vars")) &&
-        ReadUnaligned32 ((VOID *)(Entry + 36)) == SG2042_VARIABLE_BASE &&
-        ReadUnaligned32 ((VOID *)(Entry + 40)) == NV_TOTAL_SIZE) { return TRUE; }
-  }
-  return FALSE;
 }
 
 STATIC EFI_STATUS
@@ -147,13 +176,12 @@ Sg2042NvEntry (EFI_HANDLE Image, EFI_SYSTEM_TABLE *SystemTable)
     return RamVariables ();
   }
   if (Id[0] == 0xc8) { ReadGdFlashUid (); }
-  if (!HasVariablePartition ()) { return RamVariables (); }
-  UINTN Pages[2] = {mNor.Base, mNor.Gate};
-  for (UINTN I = 0; I < ARRAY_SIZE (Pages); I++) {
-    Status = gDS->SetMemorySpaceAttributes (Pages[I], EFI_PAGE_SIZE, EFI_MEMORY_UC | EFI_MEMORY_RUNTIME);
-    if (EFI_ERROR (Status)) { return RamVariables (); }
+  SBI_RET Probe = SbiCall (SG2042_NV_EID, NvProbe, 0);
+  if ((Probe.Error != SBI_SUCCESS) || (Probe.Value != SG2042_NV_ABI)) {
+    DEBUG ((DEBUG_WARN, "SG2042: SBI variable store unavailable, using RAM variables\n"));
+    return RamVariables ();
   }
-  Status = NvStorageInstall (&Ops, SG2042_VARIABLE_BASE, VirtualChange);
+  Status = NvStorageInstall (&Ops, SG2042_VARIABLE_BASE, NULL);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_WARN, "SG2042: SPI variable store unavailable (%r), using RAM variables\n", Status));
     return RamVariables ();
