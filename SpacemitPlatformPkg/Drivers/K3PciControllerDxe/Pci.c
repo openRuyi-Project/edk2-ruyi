@@ -165,6 +165,7 @@ Binding (
   CONST UINT32  *Cells;
   CONST UINT32  *ControlRef = FdtGetProp (Fdt, Port->Node, "spacemit,apmu", &Length);
 
+  *Child = -1;
   if (!ControlRef || (Length != 8)) {
     return EFI_COMPROMISED_DATA;
   }
@@ -229,7 +230,6 @@ Binding (
     }
   }
 
-  *Child = -1;
   for (Parent = FdtFirstSubnode (Fdt, Port->Node); Parent >= 0; Parent = FdtNextSubnode (Fdt, Parent)) {
     CONST CHAR8  *Type = FdtGetProp (Fdt, Parent, "device_type", &Length);
     if (K3FdtEnabled (Fdt, Parent) && Type && (Length == 4) && !AsciiStrCmp (Type, "pci")) {
