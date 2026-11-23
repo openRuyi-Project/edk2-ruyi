@@ -10,6 +10,7 @@
   BUILD_TARGETS = DEBUG|RELEASE
   SKUID_IDENTIFIER = DEFAULT
   FLASH_DEFINITION = SpacemitPlatformPkg/K3/PicoItx/PicoItx.fdf
+  DEFINE FIRMWARE_VENDOR = SpacemiT
   DEFINE K3_GOP_ENABLE = TRUE
   DEFINE K3_UFS_ENABLE = TRUE
   DEFINE K3_PCIE_ENABLE = TRUE
@@ -21,6 +22,7 @@
 
 !include RuyiPlatformPkg/Debug.dsc.inc
 !include RuyiPlatformPkg/Console.dsc.inc
+!include RuyiPlatformPkg/Firmware.dsc.inc
 
 [LibraryClasses]
   CpuMmioAddressLib|RuyiPlatformPkg/Library/IdentityMmioAddressLib/IdentityMmioAddressLib.inf
@@ -214,8 +216,6 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase64|0
   gEfiMdeModulePkgTokenSpaceGuid.PcdConOutGlyphScale|4
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|5
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVendor|L"SpacemiT"
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVersionString|L"EDK II stable202608"
 
 [PcdsDynamicExDefault]
   gMauPkgTokenSpaceGuid.PcdMauEmulationEnabled|FALSE

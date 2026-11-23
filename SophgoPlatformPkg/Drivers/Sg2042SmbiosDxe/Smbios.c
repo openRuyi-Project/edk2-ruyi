@@ -2,9 +2,8 @@
 #include <Library/CpuMmioAddressLib.h>
 #include <PiDxe.h>
 #include <IndustryStandard/SmBios.h>
-#include <Protocol/Smbios.h>
+#include <Library/RuyiSmbiosLib.h>
 #include <Library/BaseLib.h>
-#include <Library/BaseMemoryLib.h>
 #include <Library/FdtBoardInfoLib.h>
 #include <Library/FdtLib.h>
 #include <Library/FdtHardwareLib.h>
@@ -12,47 +11,7 @@
 #include <Library/PrintLib.h>
 #include <Library/Sg2042ClockLib.h>
 #include <Library/HobLib.h>
-#include <Library/MemoryAllocationLib.h>
 #include <Library/UefiBootServicesTableLib.h>
-
-STATIC
-EFI_STATUS
-AddRecord (
-  IN EFI_SMBIOS_PROTOCOL  *Smbios,
-  IN SMBIOS_STRUCTURE     *Header,
-  IN CONST CHAR8          **Strings,
-  IN UINTN                StringCount,
-  OUT EFI_SMBIOS_HANDLE   *Handle
-  )
-{
-  SMBIOS_STRUCTURE  *Record;
-  CHAR8             *Next;
-  UINTN             Size, Index, Length;
-  EFI_STATUS        Status;
-
-  Size = Header->Length + 2;
-  for (Index = 0; Index < StringCount; Index++) {
-    Size += AsciiStrSize (Strings[Index]);
-  }
-
-  Record = AllocateZeroPool (Size);
-  if (Record == NULL) {
-    return EFI_OUT_OF_RESOURCES;
-  }
-
-  CopyMem (Record, Header, Header->Length);
-  Next = (CHAR8 *)Record + Header->Length;
-  for (Index = 0; Index < StringCount; Index++) {
-    Length = AsciiStrSize (Strings[Index]);
-    CopyMem (Next, Strings[Index], Length);
-    Next += Length;
-  }
-
-  *Handle = SMBIOS_HANDLE_PI_RESERVED;
-  Status  = Smbios->Add (Smbios, NULL, Handle, Record);
-  FreePool (Record);
-  return Status;
-}
 
 EFI_STATUS EFIAPI
 PublishSg2042Info (
@@ -70,7 +29,6 @@ PublishSg2042Info (
   SMBIOS_TABLE_TYPE17     Memory = { 0 };
   SMBIOS_TABLE_TYPE19     Range  = { 0 };
   EFI_HOB_GENERIC_HEADER  *Hob;
-  CONST CHAR8             *BiosStrings[]   = { "openRuyi", "EDK II stable202608" };
   CONST CHAR8             *SystemStrings[] = { "SOPHGO", NULL };
   CONST CHAR8             *CpuStrings[]    = { "SoC", "T-Head", "SG2042 C920" };
   CONST CHAR8             *MemoryStrings[] = { "Onboard DDR4" };
@@ -91,14 +49,14 @@ PublishSg2042Info (
 
   Bios.Hdr.Type                               = SMBIOS_TYPE_BIOS_INFORMATION;
   Bios.Hdr.Length                             = sizeof (Bios);
-  Bios.Vendor                                 = 1;
-  Bios.BiosVersion                            = 2;
+
+
   Bios.BiosSize                               = 0xff;
   Bios.ExtendedBiosSize.Size                  = 64;
   Bios.BIOSCharacteristicsExtensionBytes[1]   = BIT3;
   Bios.EmbeddedControllerFirmwareMajorRelease = 0xff;
   Bios.EmbeddedControllerFirmwareMinorRelease = 0xff;
-  Status                                      = AddRecord (Smbios, &Bios.Hdr, BiosStrings, ARRAY_SIZE (BiosStrings), &Handle);
+  Status                                      = RuyiSmbiosAddBiosRecord (Smbios, &Bios, &Handle);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -110,7 +68,7 @@ PublishSg2042Info (
   System.WakeUpType   = SystemWakeupTypeUnknown;
   SystemStrings[0] = (FdtStringListSearch (Fdt, 0, "compatible", "milkv,pioneer") >= 0) ? "Milk-V" : "SOPHGO";
   SystemStrings[1]    = Info.Model;
-  Status              = AddRecord (Smbios, &System.Hdr, SystemStrings, ARRAY_SIZE (SystemStrings), &Handle);
+  Status              = RuyiSmbiosAddRecord (Smbios, &System.Hdr, SystemStrings, ARRAY_SIZE (SystemStrings), &Handle);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -129,7 +87,7 @@ PublishSg2042Info (
   Cpu.CoreCount             = Cpu.ThreadCount = Cpu.EnabledCoreCount = (UINT8)Info.CoreCount;
   Cpu.CoreCount2            = Cpu.ThreadCount2 = Cpu.EnabledCoreCount2 = Cpu.ThreadEnabled = (UINT16)Info.CoreCount;
   Cpu.L1CacheHandle         = Cpu.L2CacheHandle = Cpu.L3CacheHandle = 0xffff;
-  Status                    = AddRecord (Smbios, &Cpu.Hdr, CpuStrings, ARRAY_SIZE (CpuStrings), &Handle);
+  Status                    = RuyiSmbiosAddRecord (Smbios, &Cpu.Hdr, CpuStrings, ARRAY_SIZE (CpuStrings), &Handle);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -142,7 +100,7 @@ PublishSg2042Info (
   Array.MemoryErrorInformationHandle = 0xfffe;
   Array.MaximumCapacity = SIZE_128GB / SIZE_1KB;
   Array.NumberOfMemoryDevices = 4;
-  Status                      = AddRecord (Smbios, &Array.Hdr, NULL, 0, &ArrayHandle);
+  Status                      = RuyiSmbiosAddRecord (Smbios, &Array.Hdr, NULL, 0, &ArrayHandle);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -176,7 +134,7 @@ PublishSg2042Info (
       Memory.ExtendedSize = (UINT32)MiB;
     }
 
-    Status = AddRecord (Smbios, &Memory.Hdr, MemoryStrings, ARRAY_SIZE (MemoryStrings), &Handle);
+    Status = RuyiSmbiosAddRecord (Smbios, &Memory.Hdr, MemoryStrings, ARRAY_SIZE (MemoryStrings), &Handle);
     if (EFI_ERROR (Status)) {
       return Status;
     }
@@ -205,7 +163,7 @@ PublishSg2042Info (
     Range.StartingAddress         = Range.EndingAddress = MAX_UINT32;
     Range.ExtendedStartingAddress = Resource->PhysicalStart;
     Range.ExtendedEndingAddress   = Resource->PhysicalStart + Resource->ResourceLength - 1;
-    Status                        = AddRecord (Smbios, &Range.Hdr, NULL, 0, &Handle);
+    Status                        = RuyiSmbiosAddRecord (Smbios, &Range.Hdr, NULL, 0, &Handle);
     if (EFI_ERROR (Status)) {
       return Status;
     }

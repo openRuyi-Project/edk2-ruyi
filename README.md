@@ -10,6 +10,10 @@ Use ruyifirmware to build firmware images for these boards.
 | `EswinPlatformPkg` | SiFive HiFive Premier P550, Milk-V Megrez and PINE64 STARPro64 | [P550](https://github.com/openRuyi-Project/ruyifirmware/blob/ruyi/docs/p550/README.md), [Megrez](https://github.com/openRuyi-Project/ruyifirmware/blob/ruyi/docs/megrez/README.md), [StarPro64](https://github.com/openRuyi-Project/ruyifirmware/blob/ruyi/docs/starpro64/README.md) |
 | `SophgoPlatformPkg` | Milk-V Pioneer, SOPHGO EVB v1 and v2 | [SG2042](https://github.com/openRuyi-Project/ruyifirmware/blob/ruyi/docs/sg2042/README.md) |
 
+The shared DSC sets the firmware vendor and version for UEFI Setup and
+SMBIOS. Pass `-D "FIRMWARE_VER=Ruyi test"` to `build` to override the
+version. Use printable ASCII for SMBIOS strings.
+
 In UEFI Setup, System Information displays the active CPU profile and clocks,
 installed memory, PCIe devices and link speeds, and whole-disk information.
 Each page can refresh information from devices already enumerated by UEFI.

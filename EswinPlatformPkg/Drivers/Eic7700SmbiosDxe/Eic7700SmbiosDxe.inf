@@ -13,14 +13,12 @@
   MdeModulePkg/MdeModulePkg.dec
   EswinPlatformPkg/EswinPlatformPkg.dec
 [LibraryClasses]
+  RuyiSmbiosLib
   UefiDriverEntryPoint
-  BaseLib
-  BaseMemoryLib
   Eic7700BoardProfileLib
   Eic7700InfoLib
   Eic7700SpiNorLib
   HobLib
-  MemoryAllocationLib
   UefiBootServicesTableLib
 [Protocols]
   gEfiSmbiosProtocolGuid

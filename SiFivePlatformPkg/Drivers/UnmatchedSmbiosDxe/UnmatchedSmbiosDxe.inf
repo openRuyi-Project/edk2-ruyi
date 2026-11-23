@@ -13,12 +13,10 @@
   MdeModulePkg/MdeModulePkg.dec
   SiFivePlatformPkg/SiFivePlatformPkg.dec
 [LibraryClasses]
+  RuyiSmbiosLib
   UefiDriverEntryPoint
-  BaseLib
-  BaseMemoryLib
   Fu740InfoLib
   HobLib
-  MemoryAllocationLib
   UefiBootServicesTableLib
 [Protocols]
   gEfiSmbiosProtocolGuid

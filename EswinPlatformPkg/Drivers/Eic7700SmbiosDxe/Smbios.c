@@ -1,54 +1,12 @@
 /** SPDX-License-Identifier: BSD-2-Clause-Patent */
 #include <PiDxe.h>
 #include <IndustryStandard/SmBios.h>
-#include <Protocol/Smbios.h>
-#include <Library/BaseLib.h>
-#include <Library/BaseMemoryLib.h>
+#include <Library/RuyiSmbiosLib.h>
 #include <Library/Eic7700InfoLib.h>
 #include <Library/Eic7700BoardProfileLib.h>
 #include <Library/Eic7700SpiNorLib.h>
 #include <Library/HobLib.h>
-#include <Library/MemoryAllocationLib.h>
 #include <Library/UefiBootServicesTableLib.h>
-
-STATIC
-EFI_STATUS
-AddRecord (
-  IN EFI_SMBIOS_PROTOCOL  *Smbios,
-  IN SMBIOS_STRUCTURE     *Header,
-  IN CONST CHAR8          **Strings,
-  IN UINTN                StringCount,
-  OUT EFI_SMBIOS_HANDLE   *Handle
-  )
-{
-  SMBIOS_STRUCTURE  *Record;
-  CHAR8             *Next;
-  UINTN             Size, Index, Length;
-  EFI_STATUS        Status;
-
-  Size = Header->Length + 2;
-  for (Index = 0; Index < StringCount; Index++) {
-    Size += AsciiStrSize (Strings[Index]);
-  }
-
-  Record = AllocateZeroPool (Size);
-  if (Record == NULL) {
-    return EFI_OUT_OF_RESOURCES;
-  }
-
-  CopyMem (Record, Header, Header->Length);
-  Next = (CHAR8 *)Record + Header->Length;
-  for (Index = 0; Index < StringCount; Index++) {
-    Length = AsciiStrSize (Strings[Index]);
-    CopyMem (Next, Strings[Index], Length);
-    Next += Length;
-  }
-
-  *Handle = SMBIOS_HANDLE_PI_RESERVED;
-  Status  = Smbios->Add (Smbios, NULL, Handle, Record);
-  FreePool (Record);
-  return Status;
-}
 
 EFI_STATUS EFIAPI
 PublishEic7700Info (
@@ -66,7 +24,6 @@ PublishEic7700Info (
   SMBIOS_TABLE_TYPE17     Memory = { 0 };
   SMBIOS_TABLE_TYPE19     Range  = { 0 };
   EFI_HOB_GENERIC_HEADER  *Hob;
-  CONST CHAR8             *BiosStrings[]   = { "openRuyi", "EDK II stable202608" };
   CONST CHAR8             *SystemStrings[] = { Eic7700GetBoardProfile ()->Manufacturer, NULL };
   CONST CHAR8             *CpuStrings[]    = { "SoC", "ESWIN", "ESWIN EIC7700" };
   CONST CHAR8             *MemoryStrings[] = { "Onboard LPDDR5" };
@@ -92,14 +49,14 @@ PublishEic7700Info (
   FlashSize = Eic7700SpiNorSize ();
   Bios.Hdr.Type                               = SMBIOS_TYPE_BIOS_INFORMATION;
   Bios.Hdr.Length                             = sizeof (Bios);
-  Bios.Vendor                                 = 1;
-  Bios.BiosVersion                            = 2;
+
+
   Bios.BiosSize                               = FlashSize < SIZE_16MB ? (UINT8)(FlashSize / SIZE_64KB - 1) : 0xff;
   Bios.ExtendedBiosSize.Size                  = FlashSize / SIZE_1MB;
   Bios.BIOSCharacteristicsExtensionBytes[1]   = BIT3;
   Bios.EmbeddedControllerFirmwareMajorRelease = 0xff;
   Bios.EmbeddedControllerFirmwareMinorRelease = 0xff;
-  Status                                      = AddRecord (Smbios, &Bios.Hdr, BiosStrings, ARRAY_SIZE (BiosStrings), &Handle);
+  Status                                      = RuyiSmbiosAddBiosRecord (Smbios, &Bios, &Handle);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -110,7 +67,7 @@ PublishEic7700Info (
   System.ProductName  = 2;
   System.WakeUpType   = SystemWakeupTypeUnknown;
   SystemStrings[1]    = Info.Model;
-  Status              = AddRecord (Smbios, &System.Hdr, SystemStrings, ARRAY_SIZE (SystemStrings), &Handle);
+  Status              = RuyiSmbiosAddRecord (Smbios, &System.Hdr, SystemStrings, ARRAY_SIZE (SystemStrings), &Handle);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -128,7 +85,7 @@ PublishEic7700Info (
   Cpu.CoreCount             = Cpu.ThreadCount = Cpu.EnabledCoreCount = (UINT8)Info.CoreCount;
   Cpu.CoreCount2            = Cpu.ThreadCount2 = Cpu.EnabledCoreCount2 = Cpu.ThreadEnabled = (UINT16)Info.CoreCount;
   Cpu.L1CacheHandle         = Cpu.L2CacheHandle = Cpu.L3CacheHandle = 0xffff;
-  Status                    = AddRecord (Smbios, &Cpu.Hdr, CpuStrings, ARRAY_SIZE (CpuStrings), &Handle);
+  Status                    = RuyiSmbiosAddRecord (Smbios, &Cpu.Hdr, CpuStrings, ARRAY_SIZE (CpuStrings), &Handle);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -147,7 +104,7 @@ PublishEic7700Info (
   }
 
   Array.NumberOfMemoryDevices = 1;
-  Status                      = AddRecord (Smbios, &Array.Hdr, NULL, 0, &ArrayHandle);
+  Status                      = RuyiSmbiosAddRecord (Smbios, &Array.Hdr, NULL, 0, &ArrayHandle);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -173,7 +130,7 @@ PublishEic7700Info (
     Memory.ExtendedSize = (UINT32)MiB;
   }
 
-  Status = AddRecord (Smbios, &Memory.Hdr, MemoryStrings, ARRAY_SIZE (MemoryStrings), &Handle);
+  Status = RuyiSmbiosAddRecord (Smbios, &Memory.Hdr, MemoryStrings, ARRAY_SIZE (MemoryStrings), &Handle);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -200,7 +157,7 @@ PublishEic7700Info (
     Range.StartingAddress         = Range.EndingAddress = MAX_UINT32;
     Range.ExtendedStartingAddress = Resource->PhysicalStart;
     Range.ExtendedEndingAddress   = Resource->PhysicalStart + Resource->ResourceLength - 1;
-    Status                        = AddRecord (Smbios, &Range.Hdr, NULL, 0, &Handle);
+    Status                        = RuyiSmbiosAddRecord (Smbios, &Range.Hdr, NULL, 0, &Handle);
     if (EFI_ERROR (Status)) {
       return Status;
     }

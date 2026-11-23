@@ -6,53 +6,13 @@
 #include <Protocol/Clock.h>
 #include <Library/FdtLib.h>
 #include <IndustryStandard/SmBios.h>
-#include <Protocol/Smbios.h>
+#include <Library/RuyiSmbiosLib.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/HobLib.h>
-#include <Library/MemoryAllocationLib.h>
 #include <Library/PcdLib.h>
 #include <Library/UefiBootServicesTableLib.h>
-
-STATIC
-EFI_STATUS
-AddRecord (
-  IN EFI_SMBIOS_PROTOCOL  *Smbios,
-  IN SMBIOS_STRUCTURE     *Header,
-  IN CONST CHAR8          **Strings,
-  IN UINTN                StringCount,
-  OUT EFI_SMBIOS_HANDLE   *Handle
-  )
-{
-  SMBIOS_STRUCTURE  *Record;
-  CHAR8             *Next;
-  UINTN             Size, Index, Length;
-  EFI_STATUS        Status;
-
-  Size = Header->Length + 2;
-  for (Index = 0; Index < StringCount; Index++) {
-    Size += AsciiStrSize (Strings[Index]);
-  }
-
-  Record = AllocateZeroPool (Size);
-  if (Record == NULL) {
-    return EFI_OUT_OF_RESOURCES;
-  }
-
-  CopyMem (Record, Header, Header->Length);
-  Next = (CHAR8 *)Record + Header->Length;
-  for (Index = 0; Index < StringCount; Index++) {
-    Length = AsciiStrSize (Strings[Index]);
-    CopyMem (Next, Strings[Index], Length);
-    Next += Length;
-  }
-
-  *Handle = SMBIOS_HANDLE_PI_RESERVED;
-  Status  = Smbios->Add (Smbios, NULL, Handle, Record);
-  FreePool (Record);
-  return Status;
-}
 
 STATIC EFI_STATUS
 AddProcessor (
@@ -139,7 +99,7 @@ AddProcessor (
   Cpu.CoreCount2            = Cpu.ThreadCount2 = Cores;
   Cpu.EnabledCoreCount2     = Cpu.ThreadEnabled = Enabled;
   Cpu.L1CacheHandle         = Cpu.L2CacheHandle = Cpu.L3CacheHandle = 0xffff;
-  return AddRecord (Smbios, &Cpu.Hdr, Strings, ARRAY_SIZE (Strings), &Handle);
+  return RuyiSmbiosAddRecord (Smbios, &Cpu.Hdr, Strings, ARRAY_SIZE (Strings), &Handle);
 }
 
 STATIC CONST K3_MEMORY_INFO *
@@ -196,7 +156,6 @@ PublishBoardInfo (
   SMBIOS_TABLE_TYPE16          Array;
   SMBIOS_TABLE_TYPE17          Device;
   SMBIOS_TABLE_TYPE19          Range;
-  CONST CHAR8                  *BiosStrings[] = { "SpacemiT", "EDK II stable202608" };
   CONST CHAR8                  *SystemStrings[2];
   CONST CHAR8                  *Locator[] = { "Onboard DRAM 0", "Onboard DRAM 1" };
   EFI_STATUS                   Status;
@@ -241,20 +200,14 @@ PublishBoardInfo (
   ZeroMem (&Bios, sizeof (Bios));
   Bios.Hdr.Type    = SMBIOS_TYPE_BIOS_INFORMATION;
   Bios.Hdr.Length  = sizeof (Bios);
-  Bios.Vendor      = 1;
-  Bios.BiosVersion = 2;
+
+
   /* Report the UEFI firmware device size in 64 KiB units. */
   Bios.BiosSize                               = (UINT8)(FixedPcdGet32 (PcdFdSize) / SIZE_64KB - 1);
   Bios.BIOSCharacteristicsExtensionBytes[1]   = BIT3; /* UEFI supported */
   Bios.EmbeddedControllerFirmwareMajorRelease = 0xff;
   Bios.EmbeddedControllerFirmwareMinorRelease = 0xff;
-  Status                                      = AddRecord (
-                                                  Smbios,
-                                                  &Bios.Hdr,
-                                                  BiosStrings,
-                                                  ARRAY_SIZE (BiosStrings),
-                                                  &Handle
-                                                  );
+  Status                                      = RuyiSmbiosAddBiosRecord (Smbios, &Bios, &Handle);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -267,7 +220,7 @@ PublishBoardInfo (
   System.WakeUpType   = SystemWakeupTypeUnknown;
   SystemStrings[0]    = "SpacemiT";
   SystemStrings[1]    = FixedPcdGetPtr (PcdSystemProductName);
-  Status              = AddRecord (Smbios, &System.Hdr, SystemStrings, ARRAY_SIZE (SystemStrings), &Handle);
+  Status              = RuyiSmbiosAddRecord (Smbios, &System.Hdr, SystemStrings, ARRAY_SIZE (SystemStrings), &Handle);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -293,7 +246,7 @@ PublishBoardInfo (
   }
 
   Array.NumberOfMemoryDevices = (UINT16)DeviceCount;
-  Status                      = AddRecord (Smbios, &Array.Hdr, NULL, 0, &ArrayHandle);
+  Status                      = RuyiSmbiosAddRecord (Smbios, &Array.Hdr, NULL, 0, &ArrayHandle);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -335,7 +288,7 @@ PublishBoardInfo (
       Device.ExtendedSize = (UINT32)SizeMiB;
     }
 
-    Status = AddRecord (Smbios, &Device.Hdr, MemoryStrings, Memory != NULL ? 2 : 1, &Handle);
+    Status = RuyiSmbiosAddRecord (Smbios, &Device.Hdr, MemoryStrings, Memory != NULL ? 2 : 1, &Handle);
     if (EFI_ERROR (Status)) {
       return Status;
     }
@@ -359,7 +312,7 @@ PublishBoardInfo (
     Range.StartingAddress         = Range.EndingAddress = MAX_UINT32;
     Range.ExtendedStartingAddress = Resource->PhysicalStart;
     Range.ExtendedEndingAddress   = Resource->PhysicalStart + Resource->ResourceLength - 1;
-    Status                        = AddRecord (Smbios, &Range.Hdr, NULL, 0, &Handle);
+    Status                        = RuyiSmbiosAddRecord (Smbios, &Range.Hdr, NULL, 0, &Handle);
     if (EFI_ERROR (Status)) {
       return Status;
     }

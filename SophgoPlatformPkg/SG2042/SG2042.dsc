@@ -26,6 +26,7 @@
 
 !include RuyiPlatformPkg/Debug.dsc.inc
 !include RuyiPlatformPkg/Console.dsc.inc
+!include RuyiPlatformPkg/Firmware.dsc.inc
 
 [LibraryClasses]
   FirmwareUpdateLib|RuyiPlatformPkg/Library/FirmwareUpdateLib/FirmwareUpdateLib.inf
@@ -109,8 +110,6 @@
 [PcdsDynamicDefault]
   gSg2042PlatformTokenSpaceGuid.PcdSg2042FlashUid|{0}|VOID*|16
   gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable|FALSE
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVendor|L"openRuyi"
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVersionString|L"EDK II stable202608"
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase64|0
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingBase64|0
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase64|0

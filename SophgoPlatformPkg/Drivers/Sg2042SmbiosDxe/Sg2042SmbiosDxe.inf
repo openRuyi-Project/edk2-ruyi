@@ -13,18 +13,17 @@
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
 [LibraryClasses]
+  RuyiSmbiosLib
   CpuMmioAddressLib
   Sg2042ClockLib
   UefiDriverEntryPoint
   BaseLib
-  BaseMemoryLib
   FdtBoardInfoLib
   IoLib
   PrintLib
   FdtHardwareLib
   FdtLib
   HobLib
-  MemoryAllocationLib
   UefiBootServicesTableLib
 [Protocols]
   gEfiSmbiosProtocolGuid

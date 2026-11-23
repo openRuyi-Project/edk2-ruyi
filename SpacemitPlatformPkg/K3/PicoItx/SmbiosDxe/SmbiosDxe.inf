@@ -9,17 +9,18 @@
 [Sources]
   SmbiosDxe.c
 [Packages]
+  RuyiPlatformPkg/RuyiPlatformPkg.dec
   UefiCpuPkg/UefiCpuPkg.dec
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   SpacemitPlatformPkg/SpacemitPlatformPkg.dec
 [LibraryClasses]
+  RuyiSmbiosLib
   FdtLib
   BaseLib
   BaseMemoryLib
   DebugLib
   HobLib
-  MemoryAllocationLib
   PcdLib
   UefiBootServicesTableLib
   UefiDriverEntryPoint
