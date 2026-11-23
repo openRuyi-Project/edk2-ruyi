@@ -1,8 +1,8 @@
 ## SPDX-License-Identifier: BSD-2-Clause-Patent
 [Defines]
   INF_VERSION = 0x0001001B
-  BASE_NAME = StarPro64ProfileLib
-  FILE_GUID = 79f52376-6584-4300-a8f5-c6a05bd5ea16
+  BASE_NAME = Eic7700BoardProfileLib
+  FILE_GUID = 6f38b8d7-f090-4b23-883b-c6a78d10ad7f
   MODULE_TYPE = BASE
   LIBRARY_CLASS = Eic7700BoardProfileLib
 [Sources]
@@ -11,3 +11,6 @@
   MdePkg/MdePkg.dec
   RuyiPlatformPkg/RuyiPlatformPkg.dec
   EswinPlatformPkg/EswinPlatformPkg.dec
+[LibraryClasses]
+  FdtBoardInfoLib
+  FdtLib

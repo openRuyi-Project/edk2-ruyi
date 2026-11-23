@@ -1,4 +1,20 @@
 ## SPDX-License-Identifier: BSD-2-Clause-Patent
+[Defines]
+  PLATFORM_NAME = Eic7700
+  PLATFORM_GUID = 1d6d21ab-aee7-474b-80c5-c023ec78e4a6
+  PLATFORM_VERSION = 0.1
+  DSC_SPECIFICATION = 0x0001001C
+  OUTPUT_DIRECTORY = Build/Eic7700
+  SUPPORTED_ARCHITECTURES = RISCV64
+  BUILD_TARGETS = DEBUG|RELEASE
+  SKUID_IDENTIFIER = DEFAULT
+  FLASH_DEFINITION = EswinPlatformPkg/Eic7700/Eic7700.fdf
+  DEFINE X64EMU_ENABLE = TRUE
+  DEFINE RISCV_PEI_BOOTING = FALSE
+  DEFINE SECURE_BOOT_ENABLE = FALSE
+  DEFINE DEBUG_ON_SERIAL_PORT = TRUE
+  DEFINE HTTP_BOOT_ENABLE = FALSE
+
 !include RuyiPlatformPkg/NetworkDefines.dsc.inc
 !include Silicon/RISC-V/RiscV.dsc.inc
 
@@ -12,12 +28,12 @@
 
 [LibraryClasses]
   CpuMmioAddressLib|RuyiPlatformPkg/Library/IdentityMmioAddressLib/IdentityMmioAddressLib.inf
-  Eic7700BoardProfileLib|$(EIC_BOARD_PROFILE_LIB)
+  Eic7700BoardProfileLib|EswinPlatformPkg/Library/Eic7700BoardProfileLib/Eic7700BoardProfileLib.inf
   Eic7700BoardGpioLib|EswinPlatformPkg/Library/Eic7700GpioPadLib/Eic7700GpioPadLib.inf
   PlatformBootPolicyLib|RuyiPlatformPkg/Library/DefaultBootPolicyLib/DefaultBootPolicyLib.inf
   PlatformSettingsLib|RuyiPlatformPkg/Library/PlatformSettingsLib/PlatformSettingsLib.inf
   PlatformSettingsStorageLib|EswinPlatformPkg/Library/Eic7700SettingsStorageLib/Eic7700SettingsStorageLib.inf
-  CpuConfigLib|RuyiPlatformPkg/Library/CpuConfigLibNull/CpuConfigLibNull.inf
+  CpuConfigLib|EswinPlatformPkg/Library/PremierP550CpuConfigLib/PremierP550CpuConfigLib.inf
   DwcPcieTrainingLib|RuyiPlatformPkg/Library/DwcPcieTrainingLib/DwcPcieTrainingLib.inf
   MemoryConfigLib|EswinPlatformPkg/Library/Eic7700MemoryConfigLib/Eic7700MemoryConfigLib.inf
   ExtractGuidedSectionLib|MdePkg/Library/DxeExtractGuidedSectionLib/DxeExtractGuidedSectionLib.inf
@@ -36,7 +52,7 @@
   Eic7700UsbLib|EswinPlatformPkg/Library/Eic7700UsbLib/Eic7700UsbLib.inf
   EqosLib|RuyiPlatformPkg/Library/EqosLib/EqosLib.inf
   EqosPlatformLib|EswinPlatformPkg/Library/Eic7700EqosPlatformLib/Eic7700EqosPlatformLib.inf
-  PlatformMacAddressLib|EswinPlatformPkg/Library/Eic7700FactoryMacLib/Eic7700FactoryMacLib.inf
+  PlatformMacAddressLib|EswinPlatformPkg/Library/Eic7700MacLib/Eic7700MacLib.inf
   SnpAdapterInfoLib|RuyiPlatformPkg/Library/SnpAdapterInfoLib/SnpAdapterInfoLib.inf
   DmaLib|EswinPlatformPkg/Library/Eic7700DmaLib/Eic7700DmaLib.inf
   PciHostBridgeLib|RuyiPlatformPkg/Library/ControllerPciHostBridgeLib/ControllerPciHostBridgeLib.inf

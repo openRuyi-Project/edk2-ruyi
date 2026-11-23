@@ -42,6 +42,7 @@ PlatformFirmwareUpdateValidate (
 {
   CONST EIC7700_BOARD_PROFILE *Profile = Eic7700GetBoardProfile ();
   EFI_STATUS Status;
+  if (!Profile) { return EFI_UNSUPPORTED; }
   if (Profile->FactoryOffset % SIZE_64KB || Profile->FactoryBytes % SIZE_64KB) {
     return EFI_INVALID_PARAMETER;
   }
@@ -60,10 +61,10 @@ STATIC BOOLEAN mPreserveDefaults;
 
 STATIC BOOLEAN
 Preserved (
-  UINT32  Offset
+  CONST EIC7700_BOARD_PROFILE *Profile,
+  UINT32 Offset
   )
 {
-  CONST EIC7700_BOARD_PROFILE *Profile = Eic7700GetBoardProfile ();
   return (Profile->FactoryBytes && Offset >= Profile->FactoryOffset &&
           Offset - Profile->FactoryOffset < Profile->FactoryBytes) ||
          (mPreserveDefaults && Offset >= EIC7700_DEFAULTS_OFFSET &&
@@ -107,6 +108,7 @@ PlatformFirmwareUpdate (
   }
 
   CONST EIC7700_BOARD_PROFILE *Profile = Eic7700GetBoardProfile ();
+  if (!Profile) { return EFI_UNSUPPORTED; }
   if (Profile->FactoryOffset < Size) {
     Total -= MIN (Profile->FactoryBytes, Size - Profile->FactoryOffset);
   }
@@ -146,7 +148,7 @@ PlatformFirmwareUpdate (
   // before moving on; unchanged sectors and the variable region are kept.
   for (UINT32 Index = 1; Index <= EIC7700_SPI_IMAGE_BYTES / SIZE_64KB; Index++) {
     UINT32  Offset = Index == EIC7700_SPI_IMAGE_BYTES / SIZE_64KB ? 0 : Index * SIZE_64KB;
-    if (Preserved (Offset)) {
+    if (Preserved (Profile, Offset)) {
       continue;
     }
 

@@ -12,6 +12,7 @@
   RuyiPlatformPkg/RuyiPlatformPkg.dec
   EswinPlatformPkg/EswinPlatformPkg.dec
 [LibraryClasses]
+  Eic7700BoardProfileLib
   UefiRuntimeServicesTableLib
 [Guids]
   gPremierP550CpuConfigGuid

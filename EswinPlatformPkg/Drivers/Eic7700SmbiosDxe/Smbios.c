@@ -24,13 +24,16 @@ PublishEic7700Info (
   SMBIOS_TABLE_TYPE17     Memory = { 0 };
   SMBIOS_TABLE_TYPE19     Range  = { 0 };
   EFI_HOB_GENERIC_HEADER  *Hob;
-  CONST CHAR8             *SystemStrings[] = { Eic7700GetBoardProfile ()->Manufacturer, NULL };
+  CONST EIC7700_BOARD_PROFILE *Board = Eic7700GetBoardProfile ();
+  CONST CHAR8             *SystemStrings[2];
   CONST CHAR8             *CpuStrings[]    = { "SoC", "ESWIN", "ESWIN EIC7700" };
   CONST CHAR8             *MemoryStrings[] = { "Onboard LPDDR5" };
   EFI_STATUS              Status;
   UINT64                  MiB;
   UINT32                  FlashSize;
 
+  if (!Board) { return EFI_UNSUPPORTED; }
+  SystemStrings[0] = Board->Manufacturer;
   Status = Eic7700GetBoardInfo (&Info);
   if (EFI_ERROR (Status)) {
     return Status;

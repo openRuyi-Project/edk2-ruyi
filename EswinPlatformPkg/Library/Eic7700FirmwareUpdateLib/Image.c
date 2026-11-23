@@ -50,10 +50,11 @@ Eic7700FirmwareImageValid (CONST VOID *Buffer, UINTN Size)
 {
   CONST UINT8 *Image = Buffer, *Entry, *Header, *Rom = NULL;
   STATIC CONST UINT8 Kinds[] = {0x70, 0x10, 0x30};
-  CONST COREBOOT_IMAGE_LAYOUT *Layout = &Eic7700GetBoardProfile ()->Image;
+  CONST EIC7700_BOARD_PROFILE *Board = Eic7700GetBoardProfile ();
   UINT64 Offset, Bytes, Address, End = 8 + ARRAY_SIZE (Kinds) * ENTRY_BYTES;
   UINTN Index;
 
+  if (!Board) { return EFI_UNSUPPORTED; }
   if (!Image || Size != EIC7700_SPI_IMAGE_BYTES) { return EFI_BAD_BUFFER_SIZE; }
   if (ReadUnaligned32 ((CONST UINT32 *)Image) != FHT_MAGIC ||
       ReadUnaligned32 ((CONST UINT32 *)(Image + 4)) != ARRAY_SIZE (Kinds)) {
@@ -91,5 +92,5 @@ Eic7700FirmwareImageValid (CONST VOID *Buffer, UINTN Size)
   if (EFI_ERROR (PlatformSettingsImageValid (Image, Size, EIC7700_DEFAULTS_OFFSET, EIC7700_DEFAULTS_STRIDE))) {
     return EFI_COMPROMISED_DATA;
   }
-  return CorebootImageValidate (Rom + CBFS_OFFSET, CBFS_BYTES, Layout);
+  return CorebootImageValidate (Rom + CBFS_OFFSET, CBFS_BYTES, &Board->Image);
 }

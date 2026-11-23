@@ -1,12 +1,14 @@
 ## SPDX-License-Identifier: BSD-2-Clause-Patent
 [Defines]
   INF_VERSION = 0x0001001B
-  BASE_NAME = Eic7700FactoryMacLib
+  BASE_NAME = Eic7700MacLib
   FILE_GUID = 198dcf73-c7c5-480a-bc73-3780d2a3f848
   MODULE_TYPE = BASE
   LIBRARY_CLASS = PlatformMacAddressLib
 [Sources]
   Mac.c
+  Eeprom.c
+  Internal.h
 [Packages]
   MdePkg/MdePkg.dec
   RuyiPlatformPkg/RuyiPlatformPkg.dec
@@ -20,3 +22,6 @@
   FdtBoardInfoLib
   FdtLib
   PrintLib
+  FdtHardwareLib
+  IoLib
+  TimerLib

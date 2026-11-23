@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Guid/PremierP550CpuConfig.h>
 #include <Library/CpuConfigLib.h>
+#include <Library/Eic7700BoardProfileLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 
 #define OPTION_NAME  L"Allow1600MHzOpp"
@@ -19,6 +20,8 @@ CpuConfigGet (CPU_CONFIG *Config)
   EFI_STATUS Status;
 
   if (Config == NULL) { return EFI_INVALID_PARAMETER; }
+  CONST EIC7700_BOARD_PROFILE *Board = Eic7700GetBoardProfile ();
+  if (!Board || !Board->AllowCpuOppOverride) { return EFI_UNSUPPORTED; }
   Status = gRT->GetVariable (OPTION_NAME, &gPremierP550CpuConfigGuid, &Attributes, &Size, &Mode);
   if (Status == EFI_NOT_FOUND || Status == EFI_BUFFER_TOO_SMALL) {
     Mode = P550_CPU_STANDARD;
@@ -39,6 +42,8 @@ EFI_STATUS
 CpuConfigSet (UINT8 Mode)
 {
   EFI_STATUS Status;
+  CONST EIC7700_BOARD_PROFILE *Board = Eic7700GetBoardProfile ();
+  if (!Board || !Board->AllowCpuOppOverride) { return EFI_UNSUPPORTED; }
   if (Mode == P550_CPU_STANDARD) {
     Status = gRT->SetVariable (OPTION_NAME, &gPremierP550CpuConfigGuid, 0, 0, NULL);
     return Status == EFI_NOT_FOUND ? EFI_SUCCESS : Status;

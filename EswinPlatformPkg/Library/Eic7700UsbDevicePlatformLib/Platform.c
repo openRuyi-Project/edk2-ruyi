@@ -101,7 +101,9 @@ UsbDevicePlatformInit (
     return EFI_UNSUPPORTED;
   }
   mRestoreHost = AsciiStrCmp (Mode, "host") == 0;
-  if (mRestoreHost && !Eic7700GetBoardProfile ()->FastbootCanSwitchHostPort) {
+  CONST EIC7700_BOARD_PROFILE *Board = Eic7700GetBoardProfile ();
+  if (!Board) { return EFI_UNSUPPORTED; }
+  if (mRestoreHost && !Board->FastbootCanSwitchHostPort) {
     Print (L"Boot in USB recovery mode and connect the board download port to use Fastboot.\r\n");
     return EFI_UNSUPPORTED;
   }

@@ -1,14 +1,12 @@
 /** SPDX-License-Identifier: BSD-2-Clause-Patent */
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
-#include <Library/DebugLib.h>
-#include <Library/Eic7700LocalMacLib.h>
 #include <Library/FdtBoardInfoLib.h>
 #include <Library/FdtHardwareLib.h>
 #include <Library/FdtLib.h>
 #include <Library/IoLib.h>
-#include <Library/PlatformMacAddressLib.h>
 #include <Library/TimerLib.h>
+#include "Internal.h"
 
 #define IC_CON             0x00
 #define IC_TAR             0x04
@@ -38,8 +36,8 @@
 #define BOARD_INFO_BACKUP  80
 #define BOARD_INFO_MAGIC  0x45505ef1
 
-STATIC UINT8 mMac[2][6];
-STATIC BOOLEAN mValid;
+STATIC_ASSERT (BOARD_INFO_MAC + sizeof (EIC7700_MAC_PAIR) <= BOARD_INFO_CRC,
+               "EEPROM MAC addresses overlap the checksum");
 
 STATIC EFI_STATUS
 Cell (CONST VOID *Fdt, INT32 Node, CONST CHAR8 *Name, UINT32 *Value)
@@ -118,11 +116,10 @@ ReadRecord (UINTN Base, UINT8 Offset, UINT8 *Data)
 }
 
 STATIC BOOLEAN
-ValidRecord (CONST UINT8 *Data)
+DecodeRecord (CONST UINT8 *Data, EIC7700_MAC_PAIR *Pair)
 {
   UINT32 Crc = 0;
   UINTN I, Bit;
-  UINT8 Any;
   // SiFive carrier records use CRC32 with the U-Boot seed 0xffffffff.
   if (ReadUnaligned32 ((CONST UINT32 *)Data) != BOARD_INFO_MAGIC || Data[4] != 3) { return FALSE; }
   for (I = 0; I < BOARD_INFO_CRC; I++) {
@@ -132,16 +129,12 @@ ValidRecord (CONST UINT8 *Data)
     }
   }
   if (~Crc != ReadUnaligned32 ((CONST UINT32 *)(Data + BOARD_INFO_CRC))) { return FALSE; }
-  for (I = 0; I < 2; I++) {
-    CONST UINT8 *Mac = Data + BOARD_INFO_MAC + 6 * I;
-    Any = Mac[0] | Mac[1] | Mac[2] | Mac[3] | Mac[4] | Mac[5];
-    if (!Any || (Mac[0] & 1)) { return FALSE; }
-  }
-  return CompareMem (Data + BOARD_INFO_MAC, Data + BOARD_INFO_MAC + 6, 6) != 0;
+  CopyMem (Pair, Data + BOARD_INFO_MAC, sizeof (*Pair));
+  return Eic7700MacPairValid (Pair);
 }
 
-STATIC EFI_STATUS
-LoadAddresses (VOID)
+EFI_STATUS
+Eic7700ReadEepromMacPair (EIC7700_MAC_PAIR *Pair)
 {
   RUYI_BOARD_INFO Info;
   CONST VOID *Fdt;
@@ -213,32 +206,15 @@ LoadAddresses (VOID)
   MmioWrite32 (Base + IC_TX_TL, 0);
   Status = ReadRecord (Base, 0, Record);
   if (EFI_ERROR (Status)) { goto Done; }
-  if (!ValidRecord (Record)) {
+  if (!DecodeRecord (Record, Pair)) {
     Status = ReadRecord (Base, BOARD_INFO_BACKUP, Record);
-    if (EFI_ERROR (Status)) { goto Done; }
+    if (!EFI_ERROR (Status) && !DecodeRecord (Record, Pair)) {
+      Status = Eic7700GenerateMacPair (Pair);
+    }
   }
-  if (ValidRecord (Record)) {
-    CopyMem (mMac, Record + BOARD_INFO_MAC, sizeof (mMac));
-  } else {
-    Status = Eic7700GenerateMacPair (mMac);
-  }
-  mValid = !EFI_ERROR (Status);
 Done:
   // No DMA is used. A failed transaction is held in reset before gating.
   if (EFI_ERROR (Status)) { MmioAnd32 (Reset + SYS_I2C0_RESET, ~((UINT32)BIT0)); }
   if (!(SavedClock & BIT31)) { MmioAnd32 (Clock + SYS_I2C0_CLOCK, ~((UINT32)BIT31)); }
   return Status;
-}
-
-EFI_STATUS
-PlatformGetMacAddress (UINTN Index, UINT8 Mac[6])
-{
-  EFI_STATUS Status;
-  if (!Mac || Index >= ARRAY_SIZE (mMac)) { return EFI_INVALID_PARAMETER; }
-  if (!mValid) {
-    Status = LoadAddresses ();
-    if (EFI_ERROR (Status)) { return Status; }
-  }
-  CopyMem (Mac, mMac[Index], 6);
-  return EFI_SUCCESS;
 }
