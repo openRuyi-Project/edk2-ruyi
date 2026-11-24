@@ -1,4 +1,7 @@
 ## SPDX-License-Identifier: BSD-2-Clause-Patent
+[PcdsFeatureFlag]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutFullScreen80x25|TRUE
+
 [PcdsDynamicDefault]
   gEfiMdeModulePkgTokenSpaceGuid.PcdVideoHorizontalResolution|0
   gEfiMdeModulePkgTokenSpaceGuid.PcdVideoVerticalResolution|0
