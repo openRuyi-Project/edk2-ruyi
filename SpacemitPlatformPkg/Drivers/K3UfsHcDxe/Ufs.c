@@ -33,7 +33,13 @@
 #define UFS_PLL_TIMEOUT_US    10000
 #define UFS_HCS_POWER_MASK    (7U << 8)
 #define UFS_HCS_POWER_LOCAL   BIT8
+// PA_PWRMODE encodes the RX mode in bits 7:4 and the TX mode in bits 3:0.
+#define UFS_PWRMODE_MASK      0xf
+#define UFS_PWRMODE_RX_SHIFT  4
+#define UFS_SLOW              2
+#define UFS_SLOWAUTO          5
 #define UFS_FAST_MODE         0x11
+#define UFS_FASTAUTO_MODE     0x44
 #define UFS_ACLK_HZ           409600000U
 #define UFS_POWER_TIMEOUT_US  1000000
 #define UFS_PHY_STEP_US       1000
@@ -343,7 +349,20 @@ ChangePowerMode (
   UINT32  Result = MmioRead32 (mBase + UFS_HC_STATUS_OFFSET) & UFS_HCS_POWER_MASK;
 
   MmioWrite32 (mBase + UFS_HC_IS_OFFSET, UFS_UPMS);
-  return Result == UFS_HCS_POWER_LOCAL ? EFI_SUCCESS : EFI_DEVICE_ERROR;
+  if (Result != UFS_HCS_POWER_LOCAL) {
+    DEBUG ((DEBUG_ERROR, "K3 UFS power mode %02x rejected: HCS power status %x\n", Mode, Result));
+    return EFI_DEVICE_ERROR;
+  }
+
+  MicroSecondDelay (UFS_POWER_SETTLE_US);
+  Status = Wait32 (mBase + UFS_MPHY_POWER, UFS_MPHY_PLL_LOCK, UFS_MPHY_PLL_LOCK, UFS_PLL_TIMEOUT_US);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "K3 UFS PLL did not lock after power mode %02x\n", Mode));
+    return Status;
+  }
+
+  MicroSecondDelay (UFS_PHY_SETTLE_US);
+  return EFI_SUCCESS;
 }
 
 STATIC EFI_STATUS
@@ -383,12 +402,18 @@ PrepareHighSpeed (
   return Wait32 (mBase + UFS_MPHY_POWER, UFS_MPHY_PLL_LOCK, UFS_MPHY_PLL_LOCK, UFS_PLL_TIMEOUT_US);
 }
 
+STATIC BOOLEAN
+IsPwmMode (UINT32 Mode)
+{
+  return (Mode == UFS_SLOW) || (Mode == UFS_SLOWAUTO);
+}
+
 STATIC EFI_STATUS
 HighSpeed (
   EDKII_UFS_HC_DRIVER_INTERFACE  *Driver
   )
 {
-  UINT32      RxGear, TxGear, RxLanes, TxLanes, Value;
+  UINT32      RxGear, TxGear, RxLanes, TxLanes, PowerMode, Value;
   EFI_STATUS  Status;
 
   Status = PrepareHighSpeed (Driver);
@@ -414,6 +439,11 @@ HighSpeed (
 
   if (!RxGear || !TxGear || !RxLanes || !TxLanes) {
     return EFI_UNSUPPORTED;
+  }
+
+  Status = DmeGet (Driver, PA_PWRMODE, FALSE, &PowerMode);
+  if (EFI_ERROR (Status)) {
+    return Status;
   }
 
   // K3 supports at most HS-G3, two lanes and Rate B.
@@ -467,18 +497,23 @@ HighSpeed (
     }
   }
 
-  // Request FAST directly after the K3 analog preparation. Complete the
-  // power transition and allow the PHY to settle before issuing queries.
+  // A direct PWM-to-FAST transition can leave device descriptor queries timing out.
+  if (IsPwmMode (PowerMode >> UFS_PWRMODE_RX_SHIFT) && IsPwmMode (PowerMode & UFS_PWRMODE_MASK)) {
+    Status = ChangePowerMode (Driver, UFS_FASTAUTO_MODE);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+
+    // Release the analog gear override once the link is in high-speed mode.
+    Status = DmeSet (Driver, ANA_HSGEAR_CTRL, 0, 0);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+
+    DEBUG ((DEBUG_INFO, "K3 UFS: PWM %02x to FASTAUTO complete\n", PowerMode));
+  }
+
   Status = ChangePowerMode (Driver, UFS_FAST_MODE);
-  if (!EFI_ERROR (Status)) {
-    MicroSecondDelay (UFS_POWER_SETTLE_US);
-    Status = Wait32 (mBase + UFS_MPHY_POWER, UFS_MPHY_PLL_LOCK, UFS_MPHY_PLL_LOCK, UFS_PLL_TIMEOUT_US);
-  }
-
-  if (!EFI_ERROR (Status)) {
-    MicroSecondDelay (UFS_PHY_SETTLE_US);
-  }
-
   if (EFI_ERROR (Status)) {
     return Status;
   }
