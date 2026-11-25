@@ -21,6 +21,7 @@ CoreRate (
   INT32                            Node, Clock, Length;
   UINT64                           Base;
   UINT32                           Reference, Switch, Config0, Config1, Config2, Fraction;
+  UINT32                           RefDiv, PostDivA, PostDivB;
   UINT64                           Rate;
   EFI_STATUS                       Status;
   EFI_GCD_MEMORY_SPACE_DESCRIPTOR  Descriptor;
@@ -74,7 +75,7 @@ CoreRate (
     return 0;
   }
 
-  // The CPU root selects PLL output 2, a low-power clock, or the crystal.
+  // The CPU root selects the CPU PLL, a low-power clock, or the crystal.
   Switch = MmioRead32 (Base + EIC7700_CPU_CLK_CTRL) & 3;
   if (Switch == 2) {
     return Reference;
@@ -87,19 +88,18 @@ CoreRate (
   Config0 = MmioRead32 (Base + EIC7700_CPU_PLL_CFG0);
   Config1 = MmioRead32 (Base + EIC7700_CPU_PLL_CFG1);
   Config2 = MmioRead32 (Base + EIC7700_CPU_PLL_CFG2);
-  // The EIC7700 firmware and Linux use reference divide 1 and output 2
-  // divide 4. Do not report a rate for an unrecognized PLL configuration.
-  if (!(Config0 & BIT0) || (Config0 & 0xf0) ||
-      (((Config0 >> 12) & 0x3f) != 1) || !(Config1 & BIT1) ||
-      ((Config2 & 0x770000) != 0x010000))
-  {
+  RefDiv  = BitFieldRead32 (Config0, 12, 17);
+  if (!(Config0 & BIT0) || (Config0 & 0xf0) || !(Config1 & BIT1) || (RefDiv == 0)) {
     return 0;
   }
 
-  Fraction = (Config0 & BIT9) ? ((Config1 >> 4) & 0xffffff) : 0;
-  Rate     = MultU64x32 (Reference, Config0 >> 20);
+  // The CPU PLL uses the FOUT1 post-dividers in CFG2.
+  PostDivA = BitFieldRead32 (Config2, 8, 10);
+  PostDivB = BitFieldRead32 (Config2, 12, 14);
+  Fraction = (Config0 & BIT9) ? BitFieldRead32 (Config1, 4, 27) : 0;
+  Rate     = MultU64x32 (Reference, BitFieldRead32 (Config0, 20, 31));
   Rate    += RShiftU64 (MultU64x32 (Reference, Fraction) + 0xffffff, 24);
-  return DivU64x32 (Rate, 4);
+  return DivU64x32 (Rate, 4 * RefDiv * (PostDivA + 1) * (PostDivB + 1));
 }
 
 EFI_STATUS
