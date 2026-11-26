@@ -98,6 +98,56 @@ CardDetectPins (CONST VOID *Fdt, INT32 Node, EIC_MMC_PORT *Port)
   return EFI_SUCCESS;
 }
 
+STATIC EFI_STATUS
+ParseClocks (CONST VOID *Fdt, INT32 Node, UINTN Id, EIC_MMC_PORT *Port)
+{
+  CONST UINT32 *Clocks, *Cfg, *Axi;
+  INT32 Length, Bus, Count;
+
+  Clocks = FdtGetProp (Fdt, Node, "clocks", &Length);
+  Count = FdtStringListCount (Fdt, Node, "clock-names");
+  if (Clocks == NULL || (Count != 2 && Count != 3) ||
+      Length != (INT32)(Count * 2 * sizeof (*Clocks)) ||
+      FdtStringListSearch (Fdt, Node, "clock-names", "core") != 0 ||
+      FdtStringListSearch (Fdt, Node, "clock-names", "bus") != 1 ||
+      Fdt32ToCpu (Clocks[1]) != EIC7700_CLK_GATE_HSP_MSHC0_CORE_CLK + Id)
+  {
+    return EFI_COMPROMISED_DATA;
+  }
+
+  if (Count == 3) {
+    if (FdtStringListSearch (Fdt, Node, "clock-names", "axi") != 2) {
+      return EFI_COMPROMISED_DATA;
+    }
+
+    Cfg = &Clocks[2];
+    Axi = &Clocks[4];
+  } else {
+    // On EIC7702 the parent HSP bus owns the configuration clock.
+    Bus = FdtParentOffset (Fdt, Node);
+    if (Bus < 0 || FdtStringListSearch (Fdt, Bus, "compatible", "simple-pm-bus") < 0) {
+      return EFI_UNSUPPORTED;
+    }
+
+    Cfg = FdtGetProp (Fdt, Bus, "clocks", &Length);
+    if (Cfg == NULL || Length != 2 * sizeof (*Cfg)) {
+      return EFI_COMPROMISED_DATA;
+    }
+
+    Axi = &Clocks[2];
+  }
+
+  if (Cfg[0] != Clocks[0] || Axi[0] != Clocks[0] ||
+      Fdt32ToCpu (Cfg[1]) != EIC7700_CLK_GATE_HSP_CFG_CLK ||
+      Fdt32ToCpu (Axi[1]) != EIC7700_CLK_GATE_HSP_ACLK)
+  {
+    return EFI_COMPROMISED_DATA;
+  }
+
+  return Resource (Fdt, Fdt32ToCpu (Clocks[0]), "eswin,eic7700-clock",
+                   Port->ClockControl + sizeof (UINT32), &Port->Clock);
+}
+
 EFI_STATUS
 ParsePort (CONST VOID *Fdt, INT32 Node, EIC_MMC_PORT *Port)
 {
@@ -154,18 +204,8 @@ ParsePort (CONST VOID *Fdt, INT32 Node, EIC_MMC_PORT *Port)
   }
   Port->Delay = Port->Emmc ? EIC_EMMC_DELAY_CODE : EIC_SD_DELAY_CODE;
 
-  Data = FdtGetProp (Fdt, Node, "clocks", &Length);
-  if (!Data || Length != 24 || Fdt32ToCpu (Data[1]) != EIC7700_CLK_GATE_HSP_MSHC0_CORE_CLK + Id ||
-      Fdt32ToCpu (Data[3]) != EIC7700_CLK_GATE_HSP_CFG_CLK || Fdt32ToCpu (Data[5]) != EIC7700_CLK_GATE_HSP_ACLK ||
-      Data[0] != Data[2] || Data[0] != Data[4] ||
-      FdtStringListSearch (Fdt, Node, "clock-names", "core") != 0 ||
-      FdtStringListSearch (Fdt, Node, "clock-names", "bus") != 1 ||
-      FdtStringListSearch (Fdt, Node, "clock-names", "axi") != 2)
-  {
-    return EFI_COMPROMISED_DATA;
-  }
-  Port->ClockControl = SYSCRG_MSHC0 + Id * 4;
-  Status = Resource (Fdt, Fdt32ToCpu (*Data), "eswin,eic7700-clock", Port->ClockControl + 4, &Port->Clock);
+  Port->ClockControl = SYSCRG_MSHC0 + Id * sizeof (UINT32);
+  Status = ParseClocks (Fdt, Node, Id, Port);
   if (EFI_ERROR (Status)) { return Status; }
   Data = FdtGetProp (Fdt, Node, "resets", &Length);
   if (!Data || Length != 32) { return EFI_COMPROMISED_DATA; }
@@ -183,7 +223,7 @@ ParsePort (CONST VOID *Fdt, INT32 Node, EIC_MMC_PORT *Port)
   Port->ResetMask = (BIT0 << (23 - Id)) | (BIT0 << (3 + Id)) |
                     (BIT0 << (19 - Id)) | (BIT0 << (6 + Id));
   Port->BrokenCd = FdtGetProp (Fdt, Node, "broken-cd", &Length) != NULL;
-  if (!Port->Emmc && !Port->BrokenCd) {
+  if (!Port->Emmc && !Port->BrokenCd && FdtGetProp (Fdt, Node, "cd-gpios", NULL) != NULL) {
     Status = CardDetectPins (Fdt, Node, Port);
     if (EFI_ERROR (Status)) { return Status; }
   }
