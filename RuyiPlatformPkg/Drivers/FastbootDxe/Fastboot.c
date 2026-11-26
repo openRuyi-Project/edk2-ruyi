@@ -26,7 +26,6 @@ STATIC BOOLEAN                 mSessionInvalid;
 STATIC CONST CHAR8             *mTarget;
 STATIC UINT64                  mLastProgress;
 STATIC BOOLEAN                 mFirstProgress;
-STATIC FASTBOOT_STORAGE_PHASE  mProgressPhase;
 STATIC EFI_STATUS              mProgressStatus;
 
 STATIC EFI_STATUS EFIAPI
@@ -234,7 +233,7 @@ FlashProgress (
   }
 
   Now = GetPerformanceCounter ();
-  if (mFirstProgress || (mProgressPhase != Phase) || (Done == Total) ||
+  if (mFirstProgress || (Done == Total) ||
       (GetTimeInNanoSecond (Now - mLastProgress) >= 1000000000ULL))
   {
     Percent    = Done == Total ? 100 : (UINT32)MIN (99, (Done >> 10) * 100 / MAX (Total >> 10, 1));
@@ -245,20 +244,18 @@ FlashProgress (
     AsciiSPrint (
       Line,
       sizeof (Line),
-      "\rFastboot %a %a: %Lu/%Lu %a (%u%%)    %a",
+      "Fastboot %a %a: %Lu/%Lu %a (%u%%)\r\n",
       mTarget,
       Labels[Phase],
       DoneUnits,
       TotalUnits,
       Unit,
-      Percent,
-      Done == Total ? "\r\n" : ""
+      Percent
       );
     SerialPortWrite ((UINT8 *)Line, AsciiStrLen (Line));
     AsciiSPrint (Info, sizeof (Info), "%a %Lu/%Lu %a", Labels[Phase], DoneUnits, TotalUnits, Unit);
     mProgressStatus = SendInfo (Info);
     mFirstProgress  = FALSE;
-    mProgressPhase  = Phase;
     mLastProgress   = GetPerformanceCounter ();
   }
 
