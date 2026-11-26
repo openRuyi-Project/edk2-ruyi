@@ -5,6 +5,7 @@
  * RTL8211F register/mode semantics checked against the pinned PHY sources.
  */
 #include <Library/BaseLib.h>
+#include <Library/DebugLib.h>
 #include <Library/IoLib.h>
 #include <Library/EqosLib.h>
 #include <Library/TimerLib.h>
@@ -300,6 +301,8 @@ EqosPhyConfigure (
   } else if (P->PhyId == RTL8211F_ID) {
     Status = ConfigureRtl8211f (P);
   } else {
+    DEBUG ((DEBUG_ERROR, "EQoS %lx: unrecognized PHY ID %08x at MDIO address %u\n",
+            P->Base, P->PhyId, P->PhyAddress));
     return EFI_UNSUPPORTED;
   }
 
