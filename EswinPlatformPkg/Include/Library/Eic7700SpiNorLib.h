@@ -13,3 +13,35 @@ EFI_STATUS Eic7700SpiNorWrite (UINT32 Offset, UINTN Size, CONST VOID *Buffer);
 // Erase one aligned 4 KiB sector or 64 KiB block.
 EFI_STATUS Eic7700SpiNorErase (UINT32 Offset, UINTN Size);
 VOID Eic7700SpiNorVirtualAddressChange (VOID);
+
+// Boot-time access to a second controller. Transfer uses aligned 32-bit words.
+typedef EFI_STATUS (*EIC7700_SPI_TRANSFER)(
+  VOID *Context, BOOLEAN Write, UINTN Address, UINT32 *Words, UINTN Count
+  );
+
+typedef struct {
+  UINTN                 Spi;
+  UINTN                 Data;
+  UINTN                 Clock;
+  EIC7700_SPI_TRANSFER  Transfer;
+  VOID                  *Context;
+  EFI_STATUS            IoStatus;
+  UINT32                Size;
+  BOOLEAN               Gd25Lq128;
+  BOOLEAN               Ready;
+  BOOLEAN               Faulted;
+  BOOLEAN               Busy;
+} EIC7700_SPI_NOR;
+
+EFI_STATUS Eic7700SpiNorProbeDevice (EIC7700_SPI_NOR *Nor);
+EFI_STATUS Eic7700SpiNorReadDevice (EIC7700_SPI_NOR *Nor, UINT32 Offset, UINTN Size, VOID *Buffer);
+EFI_STATUS Eic7700SpiNorWriteDevice (EIC7700_SPI_NOR *Nor, UINT32 Offset, UINTN Size, CONST VOID *Buffer);
+EFI_STATUS Eic7700SpiNorEraseDevice (EIC7700_SPI_NOR *Nor, UINT32 Offset, UINTN Size);
+
+// Replace and verify an aligned 4 KiB sector or 64 KiB block, using its
+// previously read contents. A NULL controller selects the local boot NOR.
+EFI_STATUS
+Eic7700SpiNorReplaceUnit (
+  EIC7700_SPI_NOR *Nor OPTIONAL, UINT32 Offset, UINTN Size,
+  CONST UINT8 *Before, CONST UINT8 *After
+  );
