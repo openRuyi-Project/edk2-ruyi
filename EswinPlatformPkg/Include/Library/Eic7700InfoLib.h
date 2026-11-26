@@ -5,6 +5,7 @@
 typedef RUYI_BOARD_INFO EIC7700_BOARD_INFO;
 EFI_STATUS
 Eic7700GetBoardInfo (
-  EIC7700_BOARD_INFO  *Info
+  EIC7700_BOARD_INFO  *Info,
+  CONST CHAR8         **SocName
   );
 #endif

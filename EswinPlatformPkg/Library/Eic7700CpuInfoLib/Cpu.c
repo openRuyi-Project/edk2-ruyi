@@ -13,7 +13,8 @@ PlatformCpuInfo (
 {
   EIC7700_BOARD_INFO  Info;
   CHAR16            Text[128];
-  EFI_STATUS        Status = Eic7700GetBoardInfo (&Info);
+  CONST CHAR8       *SocName;
+  EFI_STATUS        Status = Eic7700GetBoardInfo (&Info, &SocName);
 
   if (EFI_ERROR (Status)) {
     return Status;
@@ -21,7 +22,8 @@ PlatformCpuInfo (
 
   UnicodeSPrint (Text, sizeof (Text), L"%a", Info.Model);
   EMIT (L"System", Text);
-  EMIT (L"Processor", L"ESWIN EIC7700");
+  UnicodeSPrint (Text, sizeof (Text), L"%a", SocName);
+  EMIT (L"Processor", Text);
   UnicodeSPrint (Text, sizeof (Text), L"%u SiFive P550", Info.CoreCount);
   EMIT (L"Enabled cores", Text);
   UnicodeSPrint (Text, sizeof (Text), L"%Lu", Info.BootHart);

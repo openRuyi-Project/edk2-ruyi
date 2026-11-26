@@ -26,7 +26,7 @@ PublishEic7700Info (
   EFI_HOB_GENERIC_HEADER  *Hob;
   CONST EIC7700_BOARD_PROFILE *Board = Eic7700GetBoardProfile ();
   CONST CHAR8             *SystemStrings[2];
-  CONST CHAR8             *CpuStrings[]    = { "SoC", "ESWIN", "ESWIN EIC7700" };
+  CONST CHAR8             *CpuStrings[]    = { "SoC", "ESWIN", NULL };
   CONST CHAR8             *MemoryStrings[] = { "Onboard LPDDR5" };
   EFI_STATUS              Status;
   UINT64                  MiB;
@@ -34,7 +34,7 @@ PublishEic7700Info (
 
   if (!Board) { return EFI_UNSUPPORTED; }
   SystemStrings[0] = Board->Manufacturer;
-  Status = Eic7700GetBoardInfo (&Info);
+  Status = Eic7700GetBoardInfo (&Info, &CpuStrings[2]);
   if (EFI_ERROR (Status)) {
     return Status;
   }

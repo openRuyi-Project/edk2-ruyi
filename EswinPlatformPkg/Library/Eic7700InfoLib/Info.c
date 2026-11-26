@@ -104,7 +104,8 @@ CoreRate (
 
 EFI_STATUS
 Eic7700GetBoardInfo (
-  EIC7700_BOARD_INFO  *Info
+  EIC7700_BOARD_INFO  *Info,
+  CONST CHAR8         **SocName
   )
 {
   CONST VOID  *Fdt;
@@ -113,6 +114,14 @@ Eic7700GetBoardInfo (
   Status = FdtBoardInfoGet (Info, &Fdt);
   if (EFI_ERROR (Status)) {
     return Status;
+  }
+
+  if (FdtStringListSearch (Fdt, 0, "compatible", "eswin,eic7702") >= 0) {
+    *SocName = "ESWIN EIC7702";
+  } else if (FdtStringListSearch (Fdt, 0, "compatible", "eswin,eic7700") >= 0) {
+    *SocName = "ESWIN EIC7700";
+  } else {
+    return EFI_UNSUPPORTED;
   }
 
   Info->CpuRate = CoreRate (Fdt);
