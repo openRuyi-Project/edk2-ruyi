@@ -90,7 +90,7 @@ INF  ShellPkg/Application/Shell/Shell.inf
 
 INF MdeModulePkg/Application/BootManagerMenuApp/BootManagerMenuApp.inf
 
-INF RuyiPlatformPkg/Drivers/PlatformSettingsDxe/PlatformSettingsDxe.inf
+INF $(ESWIN_SETTINGS_DXE)
 INF RuyiPlatformPkg/Drivers/PlatformDefaultsUiDxe/PlatformDefaultsUiDxe.inf
 !if $(X64EMU_ENABLE) == TRUE
 FILE FREEFORM = d4d2e038-f479-44fa-a978-7181b08d532d {

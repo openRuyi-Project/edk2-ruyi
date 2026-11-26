@@ -61,3 +61,4 @@
 [PcdsFixedAtBuild]
   gRuyiPlatformTokenSpaceGuid.PcdDriverEmulationAvailable|TRUE|BOOLEAN|0x1
   gRuyiPlatformTokenSpaceGuid.PcdVirtualRtcTimeVariableName|L"VirtualRtcTime"|VOID*|0x2
+  gRuyiPlatformTokenSpaceGuid.PcdRepairInvalidPlatformDefaults|FALSE|BOOLEAN|0x3

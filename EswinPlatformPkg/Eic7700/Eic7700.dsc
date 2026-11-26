@@ -14,6 +14,12 @@
   DEFINE SECURE_BOOT_ENABLE = FALSE
   DEFINE DEBUG_ON_SERIAL_PORT = TRUE
   DEFINE HTTP_BOOT_ENABLE = FALSE
+  DEFINE D560 = FALSE
+!if $(D560) == TRUE
+  DEFINE ESWIN_SETTINGS_DXE = RuyiPlatformPkg/Drivers/PlatformSettingsDxe/VariableSettingsDxe.inf
+!else
+  DEFINE ESWIN_SETTINGS_DXE = RuyiPlatformPkg/Drivers/PlatformSettingsDxe/PlatformSettingsDxe.inf
+!endif
 
 !include RuyiPlatformPkg/NetworkDefines.dsc.inc
 !include Silicon/RISC-V/RiscV.dsc.inc
@@ -90,6 +96,9 @@
   DebugLib|MdePkg/Library/DxeRuntimeDebugLibSerialPort/DxeRuntimeDebugLibSerialPort.inf
 
 [PcdsFixedAtBuild]
+!if $(D560) == TRUE
+  gRuyiPlatformTokenSpaceGuid.PcdRepairInvalidPlatformDefaults|TRUE
+!endif
   gRuyiPlatformTokenSpaceGuid.PcdDriverEmulationAvailable|$(X64EMU_ENABLE)
   gEfiMdeModulePkgTokenSpaceGuid.PcdFrontPageLogoEnable|TRUE
   gEfiMdePkgTokenSpaceGuid.PcdMaximumLinkedListLength|0
@@ -135,7 +144,7 @@
   GCC:*_*_*_DLINK_FLAGS = -z common-page-size=0x1000
 
 [Components]
-  RuyiPlatformPkg/Drivers/PlatformSettingsDxe/PlatformSettingsDxe.inf
+  $(ESWIN_SETTINGS_DXE)
   RuyiPlatformPkg/Drivers/PlatformDefaultsUiDxe/PlatformDefaultsUiDxe.inf
   MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf {
     <LibraryClasses>

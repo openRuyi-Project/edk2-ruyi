@@ -30,6 +30,7 @@
 [Pcd]
   gMauPkgTokenSpaceGuid.PcdMauEmulationEnabled
 [FixedPcd]
+  gRuyiPlatformTokenSpaceGuid.PcdRepairInvalidPlatformDefaults
   gRuyiPlatformTokenSpaceGuid.PcdDriverEmulationAvailable
 [Guids]
   gEfiEndOfDxeEventGroupGuid
