@@ -1,4 +1,5 @@
 /** SPDX-License-Identifier: BSD-2-Clause-Patent */
+#include <IndustryStandard/Eic7702AddressMap.h>
 #include <IndustryStandard/Eic7700ClockIds.h>
 #include <IndustryStandard/Eic7700ResetIds.h>
 #include <Library/BaseLib.h>
@@ -49,13 +50,24 @@ Cell (CONST VOID *Fdt, INT32 Node, CONST CHAR8 *Name, UINT32 *Value)
 }
 
 STATIC EFI_STATUS
-Provider (CONST VOID *Fdt, UINT32 Phandle, CONST CHAR8 *Type, UINTN Size, UINTN *Base)
+LocalMmio (CONST VOID *Fdt, INT32 Node, UINTN Mac, UINTN Minimum, UINTN *Base)
+{
+  EFI_STATUS Status;
+
+  if (!FdtNodeEnabled (Fdt, Node)) { return EFI_UNSUPPORTED; }
+  Status = FdtGetMmio (Fdt, Node, 0, Minimum, Base, NULL);
+  if (EFI_ERROR (Status)) { return Status; }
+  return EIC7702_MMIO_DIE (*Base) == EIC7702_MMIO_DIE (Mac) ? EFI_SUCCESS : EFI_UNSUPPORTED;
+}
+
+STATIC EFI_STATUS
+Provider (CONST VOID *Fdt, UINTN Mac, UINT32 Phandle, CONST CHAR8 *Type, UINTN Size, UINTN *Base)
 {
   INT32 Node = FdtNodeOffsetByPhandle (Fdt, Phandle);
-  if (!FdtNodeEnabled (Fdt, Node) || FdtStringListSearch (Fdt, Node, "compatible", Type) < 0) {
+  if (Node < 0 || FdtStringListSearch (Fdt, Node, "compatible", Type) < 0) {
     return EFI_UNSUPPORTED;
   }
-  return FdtGetMmio (Fdt, Node, 0, Size, Base, NULL);
+  return LocalMmio (Fdt, Node, Mac, Size, Base);
 }
 
 INT32
@@ -95,7 +107,7 @@ Parse (CONST VOID *Fdt, INT32 Node, EIC_EQOS_PORT *Hw)
       Fdt32ToCpu (Data[4]) != Hw->HspOffset + 0x14 ||
       Fdt32ToCpu (Data[5]) != Hw->HspOffset + 0x1c) { return EFI_UNSUPPORTED; }
   Id = (Hw->HspOffset - 0x100) / 0x100;
-  Status = Provider (Fdt, Fdt32ToCpu (*Data), "eswin,eic7700-syscfg", Hw->HspOffset + 0x20, &Hw->Hsp);
+  Status = Provider (Fdt, P->Base, Fdt32ToCpu (*Data), "eswin,eic7700-syscfg", Hw->HspOffset + 0x20, &Hw->Hsp);
   if (EFI_ERROR (Status)) { return Status; }
   Data = FdtGetProp (Fdt, Node, "clocks", &Len);
   if (!Data || Len != 32 || Data[0] != Data[2] || Data[0] != Data[4] || Data[0] != Data[6] ||
@@ -105,13 +117,14 @@ Parse (CONST VOID *Fdt, INT32 Node, EIC_EQOS_PORT *Hw)
       FdtStringListSearch (Fdt, Node, "clock-names", "cfg") != 1 ||
       FdtStringListSearch (Fdt, Node, "clock-names", "stmmaceth") != 2 ||
       FdtStringListSearch (Fdt, Node, "clock-names", "tx") != 3) { return EFI_UNSUPPORTED; }
-  Status = Provider (Fdt, Fdt32ToCpu (*Data), "eswin,eic7700-clock", SYS_CONFIG_CLOCK + 4, &Hw->Clock);
+  Status = Provider (Fdt, P->Base, Fdt32ToCpu (*Data), "eswin,eic7700-clock",
+                     SYS_CONFIG_CLOCK + 4, &Hw->Clock);
   if (EFI_ERROR (Status)) { return Status; }
   Hw->ClockOffset = SYS_ETH0 + 4 * Id;
   Hw->ResetMask = BIT26 >> Id;
   Data = FdtGetProp (Fdt, Node, "resets", &Len);
   if (!Data || Len != 8 || Fdt32ToCpu (Data[1]) != ResetIds[Id]) { return EFI_UNSUPPORTED; }
-  Status = Provider (Fdt, Fdt32ToCpu (*Data), "eswin,eic7700-reset", SYS_HSP_RESET + 4, &Hw->Reset);
+  Status = Provider (Fdt, P->Base, Fdt32ToCpu (*Data), "eswin,eic7700-reset", SYS_HSP_RESET + 4, &Hw->Reset);
   if (EFI_ERROR (Status)) { return Status; }
   Mode = FdtGetProp (Fdt, Node, "phy-mode", &Len);
   if (!Mode || Len < 6 || Len > 11 || Mode[Len - 1]) { return EFI_COMPROMISED_DATA; }
@@ -174,7 +187,10 @@ Parse (CONST VOID *Fdt, INT32 Node, EIC_EQOS_PORT *Hw)
   Hw->ActiveLow = Fdt32ToCpu (Data[2]) != 0;
   Status = Cell (Fdt, Gpio, "reg", &Hw->GpioBank);
   if (EFI_ERROR (Status) || Hw->GpioBank >= EIC7700_GPIO_BANKS || Hw->GpioBit >= EIC7700_GPIO_PINS_PER_BANK) { return EFI_UNSUPPORTED; }
-  Status = FdtGetMmio (Fdt, FdtParentOffset (Fdt, Gpio), 0, 0x80, &Hw->Gpio, NULL);
+  if (!FdtNodeEnabled (Fdt, Gpio)) {
+    return EFI_UNSUPPORTED;
+  }
+  Status = LocalMmio (Fdt, FdtParentOffset (Fdt, Gpio), P->Base, 0x80, &Hw->Gpio);
   if (EFI_ERROR (Status)) { return Status; }
   Status = Cell (Fdt, Node, "pinctrl-0", &Value);
   if (EFI_ERROR (Status)) { return Status; }
@@ -188,7 +204,7 @@ Parse (CONST VOID *Fdt, INT32 Node, EIC_EQOS_PORT *Hw)
   do { Pinctrl = FdtParentOffset (Fdt, Pinctrl); }
   while (Pinctrl > 0 && FdtStringListSearch (Fdt, Pinctrl, "compatible", "eswin,eic7700-pinctrl") < 0);
   if (Pinctrl <= 0) { return EFI_NOT_FOUND; }
-  Status = FdtGetMmio (Fdt, Pinctrl, 0, Hw->PinOffset + sizeof (UINT32), &Hw->PinBase, NULL);
+  Status = LocalMmio (Fdt, Pinctrl, P->Base, Hw->PinOffset + sizeof (UINT32), &Hw->PinBase);
   if (EFI_ERROR (Status)) { return Status; }
   Status = Cell (Fdt, Pinctrl, "vrgmii-supply", &Value);
   if (EFI_ERROR (Status)) { return Status; }

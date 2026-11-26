@@ -11,6 +11,8 @@ STATIC CONST struct {
   EIC7700_GPIO_PAD Pad;
 } mPins[] = {
   {Eic7700GpioCardDetect, 0, 13, "mode_set0", {EIC7700_PIN_MODE_SET0, EIC7700_PIN_MODE_SET0_GPIO}},
+  {Eic7700GpioPhyReset, 0, 29, "gpio29", {57U * EIC7700_PIN_STRIDE, 2U << 16}},
+  {Eic7700GpioPhyReset, 1, 2, "gpio34", {72U * EIC7700_PIN_STRIDE, 2U << 16}},
   {Eic7700GpioPhyReset, 3, 10, "gpio106", {EIC7700_PIN_GPIO106, EIC7700_PIN_GPIO_DEFAULT}},
   {Eic7700GpioPhyReset, 3, 15, "gpio111", {EIC7700_PIN_GPIO111, EIC7700_PIN_GPIO_DEFAULT}},
   {Eic7700GpioPhyReset, 2, 30, "s_mode", {141U * EIC7700_PIN_STRIDE, 2U << 16}},
