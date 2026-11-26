@@ -3,5 +3,5 @@
 #include <Uefi.h>
 
 #define P550_CPU_STANDARD    0
-#define P550_CPU_ALLOW_1600  1
+#define P550_CPU_ALLOW_1800  1
 extern EFI_GUID gPremierP550CpuConfigGuid;

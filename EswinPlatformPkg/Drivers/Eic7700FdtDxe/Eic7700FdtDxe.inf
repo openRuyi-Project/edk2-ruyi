@@ -17,6 +17,7 @@
   CpuConfigLib
   DebugLib
   Eic7700BoardProfileLib
+  FdtHardwareLib
   FdtLib
   PlatformMacAddressLib
   PrintLib
