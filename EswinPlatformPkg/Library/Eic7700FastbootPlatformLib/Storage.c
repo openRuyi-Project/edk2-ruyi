@@ -5,6 +5,8 @@
 #include <Library/BaseLib.h>
 #include <Library/DevicePathLib.h>
 #include <Library/Eic7700SpiNorLib.h>
+#include <Library/Eic7700BoardProfileLib.h>
+#include "RawSpi.h"
 #include <Library/PlatformFirmwareUpdateLib.h>
 #include <Library/FastbootPlatformLib.h>
 #include <Library/FdtBoardInfoLib.h>
@@ -27,10 +29,18 @@ STATIC FASTBOOT_NVME_TARGET  *mNvme;
 STATIC UINTN                 mNvmeCount;
 STATIC BOOLEAN               mSpiAvailable;
 
+STATIC BOOLEAN mDualDie;
+
+STATIC BOOLEAN
+IsRawSpi (CONST CHAR8 *Name)
+{
+  return !mDualDie && (AsciiStrCmp (Name, "spi0") == 0 || AsciiStrCmp (Name, "spi") == 0);
+}
+
 STATIC BOOLEAN
 IsSpi (CONST CHAR8 *Name)
 {
-  return !AsciiStrCmp (Name, "spi") || !AsciiStrCmp (Name, "firmware");
+  return IsRawSpi (Name) || !AsciiStrCmp (Name, "firmware") || (mDualDie && !AsciiStrCmp (Name, "spi"));
 }
 
 STATIC EFI_STATUS
@@ -148,7 +158,11 @@ FastbootPlatformInit (VOID)
     return Status;
   }
   mSpiAvailable = !EFI_ERROR (Eic7700SpiNorInit (FALSE));
-  if (mSpiAvailable) { Print (L"Fastboot spi: %u bytes\r\n", Eic7700SpiNorSize ()); }
+  CONST EIC7700_BOARD_PROFILE *Board = Eic7700GetBoardProfile ();
+  mDualDie = Board != NULL && Board->DualDie;
+  if (mSpiAvailable) {
+    Print (L"Fastboot %a: %u bytes\r\n", mDualDie ? "spi" : "spi0", Eic7700SpiNorSize ());
+  }
   for (Index = 0; Index < ARRAY_SIZE (mCards); Index++) {
     if (Index % MMC_PARTITION_COUNT == 0) {
       AsciiSPrint (mCards[Index].Name, sizeof (mCards[Index].Name),
@@ -255,6 +269,9 @@ FastbootFlash (CONST CHAR8 *Name, CONST VOID *Data, UINTN Size,
   }
   if (IsSpi (Name)) {
     if (!mSpiAvailable) { return EFI_NOT_FOUND; }
+    if (IsRawSpi (Name)) {
+      return Eic7700FastbootRawFlash (NULL, Eic7700SpiNorSize (), Data, Size, Progress);
+    }
     return PlatformFirmwareUpdate (Data, Size, SpiProgress, &Progress);
   }
   Io = Target (Name);
