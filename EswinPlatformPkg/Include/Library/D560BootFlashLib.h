@@ -15,3 +15,12 @@ typedef struct {
 
 EFI_STATUS D560StartRemote (D560_REMOTE *Remote);
 EFI_STATUS D560StopRemote (D560_REMOTE *Remote);
+
+EFI_STATUS
+D560SecondaryFlashSize (UINT32 *Bytes);
+
+EFI_STATUS
+D560SecondaryFlashRead (
+  UINT64 Offset, UINTN Size, VOID *Data,
+  FIRMWARE_UPDATE_PROGRESS Progress OPTIONAL, VOID *Context OPTIONAL
+  );

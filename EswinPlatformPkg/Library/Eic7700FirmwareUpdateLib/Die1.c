@@ -4,6 +4,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/BaseRiscVSbiLib.h>
 #include <Library/Eic7700DmaLib.h>
+#include <Library/D560BootFlashLib.h>
 #include <Library/Eic7700SpiNorLib.h>
 #include <Library/TimerLib.h>
 #include "Internal.h"
@@ -193,4 +194,54 @@ Error:
     EFI_STATUS StopStatus = D560StopRemote (Remote);
     return EFI_ERROR (StopStatus) ? StopStatus : Status;
   }
+}
+
+EFI_STATUS
+D560SecondaryFlashSize (UINT32 *Bytes)
+{
+  D560_REMOTE Remote;
+  EFI_STATUS Status;
+
+  if (Bytes == NULL) { return EFI_INVALID_PARAMETER; }
+  *Bytes = 0;
+  Status = D560StartRemote (&Remote);
+  if (!EFI_ERROR (Status)) {
+    UINT32 Size = Remote.Nor.Size;
+    Status = D560StopRemote (&Remote);
+    if (!EFI_ERROR (Status)) { *Bytes = Size; }
+  }
+  return Status;
+}
+
+EFI_STATUS
+D560SecondaryFlashRead (
+  UINT64 Offset, UINTN Size, VOID *Data, FIRMWARE_UPDATE_PROGRESS Progress, VOID *Context
+  )
+{
+  D560_REMOTE Remote;
+  EFI_STATUS Status, Stop;
+  UINTN Done = 0;
+
+  if (Offset > SIZE_16MB || Size > SIZE_16MB - Offset || (Size != 0 && Data == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
+  Status = D560StartRemote (&Remote);
+  if (EFI_ERROR (Status)) { return Status; }
+  while (Done < Size && !EFI_ERROR (Status)) {
+    UINTN Chunk = MIN (Size - Done, SIZE_64KB);
+    if (Progress != NULL) {
+      Status = Progress (FirmwareUpdateRead, Done, Size, Context);
+    }
+    if (!EFI_ERROR (Status)) {
+      Status = Eic7700SpiNorReadDevice (&Remote.Nor, (UINT32)(Offset + Done),
+                                        Chunk, (UINT8 *)Data + Done);
+    }
+    Done += Chunk;
+  }
+  Stop = D560StopRemote (&Remote);
+  if (!EFI_ERROR (Status)) { Status = Stop; }
+  if (!EFI_ERROR (Status) && Progress != NULL) {
+    Status = Progress (FirmwareUpdateRead, Size, Size, Context);
+  }
+  return Status;
 }

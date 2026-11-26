@@ -6,6 +6,7 @@
 #include <Library/DevicePathLib.h>
 #include <Library/Eic7700SpiNorLib.h>
 #include <Library/Eic7700BoardProfileLib.h>
+#include <Library/D560BootFlashLib.h>
 #include "RawSpi.h"
 #include <Library/PlatformFirmwareUpdateLib.h>
 #include <Library/FastbootPlatformLib.h>
@@ -30,17 +31,24 @@ STATIC UINTN                 mNvmeCount;
 STATIC BOOLEAN               mSpiAvailable;
 
 STATIC BOOLEAN mDualDie;
+STATIC UINT32  mSecondaryBytes;
 
-STATIC BOOLEAN
-IsRawSpi (CONST CHAR8 *Name)
-{
-  return !mDualDie && (AsciiStrCmp (Name, "spi0") == 0 || AsciiStrCmp (Name, "spi") == 0);
-}
+typedef enum {
+  NotBootFlash,
+  LocalFlash,
+  SecondaryFlash,
+  FirmwareTarget
+} BOOT_FLASH_TARGET;
 
-STATIC BOOLEAN
-IsSpi (CONST CHAR8 *Name)
+STATIC BOOT_FLASH_TARGET
+BootFlashTarget (CONST CHAR8 *Name)
 {
-  return IsRawSpi (Name) || !AsciiStrCmp (Name, "firmware") || (mDualDie && !AsciiStrCmp (Name, "spi"));
+  if (AsciiStrCmp (Name, "firmware") == 0) { return FirmwareTarget; }
+  if (AsciiStrCmp (Name, "spi0") == 0 || (!mDualDie && AsciiStrCmp (Name, "spi") == 0)) {
+    return LocalFlash;
+  }
+  if (mDualDie && AsciiStrCmp (Name, "spi1") == 0) { return SecondaryFlash; }
+  return NotBootFlash;
 }
 
 STATIC EFI_STATUS
@@ -160,8 +168,20 @@ FastbootPlatformInit (VOID)
   mSpiAvailable = !EFI_ERROR (Eic7700SpiNorInit (FALSE));
   CONST EIC7700_BOARD_PROFILE *Board = Eic7700GetBoardProfile ();
   mDualDie = Board != NULL && Board->DualDie;
-  if (mSpiAvailable) {
-    Print (L"Fastboot %a: %u bytes\r\n", mDualDie ? "spi" : "spi0", Eic7700SpiNorSize ());
+  mSecondaryBytes = 0;
+  if (mDualDie) {
+    if (mSpiAvailable) { Print (L"Fastboot spi0: %u bytes (die 0)\r\n", Eic7700SpiNorSize ()); }
+    Status = D560SecondaryFlashSize (&mSecondaryBytes);
+    if (!EFI_ERROR (Status)) {
+      Print (L"Fastboot spi1: %u bytes (die 1)\r\n", mSecondaryBytes);
+    } else {
+      Print (L"Fastboot spi1 unavailable: %r\r\n", Status);
+    }
+    if (mSpiAvailable && mSecondaryBytes) {
+      Print (L"Fastboot firmware: paired SPI update\r\n");
+    }
+  } else if (mSpiAvailable) {
+    Print (L"Fastboot spi0: %u bytes\r\n", Eic7700SpiNorSize ());
   }
   for (Index = 0; Index < ARRAY_SIZE (mCards); Index++) {
     if (Index % MMC_PARTITION_COUNT == 0) {
@@ -239,9 +259,23 @@ FastbootPlatformStop (VOID)
 STATIC EFI_STATUS
 TargetCapacity (CONST CHAR8 *Name, UINT64 *Bytes)
 {
-  if (IsSpi (Name)) {
+  BOOT_FLASH_TARGET Flash = BootFlashTarget (Name);
+  if (Flash == SecondaryFlash) {
+    if (mSecondaryBytes == 0) { return EFI_NOT_FOUND; }
+    *Bytes = mSecondaryBytes;
+    return EFI_SUCCESS;
+  }
+  if (Flash == LocalFlash || Flash == FirmwareTarget) {
     if (!mSpiAvailable) { return EFI_NOT_FOUND; }
-    *Bytes = Eic7700SpiNorSize (); return EFI_SUCCESS;
+    if (mDualDie && Flash == FirmwareTarget) {
+      PLATFORM_FIRMWARE_UPDATE_INFO Info;
+      if (mSecondaryBytes == 0) { return EFI_NOT_FOUND; }
+      PlatformFirmwareUpdateGetInfo (&Info);
+      *Bytes = Info.ImageSize;
+    } else {
+      *Bytes = Eic7700SpiNorSize ();
+    }
+    return EFI_SUCCESS;
   }
   return FastbootMediaCapacity (Target (Name), Bytes);
 }
@@ -267,11 +301,22 @@ FastbootFlash (CONST CHAR8 *Name, CONST VOID *Data, UINTN Size,
   if (Name == NULL) {
     return EFI_INVALID_PARAMETER;
   }
-  if (IsSpi (Name)) {
+  BOOT_FLASH_TARGET Flash = BootFlashTarget (Name);
+  if (Flash == SecondaryFlash) {
+    D560_REMOTE Remote;
+    if (mSecondaryBytes == 0) { return EFI_NOT_FOUND; }
+    EFI_STATUS Status = D560StartRemote (&Remote);
+    if (EFI_ERROR (Status)) { return Status; }
+    Status = Eic7700FastbootRawFlash (&Remote.Nor, Remote.Nor.Size, Data, Size, Progress);
+    EFI_STATUS Stop = D560StopRemote (&Remote);
+    return EFI_ERROR (Status) ? Status : Stop;
+  }
+  if (Flash == LocalFlash) {
     if (!mSpiAvailable) { return EFI_NOT_FOUND; }
-    if (IsRawSpi (Name)) {
-      return Eic7700FastbootRawFlash (NULL, Eic7700SpiNorSize (), Data, Size, Progress);
-    }
+    return Eic7700FastbootRawFlash (NULL, Eic7700SpiNorSize (), Data, Size, Progress);
+  }
+  if (Flash == FirmwareTarget) {
+    if (!mSpiAvailable || (mDualDie && mSecondaryBytes == 0)) { return EFI_NOT_FOUND; }
     return PlatformFirmwareUpdate (Data, Size, SpiProgress, &Progress);
   }
   Io = Target (Name);
@@ -287,7 +332,13 @@ FastbootRead (CONST CHAR8 *Name, UINT64 Offset, UINTN Size, VOID *Data,
   if (Name == NULL) {
     return EFI_INVALID_PARAMETER;
   }
-  if (IsSpi (Name)) {
+  BOOT_FLASH_TARGET Flash = BootFlashTarget (Name);
+  if (Flash == SecondaryFlash) {
+    if (mSecondaryBytes == 0) { return EFI_NOT_FOUND; }
+    return D560SecondaryFlashRead (Offset, Size, Data, SpiProgress, &Progress);
+  }
+  if (mDualDie && Flash == FirmwareTarget) { return EFI_UNSUPPORTED; }
+  if (Flash == LocalFlash || Flash == FirmwareTarget) {
     UINTN Chunk, Done = 0;
     EFI_STATUS Status;
     if (!mSpiAvailable) { return EFI_NOT_FOUND; }
@@ -312,7 +363,14 @@ FastbootRead (CONST CHAR8 *Name, UINT64 Offset, UINTN Size, VOID *Data,
 CONST CHAR8 *
 FastbootFlashInfo (CONST CHAR8 *Name)
 {
-  return IsSpi (Name) ? "SPI firmware verified; restart to use it" : NULL;
+  BOOT_FLASH_TARGET Flash = BootFlashTarget (Name);
+  if (Flash == LocalFlash || Flash == SecondaryFlash) {
+    return "Raw SPI verified; restart to use it";
+  }
+  if (Flash == FirmwareTarget) {
+    return mDualDie ? "Both SPI flashes verified; restart to use them" : "SPI firmware verified; restart to use it";
+  }
+  return NULL;
 }
 
 EFI_STATUS
