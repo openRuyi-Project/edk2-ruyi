@@ -1,4 +1,5 @@
 /** SPDX-License-Identifier: BSD-2-Clause-Patent */
+#include <IndustryStandard/Eic7702AddressMap.h>
 #include <PiDxe.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -44,14 +45,36 @@ typedef struct {
 
 STATIC LIST_ENTRY  mAllocations = INITIALIZE_LIST_HEAD_VARIABLE (mAllocations);
 STATIC LIST_ENTRY  mMappings    = INITIALIZE_LIST_HEAD_VARIABLE (mMappings);
-STATIC UINT64      mCachedBase, mAliasBase, mWindowSize;
-STATIC UINTN       mCacheBase, mCacheLine;
+typedef struct {
+  UINT64  Cached;
+  UINT64  Alias;
+  UINT64  Size;
+  UINTN   Cache;
+  UINTN   OtherCache;
+} DMA_WINDOW;
+
+// EIC7702 also exposes a window striped across the two inclusive L3 caches.
+STATIC DMA_WINDOW  mWindows[3];
+STATIC UINTN       mWindowCount, mCacheLine;
 STATIC BOOLEAN     mReady;
 
 STATIC UINT64
 Cells64 (CONST UINT32 *Cells)
 {
   return LShiftU64 (Fdt32ToCpu (Cells[0]), 32) | Fdt32ToCpu (Cells[1]);
+}
+
+STATIC DMA_WINDOW *
+WindowFor (UINTN Address, UINTN Bytes)
+{
+  for (UINTN Index = 0; Index < mWindowCount; Index++) {
+    DMA_WINDOW *Window = &mWindows[Index];
+    if (Address >= Window->Cached && Address - Window->Cached < Window->Size &&
+        Bytes <= Window->Size - (Address - Window->Cached)) {
+      return Window;
+    }
+  }
+  return NULL;
 }
 
 STATIC EFI_STATUS
@@ -61,10 +84,7 @@ RamRange (UINTN Address, UINTN Bytes)
   EFI_STATUS                       Status;
   UINT64                           End = Address + Bytes;
 
-  if (!Bytes || (Address > MAX_UINTN - Bytes) || (Address < mCachedBase) ||
-      (Address - mCachedBase >= mWindowSize) ||
-      (Bytes > mWindowSize - (Address - mCachedBase)))
-  {
+  if (!Bytes || Address > MAX_UINTN - Bytes || WindowFor (Address, Bytes) == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -92,13 +112,19 @@ STATIC VOID
 Flush (UINTN Address, UINTN Bytes)
 {
   UINTN  End = Address + Bytes;
+  DMA_WINDOW *Window = WindowFor (Address, Bytes);
 
+  ASSERT (Window != NULL);
   // Flush64 writes back and invalidates the inclusive cache hierarchy.
   // As in Linux sifive_ccache, fence the range rather than every cache line.
   // IoLib has no relaxed MMIO write, so use volatile 64-bit stores here.
   MemoryFence ();
   for (Address &= ~(mCacheLine - 1); Address < End; Address += mCacheLine) {
-    *(volatile UINT64 *)(mCacheBase + CCACHE_FLUSH64) = Address;
+    UINTN Cache = Window->Cache;
+    if (Window->OtherCache && (((Address >> 8) ^ (Address >> 18)) & 1)) {
+      Cache = Window->OtherCache;
+    }
+    *(volatile UINT64 *)(Cache + CCACHE_FLUSH64) = Address;
   }
   MemoryFence ();
 }
@@ -192,7 +218,8 @@ Allocate (EFI_MEMORY_TYPE Type, UINTN Pages, UINTN Alignment,
   if (EFI_ERROR (Status)) {
     goto FreeMemory;
   }
-  Allocation->Alias = (VOID *)(UINTN)(mAliasBase + (UINTN)Allocation->Cached - mCachedBase);
+  DMA_WINDOW *Window = WindowFor ((UINTN)Allocation->Cached, Bytes);
+  Allocation->Alias = (VOID *)(UINTN)(Window->Alias + ((UINTN)Allocation->Cached - Window->Cached));
   Allocation->Pages = Pages;
   if (((UINTN)Allocation->Alias & (Alignment - 1)) != 0) {
     Status = EFI_UNSUPPORTED;
@@ -450,17 +477,98 @@ DmaFreeBuffer (UINTN Pages, VOID *Host)
   return Status;
 }
 
+STATIC EFI_STATUS
+CacheForNode (CONST VOID *Fdt, UINT32 Id, UINTN *Cache)
+{
+  CONST UINT32 *Prop;
+  INT32 Node, Length;
+  UINTN Line, Base;
+  EFI_STATUS Status;
+
+  Node = -1;
+  while ((Node = FdtNodeOffsetByCompatible (Fdt, Node, "eswin,eic7700-l3-cache")) >= 0) {
+    if (!FdtNodeEnabled (Fdt, Node)) { continue; }
+    Status = FdtGetMmio (Fdt, Node, 0, CCACHE_FLUSH64 + sizeof (UINT64), &Base, NULL);
+    if (EFI_ERROR (Status)) { return Status; }
+    if (EIC7702_MMIO_DIE (Base) != Id) { continue; }
+    Prop = FdtGetProp (Fdt, Node, "cache-block-size", &Length);
+    if (Prop == NULL || Length != sizeof (*Prop)) {
+      return EFI_COMPROMISED_DATA;
+    }
+    Line = Fdt32ToCpu (*Prop);
+    if (!Line || (Line & (Line - 1)) || Line > EFI_PAGE_SIZE || (mCacheLine && Line != mCacheLine)) {
+      return EFI_UNSUPPORTED;
+    }
+    Status = FdtMapMmio (Base, EFI_PAGE_SIZE);
+    if (EFI_ERROR (Status)) { return Status; }
+    UINT32 Shift = MmioRead32 (Base + CCACHE_CONFIG) >> CCACHE_BLOCK_SHIFT;
+    if (Shift > EFI_PAGE_SHIFT || (1U << Shift) != Line) {
+      return EFI_COMPROMISED_DATA;
+    }
+    *Cache = Base;
+    mCacheLine = Line;
+    return EFI_SUCCESS;
+  }
+  return EFI_NOT_FOUND;
+}
+
+STATIC EFI_STATUS
+BindCache (CONST VOID *Fdt, DMA_WINDOW *Window)
+{
+  CONST UINT32 *Reg, *Numa;
+  UINT32 Id = 0;
+  INT32 Node, Length;
+  BOOLEAN Found = FALSE;
+  EFI_STATUS Status;
+
+  FdtForEachSubnode (Node, Fdt, 0) {
+    CONST CHAR8 *Type = FdtGetProp (Fdt, Node, "device_type", &Length);
+    if (Type == NULL || Length != sizeof ("memory") || CompareMem (Type, "memory", Length)) {
+      continue;
+    }
+    Reg = FdtGetProp (Fdt, Node, "reg", &Length);
+    if (Reg == NULL || Length != 4 * sizeof (*Reg)) {
+      continue;
+    }
+    UINT64 Base = Cells64 (Reg);
+    if (Base < Window->Cached || Base - Window->Cached >= Window->Size ||
+        Cells64 (Reg + 2) > Window->Size - (Base - Window->Cached)) {
+      continue;
+    }
+    Numa = FdtGetProp (Fdt, Node, "numa-node-id", &Length);
+    if (Numa != NULL && Length != sizeof (*Numa)) {
+      return EFI_COMPROMISED_DATA;
+    }
+    Id = Numa == NULL ? 0 : Fdt32ToCpu (*Numa);
+    Found = TRUE;
+    break;
+  }
+  if (!Found) {
+    return EFI_NOT_FOUND;
+  }
+
+  if ((Window->Cached & BIT38) != 0 && FdtStringListSearch (Fdt, 0, "compatible", "eswin,eic7702") >= 0) {
+    Status = CacheForNode (Fdt, 1, &Window->OtherCache);
+    if (EFI_ERROR (Status)) { return Status; }
+    Id = 0;
+  }
+  return CacheForNode (Fdt, Id, &Window->Cache);
+}
+
 EFI_STATUS EFIAPI
 Eic7700DmaInitialize (EFI_HANDLE Image, EFI_SYSTEM_TABLE *SystemTable)
 {
   RUYI_BOARD_INFO  Info;
   CONST VOID      *Fdt;
-  CONST UINT32    *Regions, *Alias, *Primary, *Line;
-  UINT32          Flags, PrimaryFlags, BlockShift;
+  CONST UINT32    *Regions, *Alias, *Primary;
+  UINT32          Flags, PrimaryFlags;
   UINTN           Count, Index, Reference;
-  INT32           Length, Node;
+  INT32           Length;
   EFI_STATUS      Status;
 
+  if (mReady) { return EFI_SUCCESS; }
+  mWindowCount = 0;
+  mCacheLine = 0;
   Status = FdtBoardInfoGet (&Info, &Fdt);
   if (EFI_ERROR (Status)) {
     return Status;
@@ -491,48 +599,30 @@ Eic7700DmaInitialize (EFI_HANDLE Image, EFI_SYSTEM_TABLE *SystemTable)
     {
       continue;
     }
-    mCachedBase = Cells64 (Primary);
-    mAliasBase  = Cells64 (Alias);
-    mWindowSize = MIN (Cells64 (Primary + 2), Cells64 (Alias + 2));
-    if (!mWindowSize || ((mCachedBase | mAliasBase | mWindowSize) & EFI_PAGE_MASK) ||
-        (mCachedBase > MAX_UINT64 - mWindowSize) || (mAliasBase > MAX_UINT64 - mWindowSize) ||
-        ((mAliasBase < mCachedBase + mWindowSize) && (mCachedBase < mAliasBase + mWindowSize)) ||
-        (Info.MemoryBase < mCachedBase) || (Info.MemoryBase - mCachedBase >= mWindowSize) ||
-        (Info.MemorySize > mWindowSize - (Info.MemoryBase - mCachedBase)))
-    {
-      continue;
+    DMA_WINDOW Window = { Cells64 (Primary), Cells64 (Alias),
+                          MIN (Cells64 (Primary + 2), Cells64 (Alias + 2)), 0, 0 };
+    if (!Window.Size || ((Window.Cached | Window.Alias | Window.Size) & EFI_PAGE_MASK) ||
+        Window.Cached > MAX_UINT64 - Window.Size || Window.Alias > MAX_UINT64 - Window.Size ||
+        (Window.Alias < Window.Cached + Window.Size && Window.Cached < Window.Alias + Window.Size)) {
+      return EFI_COMPROMISED_DATA;
     }
-    break;
+    Status = BindCache (Fdt, &Window);
+    if (Status == EFI_NOT_FOUND) { continue; }
+    if (EFI_ERROR (Status)) { return Status; }
+    if (mWindowCount == ARRAY_SIZE (mWindows)) { return EFI_UNSUPPORTED; }
+    for (UINTN I = 0; I < mWindowCount; I++) {
+      DMA_WINDOW *Other = &mWindows[I];
+      if ((Window.Cached < Other->Cached + Other->Size && Other->Cached < Window.Cached + Window.Size) ||
+          (Window.Alias < Other->Alias + Other->Size && Other->Alias < Window.Alias + Window.Size) ||
+          (Window.Cached < Other->Alias + Other->Size && Other->Alias < Window.Cached + Window.Size) ||
+          (Window.Alias < Other->Cached + Other->Size && Other->Cached < Window.Alias + Window.Size)) {
+        return EFI_COMPROMISED_DATA;
+      }
+    }
+    mWindows[mWindowCount++] = Window;
+    DEBUG ((DEBUG_INFO, "EIC770x DMA: cached=%Lx alias=%Lx L3=%lx\n", Window.Cached, Window.Alias, Window.Cache));
   }
-  if (Index == Count) {
-    return EFI_UNSUPPORTED;
-  }
-
-  Node = FdtNodeOffsetByCompatible (Fdt, -1, "eswin,eic7700-l3-cache");
-  if (!FdtNodeEnabled (Fdt, Node)) {
-    return EFI_NOT_FOUND;
-  }
-  Line = FdtGetProp (Fdt, Node, "cache-block-size", &Length);
-  if (!Line || (Length != sizeof (*Line))) {
-    return EFI_COMPROMISED_DATA;
-  }
-  mCacheLine = Fdt32ToCpu (*Line);
-  if (!mCacheLine || (mCacheLine & (mCacheLine - 1)) || (mCacheLine > EFI_PAGE_SIZE)) {
-    return EFI_UNSUPPORTED;
-  }
-  Status = FdtGetMmio (Fdt, Node, 0, CCACHE_FLUSH64 + sizeof (UINT64), &mCacheBase, NULL);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-  Status = FdtMapMmio (mCacheBase, EFI_PAGE_SIZE);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-  BlockShift = MmioRead32 (mCacheBase + CCACHE_CONFIG) >> CCACHE_BLOCK_SHIFT;
-  if ((BlockShift > EFI_PAGE_SHIFT) || ((1U << BlockShift) != mCacheLine)) {
-    return EFI_COMPROMISED_DATA;
-  }
+  if (mWindowCount == 0) { return EFI_UNSUPPORTED; }
   mReady = TRUE;
-  DEBUG ((DEBUG_INFO, "EIC7700 DMA: cached=%Lx alias=%Lx, line=%u\n", mCachedBase, mAliasBase, mCacheLine));
   return EFI_SUCCESS;
 }
