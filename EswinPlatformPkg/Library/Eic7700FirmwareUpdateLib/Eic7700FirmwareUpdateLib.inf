@@ -7,9 +7,16 @@
   LIBRARY_CLASS = PlatformFirmwareUpdateLib
 [Sources]
   Image.c
+  Die1.c
+  Die1Io.h
+  Die1Io.S
+  Pair.c
+  PairImage.c
   Flash.c
   Internal.h
 [Packages]
+  CryptoPkg/CryptoPkg.dec
+  EmbeddedPkg/EmbeddedPkg.dec
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   RuyiPlatformPkg/RuyiPlatformPkg.dec
@@ -17,6 +24,10 @@
 [LibraryClasses]
   Eic7700BoardProfileLib
   CorebootImageLib
+  BaseCryptLib
+  RiscVSbiLib
+  DmaLib
+  TimerLib
   PlatformSettingsLib
   BaseLib
   BaseMemoryLib

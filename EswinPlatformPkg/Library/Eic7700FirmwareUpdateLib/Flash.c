@@ -16,6 +16,12 @@ PlatformFirmwareUpdateGetInfo (
   PLATFORM_FIRMWARE_UPDATE_INFO  *Info
   )
 {
+  CONST EIC7700_BOARD_PROFILE *Profile = Eic7700GetBoardProfile ();
+  if (Profile != NULL && Profile->DualDie) {
+    Info->ImageSize = D560_UPDATE_BYTES;
+    Info->PreservationNotice = L"Both boot flashes are updated. Calibration and UEFI variables are preserved.";
+    return;
+  }
   Info->ImageSize          = EIC7700_SPI_IMAGE_BYTES;
   Info->PreservationNotice = L"UEFI variables and DDR ECC settings are preserved.";
 }
@@ -34,6 +40,22 @@ ReadFlash (
   return Status;
 }
 
+STATIC EFI_STATUS
+CheckD560Firmware (
+  CONST VOID *Image, UINTN Size, CONST EIC7700_BOARD_PROFILE *Profile,
+  D560_FIRMWARE_DIE Dies[D560_DIE_COUNT]
+  )
+{
+  EFI_STATUS Status = D560FirmwarePair (Image, Size, Profile, Dies);
+  if (!EFI_ERROR (Status)) {
+    Status = Eic7700SpiNorInit (FALSE);
+  }
+  if (!EFI_ERROR (Status) && Eic7700SpiNorSize () != SIZE_16MB) {
+    Status = EFI_UNSUPPORTED;
+  }
+  return Status;
+}
+
 EFI_STATUS
 PlatformFirmwareUpdateValidate (
   CONST VOID  *Image,
@@ -43,6 +65,10 @@ PlatformFirmwareUpdateValidate (
   CONST EIC7700_BOARD_PROFILE *Profile = Eic7700GetBoardProfile ();
   EFI_STATUS Status;
   if (!Profile) { return EFI_UNSUPPORTED; }
+  if (Profile->DualDie) {
+    D560_FIRMWARE_DIE Dies[D560_DIE_COUNT];
+    return CheckD560Firmware (Image, Size, Profile, Dies);
+  }
   if (Profile->FactoryOffset % SIZE_64KB || Profile->FactoryBytes % SIZE_64KB) {
     return EFI_INVALID_PARAMETER;
   }
@@ -101,14 +127,24 @@ PlatformFirmwareUpdate (
   UINT8                               *Saved = NULL, *Scratch = NULL;
   UINTN                               Done = 0, Total = EIC7700_SPI_IMAGE_BYTES - NV_TOTAL_SIZE -
       EIC7700_BOOT_CONFIG_SLOT_COUNT * EIC7700_BOOT_CONFIG_SLOT_SIZE;
-  EFI_STATUS                          Status = PlatformFirmwareUpdateValidate (Image, Size);
+  CONST EIC7700_BOARD_PROFILE *Profile = Eic7700GetBoardProfile ();
+  EFI_STATUS Status;
 
+  if (Profile == NULL) {
+    return EFI_UNSUPPORTED;
+  }
+  if (Profile->DualDie) {
+    D560_FIRMWARE_DIE Dies[D560_DIE_COUNT];
+    Status = CheckD560Firmware (Image, Size, Profile, Dies);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+    return D560ProgramPair (Dies, Progress, Context);
+  }
+  Status = PlatformFirmwareUpdateValidate (Image, Size);
   if (EFI_ERROR (Status)) {
     return Status;
   }
-
-  CONST EIC7700_BOARD_PROFILE *Profile = Eic7700GetBoardProfile ();
-  if (!Profile) { return EFI_UNSUPPORTED; }
   if (Profile->FactoryOffset < Size) {
     Total -= MIN (Profile->FactoryBytes, Size - Profile->FactoryOffset);
   }

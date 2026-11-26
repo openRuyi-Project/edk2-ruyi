@@ -46,6 +46,15 @@ MapValid (CONST UINT8 *Map)
 }
 
 EFI_STATUS
+Eic7700FirmwareRomValid (CONST UINT8 *Rom, UINTN Size, CONST COREBOOT_IMAGE_LAYOUT *Layout)
+{
+  if (Size != ROM_BYTES || !MapValid (Rom + FMAP_OFFSET)) {
+    return EFI_COMPROMISED_DATA;
+  }
+  return CorebootImageValidate (Rom + CBFS_OFFSET, CBFS_BYTES, Layout);
+}
+
+EFI_STATUS
 Eic7700FirmwareImageValid (CONST VOID *Buffer, UINTN Size)
 {
   CONST UINT8 *Image = Buffer, *Entry, *Header, *Rom = NULL;
@@ -88,9 +97,8 @@ Eic7700FirmwareImageValid (CONST VOID *Buffer, UINTN Size)
     }
     End = Offset + SIGNATURE_BYTES + Bytes;
   }
-  if (!MapValid (Rom + FMAP_OFFSET)) { return EFI_COMPROMISED_DATA; }
   if (EFI_ERROR (PlatformSettingsImageValid (Image, Size, EIC7700_DEFAULTS_OFFSET, EIC7700_DEFAULTS_STRIDE))) {
     return EFI_COMPROMISED_DATA;
   }
-  return CorebootImageValidate (Rom + CBFS_OFFSET, CBFS_BYTES, &Board->Image);
+  return Eic7700FirmwareRomValid (Rom, ROM_BYTES, &Board->Image);
 }
