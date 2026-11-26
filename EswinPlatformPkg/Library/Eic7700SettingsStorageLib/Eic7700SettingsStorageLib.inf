@@ -12,4 +12,5 @@
   RuyiPlatformPkg/RuyiPlatformPkg.dec
   EswinPlatformPkg/EswinPlatformPkg.dec
 [LibraryClasses]
+  Eic7700BoardProfileLib
   Eic7700SpiNorLib

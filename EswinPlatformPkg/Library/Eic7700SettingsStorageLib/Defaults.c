@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause-Patent */
 #include <IndustryStandard/Eic7700FirmwareDefaults.h>
 #include <Library/PlatformSettingsLib.h>
+#include <Library/Eic7700BoardProfileLib.h>
 #include <Library/Eic7700SpiNorLib.h>
 
 STATIC EFI_STATUS
@@ -10,6 +11,8 @@ Access (UINTN Slot, UINTN Offset, UINTN Size, VOID *Data, BOOLEAN Write, BOOLEAN
   EFI_STATUS Status;
   if (Slot >= SETTINGS_SLOT_COUNT || Offset > EIC7700_DEFAULTS_STRIDE ||
       Size > EIC7700_DEFAULTS_STRIDE - Offset || (Size && Data == NULL)) { return EFI_INVALID_PARAMETER; }
+  CONST EIC7700_BOARD_PROFILE *Board = Eic7700GetBoardProfile ();
+  if (Board == NULL || Board->DualDie) { return EFI_UNSUPPORTED; }
   Address = EIC7700_DEFAULTS_OFFSET + (UINT32)Slot * EIC7700_DEFAULTS_STRIDE + (UINT32)Offset;
   Status = Eic7700SpiNorInit (FALSE);
   if (EFI_ERROR (Status)) { return Status; }

@@ -9,6 +9,7 @@ typedef struct {
   UINT32 FactoryBytes;
   BOOLEAN FastbootCanSwitchHostPort;
   BOOLEAN AllowCpuOppOverride;
+  BOOLEAN DualDie;
 } EIC7700_BOARD_PROFILE;
 
 CONST EIC7700_BOARD_PROFILE *Eic7700GetBoardProfile (VOID);

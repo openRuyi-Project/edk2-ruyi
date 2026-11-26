@@ -13,6 +13,7 @@
   MdePkg/MdePkg.dec
   RuyiPlatformPkg/RuyiPlatformPkg.dec
 [LibraryClasses]
+  BaseLib
   Eic7700SpiNorLib
   UefiBootServicesTableLib
   NvStorageLib

@@ -476,7 +476,9 @@ Eic7700SpiNorInit (BOOLEAN Runtime)
   if (!Hob || GET_GUID_HOB_DATA_SIZE (Hob) < sizeof (UINT64)) { return EFI_NOT_FOUND; }
   Fdt = (VOID *)(UINTN)ReadUnaligned64 (GET_GUID_HOB_DATA (Hob));
   if (!Fdt || FdtCheckHeader (Fdt)) { return EFI_COMPROMISED_DATA; }
-  if (FdtStringListSearch (Fdt, 0, "compatible", "eswin,eic7700") < 0) {
+  // D560 connects its host boot flash to the same controller on die 0.
+  if ((FdtStringListSearch (Fdt, 0, "compatible", "eswin,eic7700") < 0) &&
+      (FdtStringListSearch (Fdt, 0, "compatible", "eswin,eic7702-d560") < 0)) {
     return EFI_UNSUPPORTED;
   }
   Status = MapPage (mSpi, Runtime);

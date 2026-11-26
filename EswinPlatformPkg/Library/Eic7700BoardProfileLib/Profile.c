@@ -21,6 +21,13 @@ STATIC CONST EIC7700_BOARD_PROFILE mBoards[] = {
     .Manufacturer = "PINE64",
     .FactoryOffset = 0xf80000,
     .FactoryBytes = SIZE_512KB
+  },
+  {
+    .Image = { "eswin,eic7702-d560", "CONFIG_BOARD_ESWIN_D560=y", NULL, 0x82200000, SIZE_4MB },
+    .Manufacturer = "ESWIN",
+    .FactoryOffset = 0xf80000,
+    .FactoryBytes = SIZE_512KB,
+    .DualDie = TRUE
   }
 };
 

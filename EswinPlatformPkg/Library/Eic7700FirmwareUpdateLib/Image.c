@@ -54,7 +54,7 @@ Eic7700FirmwareImageValid (CONST VOID *Buffer, UINTN Size)
   UINT64 Offset, Bytes, Address, End = 8 + ARRAY_SIZE (Kinds) * ENTRY_BYTES;
   UINTN Index;
 
-  if (!Board) { return EFI_UNSUPPORTED; }
+  if (!Board || Board->DualDie) { return EFI_UNSUPPORTED; }
   if (!Image || Size != EIC7700_SPI_IMAGE_BYTES) { return EFI_BAD_BUFFER_SIZE; }
   if (ReadUnaligned32 ((CONST UINT32 *)Image) != FHT_MAGIC ||
       ReadUnaligned32 ((CONST UINT32 *)(Image + 4)) != ARRAY_SIZE (Kinds)) {
