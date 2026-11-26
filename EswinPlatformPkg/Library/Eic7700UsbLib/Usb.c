@@ -1,4 +1,5 @@
 /** SPDX-License-Identifier: BSD-2-Clause-Patent */
+#include <IndustryStandard/Eic7702AddressMap.h>
 #include <IndustryStandard/Eic7700ClockIds.h>
 #include <IndustryStandard/Eic7700ResetIds.h>
 #include <IndustryStandard/Eic7700HspClockIds.h>
@@ -145,6 +146,7 @@ Eic7700UsbInitialize (CONST VOID *Fdt, INT32 Node, BOOLEAN Device, UINTN *Core)
   {
     return EFI_COMPROMISED_DATA;
   }
+  ClockNode = FdtNodeOffsetByPhandle (Fdt, Fdt32ToCpu (Clocks[0]));
   Status = Provider (Fdt, Clocks, EIC7700_CLK_GATE_HSP_ACLK, "eswin,eic7700-clock", HSP_CFG_CLK_CTRL + 4, &Clock);
   if (EFI_ERROR (Status)) {
     return Status;
@@ -158,7 +160,6 @@ Eic7700UsbInitialize (CONST VOID *Fdt, INT32 Node, BOOLEAN Device, UINTN *Core)
     return EFI_UNSUPPORTED;
   }
 
-  ClockNode = FdtNodeOffsetByPhandle (Fdt, Fdt32ToCpu (Clocks[0]));
   Reference = FdtGetProp (Fdt, ClockNode, "clocks", &Length);
   if (!Reference || (Length != sizeof (UINT32))) {
     return EFI_COMPROMISED_DATA;
@@ -202,6 +203,11 @@ Eic7700UsbInitialize (CONST VOID *Fdt, INT32 Node, BOOLEAN Device, UINTN *Core)
     return EFI_UNSUPPORTED;
   }
 
+  if (EIC7702_MMIO_DIE (Base) != EIC7702_MMIO_DIE (Clock) ||
+      EIC7702_MMIO_DIE (Base) != EIC7702_MMIO_DIE (Reset) ||
+      EIC7702_MMIO_DIE (Base) != EIC7702_MMIO_DIE (Hsp)) {
+    return EFI_UNSUPPORTED;
+  }
   Status = FdtMapMmio (Clock, HSP_PHY_REF_CTRL + 4);
   if (EFI_ERROR (Status)) { return Status; }
   Status = FdtMapMmio (Reset, HSP_RESET_CTRL + 4);
