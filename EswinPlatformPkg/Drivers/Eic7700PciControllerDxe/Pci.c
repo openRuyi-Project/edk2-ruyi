@@ -10,6 +10,7 @@
  * Copyright (C) 2013 Kosagi
  */
 #include <IndustryStandard/Eic7700ClockIds.h>
+#include <IndustryStandard/Eic7702AddressMap.h>
 #include <IndustryStandard/Eic7700ResetIds.h>
 #include <Uefi.h>
 #include <IndustryStandard/Pci.h>
@@ -17,6 +18,7 @@
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
+#include <Library/DevicePathLib.h>
 #include <Library/DwcPcieTrainingLib.h>
 #include <Library/FdtBoardInfoLib.h>
 #include <Library/FdtHardwareLib.h>
@@ -70,26 +72,29 @@
 #define MAX_WINDOWS            4
 #define DBI_MAP_SIZE           (ATU_OFFSET + (MAX_WINDOWS + 1) * DWC_ATU_REGION_STRIDE)
 
-STATIC UINTN   mDbi, mConfig, mElbi, mClock, mReset, mPins;
-STATIC UINT32  mLanes, mMaxSpeed = 3;
-STATIC UINT32  mSavedPad;
-STATIC RUYI_PCI_CONTROLLER_PROTOCOL mController;
-STATIC struct {
-  ACPI_HID_DEVICE_PATH      Root;
-  EFI_DEVICE_PATH_PROTOCOL End;
-} mPath = {
-  {{ACPI_DEVICE_PATH, ACPI_DP, {sizeof (ACPI_HID_DEVICE_PATH), 0}},
-   EISA_PNP_ID (0x0a08), 0},
-  {END_DEVICE_PATH_TYPE, END_ENTIRE_DEVICE_PATH_SUBTYPE,
-   {sizeof (EFI_DEVICE_PATH_PROTOCOL), 0}}
-};
-
 typedef struct {
   UINT64 Cpu, Pci, Size;
   UINT32 Type;
 } PCI_WINDOW;
-STATIC PCI_WINDOW mWindows[MAX_WINDOWS];
-STATIC UINTN mWindowCount;
+
+typedef struct {
+  UINTN Dbi, Config, Elbi, Clock, Reset, Pins;
+  UINT32 Lanes, MaxSpeed, SavedPad;
+  UINT16 Segment;
+  BOOLEAN Trained;
+  PCI_WINDOW Windows[MAX_WINDOWS];
+  UINTN WindowCount;
+  struct {
+    ACPI_HID_DEVICE_PATH Root;
+    EFI_DEVICE_PATH_PROTOCOL End;
+  } Path;
+} EIC_PCIE_PORT;
+
+#define MAX_ROOTS  2
+STATIC EIC_PCIE_PORT mPorts[MAX_ROOTS];
+STATIC PCI_ROOT_BRIDGE mRoots[MAX_ROOTS];
+STATIC UINT64 mIoBases[MAX_ROOTS];
+STATIC RUYI_MULTI_ROOT_PCI_CONTROLLER mHost;
 
 STATIC UINT64
 Cells64 (CONST UINT32 *Data)
@@ -136,7 +141,7 @@ Provider (CONST VOID *Fdt, UINT32 Phandle, CONST CHAR8 *Compatible,
 }
 
 STATIC EFI_STATUS
-ParseControls (CONST VOID *Fdt, INT32 Node, INT32 Port)
+ParseControls (CONST VOID *Fdt, INT32 Node, INT32 Child, EIC_PCIE_PORT *Port)
 {
   STATIC CONST CHAR8 *ClockNames[] = {"mstr", "dbi", "phy_reg", "aux"};
   // Stable EIC7700 clock/reset binding IDs, not register offsets.
@@ -162,7 +167,7 @@ ParseControls (CONST VOID *Fdt, INT32 Node, INT32 Port)
     }
   }
   Status = Provider (Fdt, Phandle, "eswin,eic7700-clock", "#clock-cells",
-                     SYSCRG_PCIE_CFG + 4, &mClock);
+                     SYSCRG_PCIE_CFG + 4, &Port->Clock);
   if (EFI_ERROR (Status)) { return Status; }
 
   Data = FdtGetProp (Fdt, Node, "resets", &Length);
@@ -177,22 +182,30 @@ ParseControls (CONST VOID *Fdt, INT32 Node, INT32 Port)
     }
   }
   Status = Provider (Fdt, Phandle, "eswin,eic7700-reset", "#reset-cells",
-                     SYSCRG_PCIE_RESET + 4, &mReset);
+                     SYSCRG_PCIE_RESET + 4, &Port->Reset);
   if (EFI_ERROR (Status)) { return Status; }
-  Data = FdtGetProp (Fdt, Port, "resets", &Length);
+  Data = FdtGetProp (Fdt, Child, "resets", &Length);
   if (!Data || Length != 8 || Fdt32ToCpu (Data[0]) != Phandle ||
       Fdt32ToCpu (Data[1]) != EIC7700_RESET_PCIE_PERST ||
-      FdtStringListSearch (Fdt, Port, "reset-names", "perst") != 0) {
+      FdtStringListSearch (Fdt, Child, "reset-names", "perst") != 0) {
     return EFI_UNSUPPORTED;
   }
 
-  PinNode = FdtNodeOffsetByCompatible (Fdt, -1, "eswin,eic7700-pinctrl");
-  if (!FdtNodeEnabled (Fdt, PinNode)) { return EFI_NOT_FOUND; }
-  Status = FdtGetMmio (Fdt, PinNode, 0, PERST_PAD + 4, &Base, NULL);
-  if (EFI_ERROR (Status)) { return Status; }
-  Status = FdtMapMmio (Base, PERST_PAD + 4);
-  if (!EFI_ERROR (Status)) { mPins = Base; }
-  return Status;
+  if (EIC7702_MMIO_DIE (Port->Clock) != Port->Segment ||
+      EIC7702_MMIO_DIE (Port->Reset) != Port->Segment) {
+    return EFI_COMPROMISED_DATA;
+  }
+  PinNode = -1;
+  while ((PinNode = FdtNodeOffsetByCompatible (Fdt, PinNode, "eswin,eic7700-pinctrl")) >= 0) {
+    if (!FdtNodeEnabled (Fdt, PinNode)) { continue; }
+    Status = FdtGetMmio (Fdt, PinNode, 0, PERST_PAD + 4, &Base, NULL);
+    if (EFI_ERROR (Status)) { return Status; }
+    if (EIC7702_MMIO_DIE (Base) == Port->Segment) {
+      Port->Pins = Base;
+      return FdtMapMmio (Base, PERST_PAD + 4);
+    }
+  }
+  return EFI_NOT_FOUND;
 }
 
 STATIC VOID
@@ -204,15 +217,12 @@ Empty (PCI_ROOT_BRIDGE_APERTURE *Aperture)
 }
 
 STATIC EFI_STATUS
-Parse (CONST VOID *Fdt)
+Parse (CONST VOID *Fdt, INT32 Node, EIC_PCIE_PORT *Port, PCI_ROOT_BRIDGE *Bridge)
 {
-  INT32 Node, Port = -1, Child, Parent, Length;
+  INT32 RootPort = -1, Child, Parent, Length;
   CONST UINT32 *Data;
-  PCI_ROOT_BRIDGE *Bridge = &mController.RootBridge;
   EFI_STATUS Status;
 
-  Node = FdtNodeOffsetByCompatible (Fdt, -1, "eswin,eic7700-pcie");
-  if (!FdtNodeEnabled (Fdt, Node)) { return EFI_NOT_FOUND; }
   Parent = FdtParentOffset (Fdt, Node);
   if (Parent < 0 || FdtAddressCells (Fdt, Parent) != 2 ||
       FdtAddressCells (Fdt, Node) != 3 || FdtSizeCells (Fdt, Node) != 2) {
@@ -223,36 +233,40 @@ Parse (CONST VOID *Fdt)
     if (!FdtNodeEnabled (Fdt, Child)) { continue; }
     Data = FdtGetProp (Fdt, Child, "reg", &Length);
     if (!Data || Length != 20 || Data[0] || Data[1] || Data[2] ||
-        Data[3] || Data[4] || Port >= 0) {
+        Data[3] || Data[4] || RootPort >= 0) {
       return EFI_UNSUPPORTED;
     }
-    Port = Child;
+    RootPort = Child;
   }
-  if (Port < 0 || EFI_ERROR (Cell (Fdt, Port, "num-lanes", &mLanes)) ||
-      (mLanes != 1 && mLanes != 2 && mLanes != 4)) {
+  if (RootPort < 0 || EFI_ERROR (Cell (Fdt, RootPort, "num-lanes", &Port->Lanes)) ||
+      (Port->Lanes != 1 && Port->Lanes != 2 && Port->Lanes != 4)) {
     return EFI_UNSUPPORTED;
   }
+  Port->MaxSpeed = 3;
   Data = FdtGetProp (Fdt, Node, "max-link-speed", &Length);
   if (Data) {
     if (Length != 4 || !Fdt32ToCpu (*Data) || Fdt32ToCpu (*Data) > 3) {
       return EFI_UNSUPPORTED;
     }
-    mMaxSpeed = Fdt32ToCpu (*Data);
+    Port->MaxSpeed = Fdt32ToCpu (*Data);
   }
   Data = FdtGetProp (Fdt, Node, "bus-range", &Length);
   if (!Data || Length != 8 || Data[0] || Fdt32ToCpu (Data[1]) != 255) {
     return EFI_UNSUPPORTED;
   }
-  Status = NamedMmio (Fdt, Node, "dbi", DBI_MAP_SIZE, &mDbi);
+  Status = NamedMmio (Fdt, Node, "dbi", DBI_MAP_SIZE, &Port->Dbi);
   if (EFI_ERROR (Status)) { return Status; }
-  Status = NamedMmio (Fdt, Node, "config", EFI_PAGE_SIZE, &mConfig);
+  Status = NamedMmio (Fdt, Node, "config", EFI_PAGE_SIZE, &Port->Config);
   if (EFI_ERROR (Status)) { return Status; }
-  Status = NamedMmio (Fdt, Node, "elbi", ELBI_STATUS + 4, &mElbi);
+  Status = NamedMmio (Fdt, Node, "elbi", ELBI_STATUS + 4, &Port->Elbi);
   if (EFI_ERROR (Status)) { return Status; }
-  Status = ParseControls (Fdt, Node, Port);
+  Port->Segment = EIC7702_MMIO_DIE (Port->Dbi);
+  if (EIC7702_MMIO_DIE (Port->Config) != Port->Segment ||
+      EIC7702_MMIO_DIE (Port->Elbi) != Port->Segment) { return EFI_COMPROMISED_DATA; }
+  Status = ParseControls (Fdt, Node, RootPort, Port);
   if (EFI_ERROR (Status)) { return Status; }
 
-  Bridge->Segment = 0;
+  Bridge->Segment = Port->Segment;
   Bridge->Supports = EFI_PCI_IO_ATTRIBUTE_IO | EFI_PCI_IO_ATTRIBUTE_MEMORY |
                      EFI_PCI_IO_ATTRIBUTE_BUS_MASTER | EFI_PCI_ATTRIBUTE_DUAL_ADDRESS_CYCLE;
   Bridge->Attributes = EFI_PCI_IO_ATTRIBUTE_IO | EFI_PCI_IO_ATTRIBUTE_MEMORY |
@@ -261,7 +275,13 @@ Parse (CONST VOID *Fdt)
   Bridge->AllocationAttributes = EFI_PCI_HOST_BRIDGE_MEM64_DECODE;
   Bridge->Bus.Base = 0;
   Bridge->Bus.Limit = 255;
-  Bridge->DevicePath = (VOID *)&mPath;
+  Port->Path.Root.Header.Type = ACPI_DEVICE_PATH;
+  Port->Path.Root.Header.SubType = ACPI_DP;
+  SetDevicePathNodeLength (&Port->Path.Root.Header, sizeof (Port->Path.Root));
+  Port->Path.Root.HID = EISA_PNP_ID (0x0a08);
+  Port->Path.Root.UID = Port->Segment;
+  SetDevicePathEndNode (&Port->Path.End);
+  Bridge->DevicePath = &Port->Path.Root.Header;
   Empty (&Bridge->Io);
   Empty (&Bridge->Mem);
   Empty (&Bridge->PMem);
@@ -273,7 +293,7 @@ Parse (CONST VOID *Fdt)
     return EFI_UNSUPPORTED;
   }
   for (UINTN I = 0; I < (UINTN)Length / 28; I++, Data += 7) {
-    PCI_WINDOW *Range = &mWindows[mWindowCount++];
+    PCI_WINDOW *Range = &Port->Windows[Port->WindowCount++];
     PCI_ROOT_BRIDGE_APERTURE *Aperture;
     UINT32 Flags = Fdt32ToCpu (Data[0]);
     UINT32 Space = (Flags >> 24) & 3;
@@ -321,15 +341,15 @@ Poll (UINTN Address, UINT32 Mask, UINT32 Expected, UINTN TimeoutUs)
 }
 
 STATIC BOOLEAN
-LinkUp (VOID)
+LinkUp (CONST EIC_PCIE_PORT *Port)
 {
-  return (MmioRead32 (mElbi + ELBI_STATUS) & ELBI_LINK_UP) == ELBI_LINK_UP;
+  return (MmioRead32 (Port->Elbi + ELBI_STATUS) & ELBI_LINK_UP) == ELBI_LINK_UP;
 }
 
 STATIC EFI_STATUS
-Window (UINTN Index, UINT32 Type, UINT64 Cpu, UINT64 Pci, UINT64 Size)
+Window (EIC_PCIE_PORT *Port, UINTN Index, UINT32 Type, UINT64 Cpu, UINT64 Pci, UINT64 Size)
 {
-  UINTN Base = mDbi + ATU_OFFSET + Index * DWC_ATU_REGION_STRIDE;
+  UINTN Base = Port->Dbi + ATU_OFFSET + Index * DWC_ATU_REGION_STRIDE;
   UINT64 Limit;
 
   if (Index > MAX_WINDOWS || !Size || Cpu > MAX_UINT64 - (Size - 1) ||
@@ -350,25 +370,25 @@ Window (UINTN Index, UINT32 Type, UINT64 Cpu, UINT64 Pci, UINT64 Size)
   return Poll (Base + DWC_ATU_CONTROL2, DWC_ATU_ENABLE, DWC_ATU_ENABLE, 1000);
 }
 
-STATIC EFI_STATUS EFIAPI
-Config (UINT16 Segment, UINT8 Bus, UINT8 Device, UINT8 Function,
+STATIC EFI_STATUS
+PortConfig (EIC_PCIE_PORT *Port, UINT8 Bus, UINT8 Device, UINT8 Function,
         UINT16 Register, UINTN Width, BOOLEAN Write, UINT32 *Value)
 {
   EFI_STATUS Status = EFI_SUCCESS;
   EFI_TPL Tpl;
   UINTN Address;
 
-  if (!Value || Segment || Device > 31 || Function > 7 ||
+  if (!Value || Device > 31 || Function > 7 ||
       (Width != 1 && Width != 2 && Width != 4) || Register >= 4096 ||
       (Register & (Width - 1)) || Width > 4096U - Register) {
     return EFI_INVALID_PARAMETER;
   }
   if ((!Bus && (Device || Function)) || (Bus == 1 && Device)) { return EFI_NOT_FOUND; }
-  if (Bus && !LinkUp ()) { return EFI_NOT_READY; }
+  if (Bus && !LinkUp (Port)) { return EFI_NOT_READY; }
   Tpl = gBS->RaiseTPL (TPL_HIGH_LEVEL);
-  Address = (Bus ? mConfig : mDbi) + Register;
+  Address = (Bus ? Port->Config : Port->Dbi) + Register;
   if (Bus) {
-    Status = Window (0, Bus == 1 ? ATU_CONFIG0 : ATU_CONFIG1, mConfig,
+    Status = Window (Port, 0, Bus == 1 ? ATU_CONFIG0 : ATU_CONFIG1, Port->Config,
                      ((UINT32)Bus << 24) | ((UINT32)Device << 19) | ((UINT32)Function << 16),
                      EFI_PAGE_SIZE);
   }
@@ -387,103 +407,126 @@ Config (UINT16 Segment, UINT8 Bus, UINT8 Device, UINT8 Function,
   return Status;
 }
 
+STATIC EFI_STATUS EFIAPI
+Config (UINT16 Segment, UINT8 Bus, UINT8 Device, UINT8 Function,
+        UINT16 Register, UINTN Width, BOOLEAN Write, UINT32 *Value)
+{
+  for (UINTN I = 0; I < mHost.Count; I++) {
+    EIC_PCIE_PORT *Port = &mPorts[I];
+    if (Segment == Port->Segment) {
+      if (Bus && !Port->Trained) { return EFI_NOT_FOUND; }
+      return PortConfig (Port, Bus, Device, Function, Register, Width, Write, Value);
+    }
+  }
+  return EFI_NOT_FOUND;
+}
+
 STATIC BOOLEAN EFIAPI
 LinkReady (VOID *Context)
 {
-  return (MmioRead32 (mElbi + ELBI_STATUS) & (ELBI_PHY_AUX_CLOCK | 0xff)) == ELBI_L0_STATUS;
+  EIC_PCIE_PORT *Port = Context;
+  return (MmioRead32 (Port->Elbi + ELBI_STATUS) & (ELBI_PHY_AUX_CLOCK | 0xff)) == ELBI_L0_STATUS;
 }
 
 STATIC VOID EFIAPI
 EnableLtssm (VOID *Context)
 {
-  MmioOr32 (mElbi + ELBI_CONTROL, ELBI_LTSSM_ENABLE);
+  EIC_PCIE_PORT *Port = Context;
+  MmioOr32 (Port->Elbi + ELBI_CONTROL, ELBI_LTSSM_ENABLE);
 }
 
 STATIC EFI_STATUS EFIAPI
 ReadPartner (VOID *Context, UINT16 Register, UINT32 *Value)
 {
-  return Config (0, 1, 0, 0, Register, sizeof (*Value), FALSE, Value);
+  EIC_PCIE_PORT *Port = Context;
+  return PortConfig (Port, 1, 0, 0, Register, sizeof (*Value), FALSE, Value);
 }
 
 STATIC VOID
-Stop (VOID)
+Stop (EIC_PCIE_PORT *Port)
 {
   // Power-up reset must precede LTSSM disable outside Detect.
-  MmioAnd32 (mReset + SYSCRG_PCIE_RESET, ~(UINT32)(RESET_PERST | RESET_POWER));
-  MmioAndThenOr32 (mElbi + ELBI_CONTROL, ~(UINT32)ELBI_LTSSM_ENABLE, ELBI_HOLD_PHY);
-  MmioAnd32 (mReset + SYSCRG_PCIE_RESET, ~(UINT32)RESET_DBI);
-  MmioAnd32 (mClock + SYSCRG_PCIE_CFG, ~(UINT32)(CLOCK_AUX | CLOCK_CR | CLOCK_GATE));
-  MmioAnd32 (mClock + SYSCRG_PCIE_ACLK, ~(UINT32)CLOCK_GATE);
-  MmioWrite32 (mPins + PERST_PAD, mSavedPad);
+  MmioAnd32 (Port->Reset + SYSCRG_PCIE_RESET, ~(UINT32)(RESET_PERST | RESET_POWER));
+  MmioAndThenOr32 (Port->Elbi + ELBI_CONTROL, ~(UINT32)ELBI_LTSSM_ENABLE, ELBI_HOLD_PHY);
+  MmioAnd32 (Port->Reset + SYSCRG_PCIE_RESET, ~(UINT32)RESET_DBI);
+  MmioAnd32 (Port->Clock + SYSCRG_PCIE_CFG, ~(UINT32)(CLOCK_AUX | CLOCK_CR | CLOCK_GATE));
+  MmioAnd32 (Port->Clock + SYSCRG_PCIE_ACLK, ~(UINT32)CLOCK_GATE);
+  MmioWrite32 (Port->Pins + PERST_PAD, Port->SavedPad);
 }
 
 STATIC EFI_STATUS
-Start (VOID)
+Start (EIC_PCIE_PORT *Port, BOOLEAN DualDie)
 {
   UINT32 Version;
   UINT16 LinkStatus;
   EFI_STATUS Status;
   DWC_PCIE_TRAINING Training = {
-    "EIC7700", mDbi, mMaxSpeed, mLanes, NULL, LinkReady, EnableLtssm, ReadPartner
+    DualDie ? (Port->Segment ? "EIC7702 die 1" : "EIC7702 die 0") : "EIC7700",
+    Port->Dbi, Port->MaxSpeed, Port->Lanes, Port, LinkReady, EnableLtssm, ReadPartner,
+    DualDie, DualDie
   };
 
-  mSavedPad = MmioRead32 (mPins + PERST_PAD);
-  MmioOr32 (mPins + PERST_PAD, PAD_INPUT_ENABLE);
+  Port->SavedPad = MmioRead32 (Port->Pins + PERST_PAD);
+  MmioOr32 (Port->Pins + PERST_PAD, PAD_INPUT_ENABLE);
   // TCU AXI must run for incoming DMA, including SMMU bypass mode.
-  MmioOr32 (mClock + SYSCRG_TCU_ACLK, CLOCK_GATE);
-  MmioOr32 (mClock + SYSCRG_PCIE_CFG, CLOCK_CR);
-  MmioOr32 (mClock + SYSCRG_PCIE_ACLK, CLOCK_GATE);
-  MmioOr32 (mClock + SYSCRG_PCIE_CFG, CLOCK_GATE | CLOCK_AUX);
-  MmioAnd32 (mReset + SYSCRG_PCIE_RESET,
+  MmioOr32 (Port->Clock + SYSCRG_TCU_ACLK, CLOCK_GATE);
+  MmioOr32 (Port->Clock + SYSCRG_PCIE_CFG, CLOCK_CR);
+  MmioOr32 (Port->Clock + SYSCRG_PCIE_ACLK, CLOCK_GATE);
+  MmioOr32 (Port->Clock + SYSCRG_PCIE_CFG, CLOCK_GATE | CLOCK_AUX);
+  MmioAnd32 (Port->Reset + SYSCRG_PCIE_RESET,
              ~(UINT32)(RESET_DBI | RESET_POWER | RESET_PERST));
-  MmioOr32 (mReset + SYSCRG_PCIE_RESET, RESET_DBI);
-  MmioOr32 (mReset + SYSCRG_PCIE_RESET, RESET_POWER);
-  MmioAndThenOr32 (mElbi + ELBI_CONTROL,
+  MmioOr32 (Port->Reset + SYSCRG_PCIE_RESET, RESET_DBI);
+  MmioOr32 (Port->Reset + SYSCRG_PCIE_RESET, RESET_POWER);
+  MmioAndThenOr32 (Port->Elbi + ELBI_CONTROL,
                    ~(ELBI_DEVICE_TYPE | ELBI_LTSSM_ENABLE),
                    ELBI_ROOT_PORT | ELBI_HOLD_PHY);
   // Keep the endpoint reset while controller clocks and reference clock settle.
   MicroSecondDelay (100000);
   // PERST# also resets this SoC's PHY. Release it before waiting for PHY ready.
-  MmioOr32 (mReset + SYSCRG_PCIE_RESET, RESET_PERST);
-  MmioAnd32 (mElbi + ELBI_CONTROL, ~(UINT32)ELBI_HOLD_PHY);
-  Status = Poll (mElbi + ELBI_STATUS, ELBI_PHY_AUX_CLOCK, 0, 20000);
+  MmioOr32 (Port->Reset + SYSCRG_PCIE_RESET, RESET_PERST);
+  MmioAnd32 (Port->Elbi + ELBI_CONTROL, ~(UINT32)ELBI_HOLD_PHY);
+  Status = Poll (Port->Elbi + ELBI_STATUS, ELBI_PHY_AUX_CLOCK, 0, 20000);
   if (EFI_ERROR (Status)) { return Status; }
-  Version = MmioRead32 (mDbi + DBI_VERSION);
+  Version = MmioRead32 (Port->Dbi + DBI_VERSION);
   if (Version < 0x3438302a || Version == MAX_UINT32) { return EFI_UNSUPPORTED; }
 
   // Root mode does not use the endpoint-facing local register BARs.
   // Disable their masks through EIC7700's shadow/CS2 window before sizing.
-  MmioWrite32 (mDbi + DBI_CS2_OFFSET + PCI_BASE_ADDRESSREG_OFFSET, 0);
-  MmioWrite32 (mDbi + DBI_CS2_OFFSET + PCI_BASE_ADDRESSREG_OFFSET + 4, 0);
-  MmioOr32 (mDbi + DWC_DBI_MISC_CONTROL, DWC_DBI_RO_WRITE_ENABLE);
-  MmioWrite32 (mDbi, DBI_VENDOR_DEVICE);
-  MmioWrite16 (mDbi + PCI_CLASSCODE_OFFSET + 1, 0x0604);
-  MmioWrite32 (mDbi + PCI_BASE_ADDRESSREG_OFFSET, 0);
-  MmioWrite32 (mDbi + PCI_BASE_ADDRESSREG_OFFSET + 4, 0);
-  MmioWrite32 (mDbi + PCI_BRIDGE_PRIMARY_BUS_REGISTER_OFFSET, 0x00ff0100);
-  MmioOr16 (mDbi + PCI_COMMAND_OFFSET,
+  MmioWrite32 (Port->Dbi + DBI_CS2_OFFSET + PCI_BASE_ADDRESSREG_OFFSET, 0);
+  MmioWrite32 (Port->Dbi + DBI_CS2_OFFSET + PCI_BASE_ADDRESSREG_OFFSET + 4, 0);
+  MmioOr32 (Port->Dbi + DWC_DBI_MISC_CONTROL, DWC_DBI_RO_WRITE_ENABLE);
+  MmioWrite32 (Port->Dbi, DBI_VENDOR_DEVICE);
+  MmioWrite16 (Port->Dbi + PCI_CLASSCODE_OFFSET + 1, 0x0604);
+  MmioWrite32 (Port->Dbi + PCI_BASE_ADDRESSREG_OFFSET, 0);
+  MmioWrite32 (Port->Dbi + PCI_BASE_ADDRESSREG_OFFSET + 4, 0);
+  MmioWrite32 (Port->Dbi + PCI_BRIDGE_PRIMARY_BUS_REGISTER_OFFSET, 0x00ff0100);
+  MmioOr16 (Port->Dbi + PCI_COMMAND_OFFSET,
             EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER);
-  MmioAndThenOr32 (mDbi + DBI_MSI_CAP, ~(7U << 17), 5U << 17);
-  MmioAnd32 (mDbi + DBI_EXP_CAP, ~0xff00U);
-  MmioAndThenOr32 (mDbi + DBI_PORT_LINK, ~(DBI_LINK_MODE_MASK | DBI_FAST_LINK),
-                   ((2 * mLanes - 1) << 16) | DBI_DLL_ENABLE);
-  // As in Linux DWC, require one lane to exit electrical idle, then negotiate.
-  MmioAndThenOr32 (mDbi + DBI_GEN2_CONTROL, ~DBI_PREDETERMINED_LANES, 1U << 8);
-  MmioAndThenOr32 (mDbi + DBI_LINK_CAP, ~0x3ffU, (mLanes << 4) | mMaxSpeed);
-  MmioAnd32 (mDbi + DBI_MULTI_LANE, ~0x7fU);
-  MmioAnd32 (mDbi + DWC_DBI_MISC_CONTROL, ~(UINT32)DWC_DBI_RO_WRITE_ENABLE);
+  MmioAndThenOr32 (Port->Dbi + DBI_MSI_CAP, ~(7U << 17), 5U << 17);
+  MmioAnd32 (Port->Dbi + DBI_EXP_CAP, ~0xff00U);
+  MmioAndThenOr32 (Port->Dbi + DBI_PORT_LINK, ~(DBI_LINK_MODE_MASK | DBI_FAST_LINK),
+                   ((2 * Port->Lanes - 1) << 16) | DBI_DLL_ENABLE);
+  MmioAndThenOr32 (Port->Dbi + DBI_GEN2_CONTROL, ~DBI_PREDETERMINED_LANES, 1U << 8);
+  MmioAndThenOr32 (Port->Dbi + DBI_LINK_CAP, ~0x3ffU, (Port->Lanes << 4) | Port->MaxSpeed);
+  MmioAnd32 (Port->Dbi + DBI_MULTI_LANE, ~0x7fU);
+  MmioAnd32 (Port->Dbi + DWC_DBI_MISC_CONTROL, ~(UINT32)DWC_DBI_RO_WRITE_ENABLE);
+  for (UINTN I = 0; I < Port->WindowCount; I++) {
+    PCI_WINDOW *Range = &Port->Windows[I];
+    Status = Window (Port, I + 1, Range->Type, Range->Cpu, Range->Pci, Range->Size);
+    if (EFI_ERROR (Status)) { return Status; }
+  }
   Status = DwcPcieTrainLink (&Training, &LinkStatus);
+  if (Status == EFI_NO_MEDIA && DualDie) {
+    DEBUG ((DEBUG_INFO, "EIC7702 PCIe segment %u: no active link\n", Port->Segment));
+    return EFI_SUCCESS;
+  }
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "EIC7700 PCIe ELBI status: %08x\n", MmioRead32 (mElbi + ELBI_STATUS)));
+    DEBUG ((DEBUG_ERROR, "EIC7700 PCIe ELBI status: %08x\n", MmioRead32 (Port->Elbi + ELBI_STATUS)));
     return Status;
   }
   DEBUG ((DEBUG_INFO, "EIC7700 PCIe: Gen%u x%u, DesignWare %08x\n",
           LinkStatus & 0xf, (LinkStatus >> 4) & 0x3f, Version));
-  for (UINTN I = 0; I < mWindowCount; I++) {
-    PCI_WINDOW *Range = &mWindows[I];
-    Status = Window (I + 1, Range->Type, Range->Cpu, Range->Pci, Range->Size);
-    if (EFI_ERROR (Status)) { return Status; }
-  }
+  Port->Trained = TRUE;
   return EFI_SUCCESS;
 }
 
@@ -493,22 +536,43 @@ Eic7700PciEntry (EFI_HANDLE Image, EFI_SYSTEM_TABLE *SystemTable)
   RUYI_BOARD_INFO Info;
   CONST VOID *Fdt;
   EFI_HANDLE Handle = NULL;
-  EFI_STATUS Status;
+  EFI_STATUS Status, Last = EFI_NOT_FOUND;
+  INT32 Node = -1;
+  BOOLEAN DualDie;
 
   Status = FdtBoardInfoGet (&Info, &Fdt);
   if (EFI_ERROR (Status)) { return Status; }
-  Status = Parse (Fdt);
-  if (EFI_ERROR (Status)) { return Status; }
-  Status = Start ();
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "EIC7700 PCIe initialization failed: %r\n", Status));
-    Stop ();
-    return Status;
+  DualDie = FdtStringListSearch (Fdt, 0, "compatible", "eswin,eic7702") >= 0;
+  while ((Node = FdtNodeOffsetByCompatible (Fdt, Node, "eswin,eic7700-pcie")) >= 0) {
+    if (!FdtNodeEnabled (Fdt, Node)) { continue; }
+    UINTN I = mHost.Count;
+    if (I == (DualDie ? MAX_ROOTS : 1)) { break; }
+    EIC_PCIE_PORT *Port = &mPorts[I];
+    PCI_ROOT_BRIDGE *Root = &mRoots[I];
+    ZeroMem (Port, sizeof (*Port));
+    ZeroMem (Root, sizeof (*Root));
+    Last = Parse (Fdt, Node, Port, Root);
+    if (EFI_ERROR (Last)) { continue; }
+    if (I && Port->Segment == mPorts[0].Segment) { Last = EFI_COMPROMISED_DATA; continue; }
+    Last = Start (Port, DualDie);
+    if (EFI_ERROR (Last)) {
+      DEBUG ((DEBUG_ERROR, "EIC7700 PCIe segment %u initialization failed: %r\n", Port->Segment, Last));
+      Stop (Port);
+      continue;
+    }
+    mIoBases[I] = Root->Io.Base - Root->Io.Translation;
+    mHost.Count++;
   }
-  mController.Revision = 1;
-  mController.Config = Config;
+  if (mHost.Count == 0) { return Last; }
+  mHost.Controller.Revision = DualDie ? 2 : 1;
+  mHost.Controller.Config = Config;
+  mHost.Controller.RootBridge = mRoots[0];
+  mHost.Bridges = mRoots;
+  mHost.IoMmioBases = mIoBases;
   Status = gBS->InstallProtocolInterface (&Handle, &gRuyiPciControllerProtocolGuid,
-                                         EFI_NATIVE_INTERFACE, &mController);
-  if (EFI_ERROR (Status)) { Stop (); }
+                                          EFI_NATIVE_INTERFACE, &mHost);
+  if (EFI_ERROR (Status)) {
+    while (mHost.Count) { Stop (&mPorts[--mHost.Count]); }
+  }
   return Status;
 }
