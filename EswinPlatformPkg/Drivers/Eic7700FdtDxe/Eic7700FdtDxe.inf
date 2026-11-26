@@ -16,6 +16,7 @@
   BaseMemoryLib
   CpuConfigLib
   DebugLib
+  Eic7700BoardProfileLib
   FdtLib
   PlatformMacAddressLib
   PrintLib

@@ -6,24 +6,28 @@
 STATIC CONST EIC7700_BOARD_PROFILE mBoards[] = {
   {
     .Image = {"sifive,hifive-premier-p550", "CONFIG_BOARD_SIFIVE_HIFIVE_PREMIER_P550=y", NULL, 0x82200000, SIZE_4MB},
+    .EthernetPorts = 2,
     .Manufacturer = "SiFive",
     .FastbootCanSwitchHostPort = TRUE,
     .AllowCpuOppOverride = TRUE
   },
   {
     .Image = {"milkv,megrez", "CONFIG_BOARD_MILKV_MEGREZ=y", NULL, 0x82200000, SIZE_4MB},
+    .EthernetPorts = 2,
     .Manufacturer = "Milk-V",
     .FactoryOffset = 0x780000,
     .FactoryBytes = SIZE_512KB
   },
   {
     .Image = {"pine64,starpro64", "CONFIG_BOARD_PINE64_STARPRO64=y", NULL, 0x82200000, SIZE_4MB},
+    .EthernetPorts = 2,
     .Manufacturer = "PINE64",
     .FactoryOffset = 0xf80000,
     .FactoryBytes = SIZE_512KB
   },
   {
     .Image = { "eswin,eic7702-d560", "CONFIG_BOARD_ESWIN_D560=y", NULL, 0x82200000, SIZE_4MB },
+    .EthernetPorts = 4,
     .Manufacturer = "ESWIN",
     .FactoryOffset = 0xf80000,
     .FactoryBytes = SIZE_512KB,

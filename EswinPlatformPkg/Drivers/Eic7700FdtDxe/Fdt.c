@@ -1,5 +1,6 @@
 /** SPDX-License-Identifier: BSD-2-Clause-Patent */
 #include <PiDxe.h>
+#include <Uefi/UefiPxe.h>
 #include <Guid/EventGroup.h>
 #include <Guid/Fdt.h>
 #include <Library/BaseLib.h>
@@ -7,6 +8,7 @@
 #include <Guid/PremierP550CpuConfig.h>
 #include <Library/CpuConfigLib.h>
 #include <Library/DebugLib.h>
+#include <Library/Eic7700BoardProfileLib.h>
 #include <Library/FdtLib.h>
 #include <Library/PlatformMacAddressLib.h>
 #include <Library/PrintLib.h>
@@ -66,9 +68,11 @@ Publish (EFI_EVENT Event, VOID *Context)
   INT32 Aliases, Node, Length;
   CONST CHAR8 *Path;
   CHAR8 Name[16];
-  UINT8 Mac[6];
+  UINT8 Mac[PXE_HWADDR_LEN_ETHER];
+  CONST EIC7700_BOARD_PROFILE *Board = Eic7700GetBoardProfile ();
 
   gBS->CloseEvent (Event);
+  if (Board == NULL) { return; }
   Status = EfiGetSystemConfigurationTable (&gFdtTableGuid, &Original);
   if (EFI_ERROR (Status) || FdtCheckHeader (Original) || FdtTotalSize (Original) > SIZE_1MB) {
     DEBUG ((DEBUG_ERROR, "EIC7700 OS device tree unavailable\n"));
@@ -79,7 +83,7 @@ Publish (EFI_EVENT Event, VOID *Context)
   if (EFI_ERROR (Status)) { return; }
   Copy = (VOID *)(UINTN)Address;
   if (FdtOpenInto (Original, Copy, EFI_PAGES_TO_SIZE (Pages))) { goto Failed; }
-  for (Index = 0; Index < 2; Index++) {
+  for (Index = 0; Index < Board->EthernetPorts; Index++) {
     Status = PlatformGetMacAddress (Index, Mac);
     if (EFI_ERROR (Status)) { goto Failed; }
     // Property insertion can change offsets. Resolve aliases again each time.

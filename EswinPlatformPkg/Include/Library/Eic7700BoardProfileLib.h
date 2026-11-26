@@ -7,6 +7,7 @@ typedef struct {
   CONST CHAR8 *Manufacturer;
   UINT32 FactoryOffset;
   UINT32 FactoryBytes;
+  UINTN  EthernetPorts;
   BOOLEAN FastbootCanSwitchHostPort;
   BOOLEAN AllowCpuOppOverride;
   BOOLEAN DualDie;
