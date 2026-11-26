@@ -123,26 +123,36 @@ WaitLink (
   UINT16                   *LinkStatus
   )
 {
-  UINTN   Stable = 0;
-  UINT32  SpeedControl = DWC_SPEED_CHANGE;
+  UINTN Stable = 0;
+  UINT32 SpeedControl = DWC_SPEED_CHANGE;
+  UINT16 Previous = 0;
+  BOOLEAN Seen = FALSE;
 
   *LinkStatus = 0;
   for (UINTN Elapsed = 0; Elapsed <= LINK_TIMEOUT_US; Elapsed += POLL_INTERVAL_US) {
-    // Some integrations lose DBI access on a failed link. Poll the safe
-    // platform status first, including during Recovery and Equalization.
+    // Guard DBI access during Recovery and Equalization.
     if (Training->LinkReady (Training->Context)) {
+      Seen = TRUE;
       *LinkStatus = MmioRead16 (Training->Dbi + Capability + PCIE_LINK_STATUS);
       SpeedControl = MmioRead32 (Training->Dbi + DWC_SPEED_CONTROL);
+      UINT8 ActualSpeed = *LinkStatus & PCIE_SPEED_MASK;
+      UINT8 ActualWidth = (*LinkStatus >> 4) & PCIE_WIDTH_MASK;
+      UINT16 Negotiated = (ActualWidth << 4) | ActualSpeed;
+      BOOLEAN Exact = ActualSpeed == Speed && (!Width || ActualWidth == Width);
+      BOOLEAN Reduced = Training->AllowReducedLink && Width &&
+                        ActualSpeed <= Speed && ActualWidth <= Width;
+
       if (!(SpeedControl & DWC_SPEED_CHANGE) && !(*LinkStatus & PCIE_LINK_TRAINING) &&
-          (*LinkStatus & PCIE_SPEED_MASK) == Speed &&
-          ValidWidth ((*LinkStatus >> 4) & PCIE_WIDTH_MASK) &&
-          (Width == 0 || ((*LinkStatus >> 4) & PCIE_WIDTH_MASK) == Width))
-      {
-        // Include the post-link delay before issuing configuration requests.
-        if (Stable >= CONFIG_DELAY_US) {
+          ActualSpeed && ValidWidth (ActualWidth) && (Exact || Reduced)) {
+        if (Negotiated != Previous) { Stable = 0; }
+        Previous = Negotiated;
+        if (Stable >= CONFIG_DELAY_US && (Exact || Elapsed == LINK_TIMEOUT_US)) {
+          if (!Exact) {
+            DEBUG ((DEBUG_WARN, "%a PCIe: negotiated Gen%u x%u, target Gen%u x%u\n",
+                    Training->Name, ActualSpeed, ActualWidth, Speed, Width));
+          }
           return EFI_SUCCESS;
         }
-
         Stable += POLL_INTERVAL_US;
       } else {
         Stable = 0;
@@ -150,10 +160,10 @@ WaitLink (
     } else {
       Stable = 0;
     }
-
     MicroSecondDelay (POLL_INTERVAL_US);
   }
 
+  if (!Width && !Seen && Training->AllowEmpty) { return EFI_NO_MEDIA; }
   DEBUG ((DEBUG_ERROR, "%a PCIe: expected Gen%u x%u, last link-status=%04x speed-control=%08x\n",
           Training->Name, Speed, Width, *LinkStatus, SpeedControl));
   return EFI_TIMEOUT;
@@ -303,7 +313,7 @@ DwcPcieTrainLink (
   Phase = "directed speed change";
   Status = WaitLink (Training, Capability, Speed, Width, LinkStatus);
 Done:
-  if (EFI_ERROR (Status)) {
+  if (EFI_ERROR (Status) && Status != EFI_NO_MEDIA) {
     // The caller resets the platform. Do not access DBI on this path.
     DEBUG ((DEBUG_ERROR, "%a PCIe: %a failed: %r\n", Training->Name, Phase, Status));
   }

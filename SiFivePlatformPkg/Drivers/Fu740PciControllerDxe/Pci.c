@@ -351,7 +351,7 @@ Start (
   EFI_STATUS  Status;
   UINT16      LinkStatus;
   DWC_PCIE_TRAINING Training = {
-    "FU740", mDbi, mMaxSpeed, 8, NULL, LinkReady, EnableLtssm, ReadPartner
+    "FU740", mDbi, mMaxSpeed, 8, NULL, LinkReady, EnableLtssm, ReadPartner, FALSE, FALSE
   };
 
   // Match U-Boot's board power/reset sequence, including a powered-off

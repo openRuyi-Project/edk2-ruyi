@@ -21,6 +21,10 @@ typedef struct {
 
   // Read an aligned dword from the immediate link partner, bus 1:0.0.
   EFI_STATUS (EFIAPI *ReadPartner)(VOID *Context, UINT16 Register, UINT32 *Value);
+  // Return EFI_NO_MEDIA if the initial poll never sees a ready link.
+  BOOLEAN AllowEmpty;
+  // Accept a stable lower speed or width after the directed training timeout.
+  BOOLEAN AllowReducedLink;
 } DWC_PCIE_TRAINING;
 
 /**
@@ -30,10 +34,11 @@ typedef struct {
   LTSSM disabled and DBI accessible. MaxSpeed and MaxWidth are the platform
   limits, including board wiring. The immediate partner may be a switch.
 
-  On success, LinkStatus contains the PCIe Link Status register. The speed
-  and width must match the common capabilities. No speed fallback is applied.
-  On error, the caller must reset the controller and endpoint before reuse.
-  This also clears temporary Gen1 settings when DBI is inaccessible.
+  On success, LinkStatus contains the stable negotiated speed and width.
+  Both must match the selected limits unless AllowReducedLink is set.
+  If AllowEmpty is set and LinkReady stays false during the initial poll,
+  return EFI_NO_MEDIA with LTSSM enabled. For other errors, reset the
+  controller and endpoint before reuse.
 **/
 EFI_STATUS
 EFIAPI
