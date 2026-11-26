@@ -4,6 +4,7 @@
  * Copyright 2026, Beijing ESWIN Computing Technology Co., Ltd.
  * Yulin Lu <luyulin@eswincomputing.com>
  */
+#include <IndustryStandard/Eic7702AddressMap.h>
 #include <IndustryStandard/Eic7700ClockIds.h>
 #include <IndustryStandard/Eic7700ResetIds.h>
 #include <IndustryStandard/Eic7700HspClockIds.h>
@@ -171,7 +172,12 @@ Parse (CONST VOID *Fdt, INT32 Node, SATA_CONTEXT *S)
                      "eswin,eic7700-hspcrg", EIC7700_HSP_CLK_GATE_SATA, HSP_SATA_RESET + 4,
                      &S->Hsp, &HspNode);
   if (EFI_ERROR (Status)) { return Status; }
-  if (S->Phy != S->Hsp + HSP_SATA_BASE) { return EFI_UNSUPPORTED; }
+  if (S->Phy != S->Hsp + HSP_SATA_BASE ||
+      EIC7702_MMIO_DIE (S->Base) != EIC7702_MMIO_DIE (S->Hsp) ||
+      EIC7702_MMIO_DIE (S->Base) != EIC7702_MMIO_DIE (S->Clock) ||
+      EIC7702_MMIO_DIE (S->Base) != EIC7702_MMIO_DIE (S->Reset)) {
+    return EFI_UNSUPPORTED;
+  }
   Status = Provider (Fdt, HspNode, "clocks", "clock-names", "sata",
                      "eswin,eic7700-clock", EIC7700_CLK_GATE_HSP_SATA_OOB_CLK, SYSCRG_SATA_REF + 4, &Base, NULL);
   if (EFI_ERROR (Status) || Base != S->Clock) { return EFI_UNSUPPORTED; }
