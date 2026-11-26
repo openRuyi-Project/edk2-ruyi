@@ -1,5 +1,6 @@
 /** SPDX-License-Identifier: BSD-2-Clause-Patent */
 #include <Uefi.h>
+#include <IndustryStandard/Eic7702AddressMap.h>
 #include <Guid/NonDiscoverableDevice.h>
 #include <Protocol/NonDiscoverableDevice.h>
 #include <Library/BaseLib.h>
@@ -67,6 +68,7 @@ UsbDevicePlatformInit (
   RUYI_BOARD_INFO  Info;
   CONST UINT32    *Hsp;
   CONST CHAR8     *Mode;
+  CONST EIC7700_BOARD_PROFILE *Board;
   INT32           Node = -1, Length;
   EFI_STATUS      Status, Cleanup;
 
@@ -77,6 +79,8 @@ UsbDevicePlatformInit (
   if (EFI_ERROR (Status)) {
     return Status;
   }
+  Board = Eic7700GetBoardProfile ();
+  if (Board == NULL) { return EFI_UNSUPPORTED; }
   mNode = -1;
   while ((Node = FdtNodeOffsetByCompatible (mFdt, Node, "eswin,eic7700-dwc3")) >= 0) {
     if (!FdtNodeEnabled (mFdt, Node)) {
@@ -86,6 +90,11 @@ UsbDevicePlatformInit (
     if ((Hsp != NULL) && (Length == 3 * sizeof (UINT32)) &&
         (Fdt32ToCpu (Hsp[1]) == USB0_HSP_BUS))
     {
+      Status = FdtGetMmio (mFdt, Node, 0, SIZE_64KB, Base, NULL);
+      if (EFI_ERROR (Status)) { return Status; }
+      if (Board->DualDie && EIC7702_MMIO_DIE (*Base) != 0) {
+        continue;
+      }
       mNode = Node;
       break;
     }
@@ -101,17 +110,11 @@ UsbDevicePlatformInit (
     return EFI_UNSUPPORTED;
   }
   mRestoreHost = AsciiStrCmp (Mode, "host") == 0;
-  CONST EIC7700_BOARD_PROFILE *Board = Eic7700GetBoardProfile ();
-  if (!Board) { return EFI_UNSUPPORTED; }
   if (mRestoreHost && !Board->FastbootCanSwitchHostPort) {
     Print (L"Boot in USB recovery mode and connect the board download port to use Fastboot.\r\n");
     return EFI_UNSUPPORTED;
   }
 
-  Status = FdtGetMmio (mFdt, mNode, 0, SIZE_64KB, Base, NULL);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
   Status = FindHost (*Base, &mHost);
   if (EFI_ERROR (Status)) {
     return Status;
@@ -171,8 +174,13 @@ UsbDevicePlatformGetInfo (
   VOID
   )
 {
-  STATIC CONST USB_DEVICE_INFO Info = {
+  STATIC CONST USB_DEVICE_INFO Eic7700 = {
     0x3452, 0x7700, "ESWIN", "Ruyi Firmware EIC7700"
   };
-  return &Info;
+  STATIC CONST USB_DEVICE_INFO Eic7702 = {
+    0x3452, 0x7700, "ESWIN", "Ruyi Firmware EIC7702"
+  };
+  CONST EIC7700_BOARD_PROFILE *Board = Eic7700GetBoardProfile ();
+
+  return Board != NULL && Board->DualDie ? &Eic7702 : &Eic7700;
 }

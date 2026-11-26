@@ -31,6 +31,7 @@ STATIC CONST EIC7700_BOARD_PROFILE mBoards[] = {
     .Manufacturer = "ESWIN",
     .FactoryOffset = 0xf80000,
     .FactoryBytes = SIZE_512KB,
+    .FastbootCanSwitchHostPort = TRUE,
     .DualDie = TRUE
   }
 };
