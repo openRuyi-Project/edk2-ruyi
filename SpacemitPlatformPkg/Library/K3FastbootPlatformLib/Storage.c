@@ -16,6 +16,12 @@ STATIC UFS_USER_MEDIA  mUfs;
 STATIC FASTBOOT_NVME_TARGET  *mTargets;
 STATIC UINTN                 mCount;
 
+STATIC BOOLEAN
+IsRawSpi (CONST CHAR8 *Name)
+{
+  return AsciiStrCmp (Name, K3_SPI_TARGET) == 0 || AsciiStrCmp (Name, "spi") == 0;
+}
+
 STATIC EFI_BLOCK_IO_PROTOCOL *
 Target (
   CONST CHAR8  *Name
@@ -98,7 +104,7 @@ STATIC EFI_STATUS
 TargetCapacity (CONST CHAR8 *Name, UINT64 *Bytes)
 {
   if (!AsciiStrCmp (Name, "ec")) { *Bytes = K3_EC_UPDATE_SIZE; return EFI_SUCCESS; }
-  if ((!AsciiStrCmp (Name, K3_SPI_TARGET) || !AsciiStrCmp (Name, K3_FIRMWARE_TARGET)) && K3FastbootSpiAvailable ()) {
+  if ((IsRawSpi (Name) || !AsciiStrCmp (Name, K3_FIRMWARE_TARGET)) && K3FastbootSpiAvailable ()) {
     *Bytes = K3FastbootSpiSize (); return EFI_SUCCESS;
   }
   return FastbootMediaCapacity (Target (Name), Bytes);
@@ -138,7 +144,7 @@ FastbootRead (
     return K3EcFlashRead ((UINT32)Offset, Size, Data, Progress);
   }
 
-  if (!AsciiStrCmp (Name, K3_SPI_TARGET) || !AsciiStrCmp (Name, K3_FIRMWARE_TARGET)) {
+  if (IsRawSpi (Name) || !AsciiStrCmp (Name, K3_FIRMWARE_TARGET)) {
     return K3FastbootSpiRead (Offset, Size, Data, Progress);
   }
 
@@ -161,7 +167,7 @@ FastbootFlash (
     return K3EcUpdate (Data, Size, Progress);
   }
 
-  if (!AsciiStrCmp (Name, K3_SPI_TARGET)) {
+  if (IsRawSpi (Name)) {
     return K3FastbootSpiFlash (Data, Size, Progress);
   }
 

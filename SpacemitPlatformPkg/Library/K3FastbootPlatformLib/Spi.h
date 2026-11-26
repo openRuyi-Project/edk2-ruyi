@@ -3,7 +3,7 @@
 #ifndef K3_FASTBOOT_SPI_H
 #define K3_FASTBOOT_SPI_H
 #include <Library/FastbootStorageLib.h>
-#define K3_SPI_TARGET       "spi"
+#define K3_SPI_TARGET       "spi0"
 #define K3_FIRMWARE_TARGET  "firmware"
 UINT64
 K3FastbootSpiSize (
