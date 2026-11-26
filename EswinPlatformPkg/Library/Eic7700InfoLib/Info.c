@@ -3,6 +3,7 @@
 #include <Library/BaseLib.h>
 #include <Library/DxeServicesTableLib.h>
 #include <Library/Eic7700InfoLib.h>
+#include <Library/FdtHardwareLib.h>
 #include <Library/FdtLib.h>
 #include <Library/IoLib.h>
 
@@ -26,8 +27,13 @@ CoreRate (
   EFI_STATUS                       Status;
   EFI_GCD_MEMORY_SPACE_DESCRIPTOR  Descriptor;
 
-  Node = FdtNodeOffsetByCompatible (Fdt, -1, "eswin,eic7700-clock");
-  if (Node < 0) {
+  Node = FdtPathOffset (Fdt, "/cpus/cpu@0");
+  Data = Node >= 0 ? FdtGetProp (Fdt, Node, "clocks", &Length) : NULL;
+  if (Data == NULL || Length != 2 * sizeof (*Data)) {
+    return 0;
+  }
+  Node = FdtNodeOffsetByPhandle (Fdt, Fdt32ToCpu (Data[0]));
+  if (Node < 0 || FdtStringListSearch (Fdt, Node, "compatible", "eswin,eic7700-clock") < 0) {
     return 0;
   }
 
@@ -102,6 +108,51 @@ CoreRate (
   return DivU64x32 (Rate, 4 * RefDiv * (PostDivA + 1) * (PostDivB + 1));
 }
 
+STATIC UINT64
+MaxCpuRate (
+  CONST VOID  *Fdt
+  )
+{
+  INT32         Cpus, Cpu, Table, Opp, Length;
+  CONST UINT32  *Phandle;
+  CONST UINT64  *Hz;
+  UINT64        Highest = 0;
+
+  Cpus = FdtPathOffset (Fdt, "/cpus");
+  FdtForEachSubnode (Cpu, Fdt, Cpus) {
+    if ((FdtStringListSearch (Fdt, Cpu, "device_type", "cpu") < 0) || !FdtNodeEnabled (Fdt, Cpu)) {
+      continue;
+    }
+
+    Phandle = FdtGetProp (Fdt, Cpu, "operating-points-v2", &Length);
+    if ((Phandle == NULL) || (Length != sizeof (*Phandle))) {
+      continue;
+    }
+
+    Table = FdtNodeOffsetByPhandle (Fdt, Fdt32ToCpu (*Phandle));
+    if (!FdtNodeEnabled (Fdt, Table) ||
+        (FdtStringListSearch (Fdt, Table, "compatible", "operating-points-v2") < 0)) {
+      continue;
+    }
+
+    FdtForEachSubnode (Opp, Fdt, Table) {
+      // Firmware has no hardware version mask for conditional OPPs.
+      if (!FdtNodeEnabled (Fdt, Opp) || (FdtGetProp (Fdt, Opp, "opp-supported-hw", NULL) != NULL)) {
+        continue;
+      }
+
+      Hz = FdtGetProp (Fdt, Opp, "opp-hz", &Length);
+      if ((Hz != NULL) && (Length == sizeof (*Hz))) {
+        UINT64 Rate = Fdt64ToCpu (ReadUnaligned64 (Hz));
+
+        Highest = MAX (Highest, Rate);
+      }
+    }
+  }
+
+  return Highest;
+}
+
 EFI_STATUS
 Eic7700GetBoardInfo (
   EIC7700_BOARD_INFO  *Info,
@@ -124,6 +175,7 @@ Eic7700GetBoardInfo (
     return EFI_UNSUPPORTED;
   }
 
-  Info->CpuRate = CoreRate (Fdt);
+  Info->CpuRate    = CoreRate (Fdt);
+  Info->MaxCpuRate = MaxCpuRate (Fdt);
   return EFI_SUCCESS;
 }

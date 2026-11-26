@@ -15,6 +15,7 @@
   EswinPlatformPkg/EswinPlatformPkg.dec
 [LibraryClasses]
   FdtBoardInfoLib
+  FdtHardwareLib
   BaseLib
   DxeServicesTableLib
   FdtLib

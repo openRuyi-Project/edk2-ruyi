@@ -83,6 +83,7 @@ PublishEic7700Info (
   Cpu.ProcessorType         = CentralProcessor;
   Cpu.ProcessorFamily       = ProcessorFamilyIndicatorFamily2;
   Cpu.ProcessorFamily2      = ProcessorFamilyRiscVRV64;
+  Cpu.MaxSpeed              = (UINT16)MIN (Info.MaxCpuRate / 1000000, MAX_UINT16);
   Cpu.CurrentSpeed          = (UINT16)MIN (Info.CpuRate / 1000000, MAX_UINT16);
   Cpu.Status                = 0x41;
   Cpu.CoreCount             = Cpu.ThreadCount = Cpu.EnabledCoreCount = (UINT8)Info.CoreCount;

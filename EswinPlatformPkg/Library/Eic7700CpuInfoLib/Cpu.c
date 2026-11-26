@@ -35,5 +35,12 @@ PlatformCpuInfo (
   }
 
   EMIT (L"Core clock", Text);
+  if (Info.MaxCpuRate) {
+    UnicodeSPrint (Text, sizeof (Text), L"%Lu MHz", Info.MaxCpuRate / 1000000);
+    EMIT (L"Maximum core clock", Text);
+  } else {
+    EMIT (L"Maximum core clock", L"Unknown");
+  }
+
   return EFI_SUCCESS;
 }

@@ -9,6 +9,7 @@ typedef struct {
   UINT64         MemorySize;
   UINT64         BootHart;
   UINT64         CpuRate;
+  UINT64         MaxCpuRate;
   UINT32         CoreCount;
 } RUYI_BOARD_INFO;
 EFI_STATUS
