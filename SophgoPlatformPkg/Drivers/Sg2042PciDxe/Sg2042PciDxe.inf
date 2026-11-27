@@ -7,24 +7,32 @@
   ENTRY_POINT = Sg2042PciEntry
 [Sources]
   Pci.c
+  Pioneer.c
+  Pioneer.h
   Cadence.h
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
+  EmbeddedPkg/EmbeddedPkg.dec
   RuyiPlatformPkg/RuyiPlatformPkg.dec
 [LibraryClasses]
   CpuMmioAddressLib
   BaseLib
   DevicePathLib
-  FdtBoardInfoLib
+  FdtI2cReadLib
   FdtHardwareLib
   FdtLib
   TimerLib
   IoLib
   UefiBootServicesTableLib
   UefiDriverEntryPoint
+  UefiLib
 [Protocols]
   gRuyiPciControllerProtocolGuid
   gEfiCpuArchProtocolGuid
+  gFdtClientProtocolGuid
+[Guids]
+  gEdkiiPlatformHasDeviceTreeGuid
+  gFdtTableGuid
 [Depex]
-  gEfiCpuArchProtocolGuid
+  gEfiCpuArchProtocolGuid AND gFdtClientProtocolGuid AND gEdkiiPlatformHasDeviceTreeGuid

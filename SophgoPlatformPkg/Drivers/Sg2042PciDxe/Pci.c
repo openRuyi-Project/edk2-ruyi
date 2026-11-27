@@ -12,7 +12,7 @@
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include "Cadence.h"
-#include <Library/FdtBoardInfoLib.h>
+#include "Pioneer.h"
 #include <Library/FdtHardwareLib.h>
 #include <Library/FdtLib.h>
 #include <Library/TimerLib.h>
@@ -356,11 +356,10 @@ InitPort (CONST VOID *Fdt, INT32 Node, UINTN I)
 EFI_STATUS EFIAPI
 Sg2042PciEntry (EFI_HANDLE Image, EFI_SYSTEM_TABLE *SystemTable)
 {
-  CONST VOID *Fdt;
-  RUYI_BOARD_INFO Info;
+  VOID *Fdt;
   EFI_HANDLE Handle = NULL;
   INT32 Node = -1;
-  EFI_STATUS Status = FdtBoardInfoGet (&Info, &Fdt);
+  EFI_STATUS Status = Sg2042PreparePciFdt (&Fdt);
   if (EFI_ERROR (Status)) { return Status; }
   while ((Node = FdtNodeOffsetByCompatible (Fdt, Node, "sophgo,sg2042-pcie-host")) >= 0) {
     if (!FdtNodeEnabled (Fdt, Node)) { continue; }
