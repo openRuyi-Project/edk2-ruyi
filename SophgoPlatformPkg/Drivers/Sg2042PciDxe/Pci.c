@@ -15,7 +15,6 @@
 #include "Pioneer.h"
 #include <Library/FdtHardwareLib.h>
 #include <Library/FdtLib.h>
-#include <Library/TimerLib.h>
 #include <Library/DevicePathLib.h>
 #include <Protocol/PlatformPciController.h>
 #include <Protocol/PciHostBridgeResourceAllocation.h>
@@ -369,17 +368,6 @@ Sg2042PciEntry (EFI_HANDLE Image, EFI_SYSTEM_TABLE *SystemTable)
     mHost.Count++;
   }
   if (!mHost.Count) { return EFI_NOT_FOUND; }
-  // On Pioneer the ASM2824 is soldered to PCIe1 high (segment 3).
-  // Wait for its upstream port to answer configuration cycles before
-  // PciBus enumerates USB, SATA and LAN behind the switch.
-  if (FdtStringListSearch (Fdt, 0, "compatible", "milkv,pioneer") >= 0) {
-    UINT32 Id;
-    for (UINTN Ms = 0; Ms < 8000; Ms++) {
-      Status = Config (3, 1, 0, 0, 0, sizeof (Id), FALSE, &Id);
-      if (!EFI_ERROR (Status) && (UINT16)Id > 1 && (UINT16)Id != MAX_UINT16) { break; }
-      MicroSecondDelay (1000);
-    }
-  }
   mHost.Controller.Revision = 2;
   mHost.Controller.Config = Config;
   mHost.Bridges = mRoots;

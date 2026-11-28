@@ -22,7 +22,6 @@
   FdtI2cReadLib
   FdtHardwareLib
   FdtLib
-  TimerLib
   IoLib
   UefiBootServicesTableLib
   UefiDriverEntryPoint
