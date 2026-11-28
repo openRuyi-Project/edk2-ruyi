@@ -281,11 +281,6 @@ InitPort (CONST VOID *Fdt, INT32 Node, UINTN I)
   INT32 Len, Count;
   UINTN Domain, RegSize, CfgSize;
   EFI_STATUS Status;
-  P = FdtGetProp (Fdt, Node, "linux,pci-domain", &Len);
-  if (!P || Len != 4 || (Domain = Fdt32ToCpu (*P)) >= MAX_ROOTS) { return EFI_COMPROMISED_DATA; }
-  for (UINTN J = 0; J < I; J++) {
-    if (mRoots[J].Segment == Domain) { return EFI_COMPROMISED_DATA; }
-  }
   P = FdtGetProp (Fdt, Node, "bus-range", &Len);
   if (!P || Len != 8 || P[0] || Fdt32ToCpu (P[1]) != 255) { return EFI_UNSUPPORTED; }
   INT32 RegIndex = FdtStringListSearch (Fdt, Node, "reg-names", "reg");
@@ -293,6 +288,18 @@ InitPort (CONST VOID *Fdt, INT32 Node, UINTN I)
   if (RegIndex < 0 || CfgIndex < 0) { return EFI_NOT_FOUND; }
   Status = FdtGetMmio (Fdt, Node, RegIndex, PCIE_AT_LINKDOWN + 4, &Port->Reg, &RegSize);
   if (EFI_ERROR (Status)) { return Status; }
+  P = FdtGetProp (Fdt, Node, "linux,pci-domain", &Len);
+  if (P == NULL) {
+    INT32 PortIndex = Sg2042PciPortIndex (Port->Reg);
+    if (PortIndex < 0) { return EFI_UNSUPPORTED; }
+    Domain = (UINTN)PortIndex;
+  } else {
+    if (Len != sizeof (*P) || Fdt32ToCpu (*P) > MAX_UINT16) { return EFI_COMPROMISED_DATA; }
+    Domain = Fdt32ToCpu (*P);
+  }
+  for (UINTN J = 0; J < I; J++) {
+    if (mRoots[J].Segment == Domain) { return EFI_COMPROMISED_DATA; }
+  }
   Status = FdtGetMmio (Fdt, Node, CfgIndex, EFI_PAGE_SIZE, &Port->Cfg, &CfgSize);
   if (EFI_ERROR (Status)) { return Status; }
   Status = FdtMapMmio (Port->Reg, RegSize);
